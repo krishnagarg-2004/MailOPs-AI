@@ -1,0 +1,226 @@
+MAILOPS AI (EnterpriseAIMailOPs_MIPRO) — PROJECT BIBLE / MASTER CONTEXT
+Version: 1.1
+Last Updated: August 2026
+Purpose: Project Master Context and Bible for MailOps AI.
+
+======================================================================
+0. HOW TO USE THIS DOCUMENT
+======================================================================
+
+This document is a master project reference for MailOps AI.
+The project is built iteratively:
+Requirements -> Architecture -> Database -> Authentication -> Integrations -> AI -> UI -> Testing -> Deployment.
+
+Before implementation, decisions must be reviewed and approved. Do not silently add large features, change the architecture, or expand scope. If a proposed feature conflicts with this Bible, flag the conflict and discuss it.
+
+NOTE: PROJECT_BIBLE.md is the canonical maintained specification file in this repository. This TXT file is updated to reflect the exact same approved specification and is retained for backwards compatibility.
+
+======================================================================
+1. PROJECT IDENTITY
+======================================================================
+
+Working project name:
+MAILOPS AI (EnterpriseAIMailOPs_MIPRO)
+
+Alternative names previously considered:
+- InboxIQ
+- MailMind AI
+- MailPilot AI
+
+Project type:
+B.Tech College Minor Project / Serious Portfolio Software Engineering Project.
+
+Domain:
+- Artificial Intelligence
+- Enterprise Software
+- Email Intelligence
+- Document Intelligence
+- NLP
+- Knowledge Retrieval
+- Workflow Automation
+
+Canonical Definition:
+MailOps AI is an AI-powered enterprise work-intelligence platform that connects organizational communication (emails) and business documents, understands their content and relationships, extracts actionable work information, provides contextual knowledge retrieval, identifies tasks, decisions, deadlines, and risks, assists with human-reviewed responses, and presents explainable intelligence through a unified workspace.
+
+======================================================================
+2. EXECUTIVE SUMMARY & CORE PROBLEM
+======================================================================
+
+Businesses receive large volumes of emails and attachments. Employees commonly spend time reading emails, opening attachments, downloading invoices, checking contracts, replying to customers, forwarding emails, creating tasks manually, tracking deadlines, determining which department should handle a request, and finding information scattered across conversations and documents.
+
+MailOps AI bridges the gap between passive email/document consumption and proactive operational execution.
+
+Core problem categories:
+1. Information overload
+2. Context fragmentation
+3. Manual document processing
+4. Missed tasks and deadlines
+5. Inefficient information retrieval
+6. Repetitive communication
+7. Lack of cross-email and cross-document context
+
+======================================================================
+3. TARGET USERS & PRODUCT VISION
+======================================================================
+
+Target Users:
+- Operations Employees & Managers
+- Finance Personnel
+- Legal & Compliance Teams
+- Individual Enterprise Professionals
+
+Product Vision:
+Transform raw enterprise communication into an explainable, structured work-intelligence network where every incoming email or document automatically yields structured insights: what happened, why it matters, what needs to be done next, where the supporting evidence is located, and how it links to existing enterprise knowledge.
+
+======================================================================
+4. CORE PRODUCT CONCEPT & PRINCIPLES
+======================================================================
+
+1. Understand before acting.
+2. Human remains in control.
+3. AI decisions should be explainable (confidence, reason, citations).
+4. Evidence and retrieved context should be preferred over unsupported generation.
+5. Keep architecture modular (Modular Monolith for V1).
+6. Avoid unnecessary complexity (No microservices, no unnecessary vector databases, no LangChain structural dependency).
+7. Build a complete working Version 1 rather than an unfinished collection of features.
+8. Treat email and document content as untrusted input.
+
+======================================================================
+5. CORE PRODUCT CAPABILITIES
+======================================================================
+
+A. Gmail Integration
+- Google OAuth 2.0 authentication
+- Connect to Gmail (read, modify, draft scopes)
+- Sync messages, threads, metadata, and attachments asynchronously
+
+B. Email Intelligence
+- Email & thread summarization
+- Intent classification, priority detection, urgency scoring, sentiment analysis
+- Entity extraction & duplicate detection
+
+C. Action Intelligence
+- Action item extraction
+- Identify requests, commitments, decisions, deadlines, responsible owners
+- Recommend next actions and flag risks
+
+D. Document Intelligence
+- Supported formats: PDF, DOCX, images (PNG, JPEG)
+- Automatic text extraction with fallback Tesseract OCR
+- Key field extraction for Invoices (vendor, total, tax/GST, due date) and Contracts (parties, renewal dates, obligations, risk clauses)
+
+E. AI Reply Assistance
+- Generate professional replies & follow-ups using conversation context
+- Mandatory human review: AI draft -> User review/edit -> User explicitly sends email. No autonomous sending in V1.
+
+F. Knowledge Intelligence & Search
+- Hybrid search: structured metadata filtering + vector similarity retrieval using pgvector in PostgreSQL
+- Semantic RAG retrieval for context-aware AI answers
+
+G. Action Graph
+- Visualization & domain-model relationship mapping connecting emails, attachments, decisions, tasks, and deadlines
+- Uses PostgreSQL domain model relationships in V1 (No Neo4j or separate graph database)
+
+H. Operational Dashboard
+- Daily priority overview, pending actions, recent extractions, processing statistics
+
+======================================================================
+6. V1 SCOPE & EXPLICITLY OUT OF SCOPE
+======================================================================
+
+V1 Scope:
+- Single/Multi-user Google OAuth authentication
+- Gmail API integration (reading, drafting)
+- Modular Monolith backend in Python (FastAPI) and PostgreSQL
+- Frontend in React, TypeScript, Vite, Tailwind CSS
+- Document text extraction & OCR for PDFs/images
+- Gemini API integration via direct SDK (`google-genai`)
+- Vector retrieval via `pgvector` in PostgreSQL
+- Action Graph domain model relationship layer
+
+Explicitly Out of Scope for V1:
+- Resume analysis, candidate scoring, interview question generator
+- Autonomous email sending
+- Third-party chat platforms (Slack, Teams)
+- Microservices architecture
+- Standalone vector databases (ChromaDB, Pinecone)
+- Standalone graph databases (Neo4j)
+- LangChain as a core structural dependency
+
+======================================================================
+7. FUNCTIONAL REQUIREMENTS SUMMARY
+======================================================================
+
+- FR-AUTH-01: Authenticate users securely via Google OAuth 2.0.
+- FR-MAIL-01: Synchronize Gmail messages, threads, metadata, and attachments via background workers.
+- FR-AI-01: Generate summaries, intent classifications, priority scores, and sentiment ratings for emails.
+- FR-AI-02: Extract action items, deadlines, and assigned owners.
+- FR-DOC-01: Extract text from PDF/image attachments with OCR fallback.
+- FR-DOC-02: Parse business document metadata (Invoices, Contracts, POs).
+- FR-RAG-01: Index text chunks using pgvector for semantic search.
+- FR-REPLY-01: Draft contextual replies for mandatory manual review and dispatch.
+- FR-GRAPH-01: Display visual timeline and domain relationships.
+
+======================================================================
+8. NON-FUNCTIONAL REQUIREMENTS & SECURITY
+======================================================================
+
+- NFR-SEC-01: OAuth tokens and secrets stored encrypted; never committed to Git.
+- NFR-SEC-02: Email/document text sanitized as untrusted input to defend against prompt injection.
+- NFR-PERF-01: Sub-200ms read API response times; heavy tasks run in background workers.
+- NFR-MAINT-01: Strict domain module isolation inside backend FastAPI structure.
+
+======================================================================
+9. SYSTEM & DATABASE ARCHITECTURE
+======================================================================
+
+Modular Monolith Backend Structure:
+backend/
+    app/
+        api/v1/
+        core/
+        domain/
+        schemas/
+        services/
+        repositories/
+        integrations/
+        ai/
+        documents/
+        search/
+        workers/
+        db/
+        main.py
+
+Database Strategy:
+- Primary DB: PostgreSQL
+- Vector Search: `pgvector` extension inside PostgreSQL
+- Domain Model Modules: Identity, Email, Documents, Intelligence, Actions, Knowledge, Organization, Infrastructure.
+
+======================================================================
+10. TECHNOLOGY STACK
+======================================================================
+
+- Backend: Python 3.14, FastAPI, Uvicorn, Pydantic, Pydantic Settings
+- Frontend: React, TypeScript, Vite, Tailwind CSS
+- Database: PostgreSQL + pgvector
+- AI Provider: Gemini (Direct `google-genai` SDK)
+- Auth: Google OAuth 2.0
+- OCR: Tesseract OCR
+- Environment: `py -3.14 -m venv .venv`
+
+======================================================================
+11. ARCHITECTURE DECISION RECORD / RECENT APPROVED DECISIONS
+======================================================================
+
+- ADR-001: Modular Monolith approved for V1 instead of Microservices.
+- ADR-002: PostgreSQL + `pgvector` approved for vector storage instead of standalone ChromaDB.
+- ADR-003: Direct Gemini SDK approved; LangChain prohibited from core dependency lock-in.
+- ADR-004: Action Graph implemented via PostgreSQL domain model relationships rather than Neo4j.
+- ADR-005: Python 3.14 virtual environment (`py -3.14 -m venv .venv`) standardized.
+
+======================================================================
+12. SPECIFICATION FILE NOTE
+======================================================================
+
+PROJECT_BIBLE.md is the canonical maintained specification.
+This TXT file is retained as a compatibility/reference copy.

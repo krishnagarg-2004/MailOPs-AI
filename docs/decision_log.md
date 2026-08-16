@@ -29,3 +29,13 @@
 - **Context**: Virtual environment configuration.
 - **Decision**: Standardize on Python 3.14 and `py -3.14 -m venv .venv` execution launcher for local virtual environments.
 - **Rationale**: Ensures runtime consistency across team environments.
+
+## ADR-006: Database Foundation Architecture & Token Storage Security Boundary
+- **Status**: Approved
+- **Context**: Designing database integration, session scope, ORM models, and OAuth credential storage for Milestone 2.
+- **Decision**:
+  1. Standardize on PostgreSQL with `pgvector/pgvector:pg16` Docker image, SQLAlchemy 2.0 ORM, `psycopg` (v3) driver, and Alembic version control.
+  2. Implement request-scoped database session management via FastAPI `get_db()` generator with explicit cleanup.
+  3. Model identity using `User` and `OAuthAccount` tables connected by a one-to-many relationship (`User.oauth_accounts`) with cascade deletion.
+  4. Establish OAuth credential storage boundary on `OAuthAccount` via nullable text columns (`encrypted_access_token`, `encrypted_refresh_token`). Plaintext tokens MUST NEVER be stored in source control or unencrypted database columns. Application-level symmetric key encryption will be attached during Milestone 3 OAuth implementation.
+- **Rationale**: Guarantees clean architecture separation, strict data integrity, automated migration tracking, and security compliance before implementing external authentication flows.

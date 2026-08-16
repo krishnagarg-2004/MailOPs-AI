@@ -59,15 +59,25 @@ EnterpriseAIMailOPs_MIPRO/
    ```bash
    pip install -e ./backend
    ```
-4. Run backend tests:
+4. Start local PostgreSQL environment (Docker):
    ```bash
-   pytest backend/tests
+   docker compose up -d
    ```
-5. Launch FastAPI dev server:
+5. Apply database migrations:
+   ```bash
+   alembic upgrade head
+   ```
+6. Run backend test suite:
+   ```bash
+   $env:PYTHONPATH="."
+   .\.venv\Scripts\python -m pytest backend/tests
+   ```
+7. Launch FastAPI dev server:
    ```bash
    uvicorn backend.app.main:app --reload
    ```
    Access health check at `http://localhost:8000/api/v1/health`.
+
 
 ### Frontend Setup
 1. Navigate to frontend directory:

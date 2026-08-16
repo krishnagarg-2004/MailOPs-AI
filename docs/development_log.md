@@ -36,3 +36,17 @@
 - Implemented FastAPI `get_current_user` dependency (`backend/app/api/deps.py`) validating HttpOnly opaque session cookies (`mailops_session` / `__Host-mailops_session`) against PostgreSQL `sessions` records.
 - Built React 18 frontend authentication context (`AuthContext.tsx`), protected route component (`ProtectedRoute.tsx`), and login page (`Login.tsx`).
 - Expanded Pytest suite to 31 tests (`test_crypto.py`, `test_security.py`, `test_auth_service.py`, `test_auth_api.py`) verifying token encryption, OIDC nonce checks, session regeneration, state browser-binding, unauthorized `401` responses, and logout revocation against live PostgreSQL 16 (31/31 passing).
+
+## August 2026 — Milestone 4: Gmail API Integration & Synchronizer Worker Complete
+
+- Configured Gmail synchronization and attachment storage settings (`INITIAL_SYNC_LIMIT=500`, `ATTACHMENT_MAX_SIZE_BYTES=10485760`) in `backend/app/core/config.py`.
+- Created domain models `EmailThread` (`backend/app/models/email_thread.py`), `EmailMessage` (`backend/app/models/email_message.py`), `Attachment` (`backend/app/models/attachment.py`), and `GmailSyncState` (`backend/app/models/gmail_sync_state.py`) with user-scoped uniqueness constraints (`uq_user_gmail_thread`, `uq_user_gmail_message`).
+- Generated Alembic migration `003_create_gmail_entities_table.py` and verified 5-stage migration lifecycle against live PostgreSQL 16 container (`email_threads`, `email_messages`, `attachments`, `gmail_sync_states`).
+- Implemented MIME parsing & email body normalization utility (`backend/app/utils/mime_parser.py`) supporting base64url decoding, RFC 2822 date parsing, recursive multipart traversing, plain text & HTML extraction, and quoted reply stripping.
+- Built Gmail REST API client (`backend/app/integrations/gmail.py`) supporting automatic OAuth access token refresh, Fernet re-encryption, and `invalid_grant` revocation error handling.
+- Built database repository layer (`backend/app/repositories/gmail_repository.py`) implementing PostgreSQL `ON CONFLICT (user_id, gmail_message_id) DO UPDATE` upsert idempotency.
+- Built decoupled synchronization service (`backend/app/services/gmail_sync_service.py`) supporting baseline historyId capture invariant, bounded initial sync, incremental History API sync (`messagesAdded`, `messagesDeleted`, `labelsAdded`), and HTTP 404 historyIdNotFound full sync fallback.
+- Implemented selective document/image attachment downloading with UUID path sanitization (`storage/attachments/{user_id}/{uuid}.dat`) and strict 10MB byte limit verification.
+- Built FastAPI Gmail router (`backend/app/api/v1/gmail.py`) providing `/gmail/status`, `/gmail/sync` (background task runner), `/gmail/threads`, `/gmail/threads/{id}`, `/gmail/messages/{id}`, and `/gmail/disconnect`.
+- Built React 18 frontend Gmail sync widget (`frontend/src/components/GmailSyncWidget.tsx`).
+- Expanded Pytest suite to 50 tests (`test_mime_parser.py`, `test_gmail_client.py`, `test_attachment_security.py`, `test_gmail_repository.py`, `test_sync_service.py`, `test_user_isolation.py`, `test_gmail_api.py`) verifying MIME parsing, token refresh, upsert idempotency, 404 fallback, multi-tenant user isolation, and API routes (50/50 passing).

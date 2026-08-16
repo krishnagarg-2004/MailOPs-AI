@@ -26,6 +26,11 @@ class Settings(BaseSettings):
     FRONTEND_URL: str = "http://localhost:5173"
     SESSION_EXPIRE_HOURS: int = 24
 
+    # Gmail Synchronization Configuration
+    INITIAL_SYNC_LIMIT: int = 500
+    ATTACHMENT_MAX_SIZE_BYTES: int = 10 * 1024 * 1024  # 10 MB
+
+
     @property
     def SESSION_COOKIE_NAME(self) -> str:
         """Use __Host- prefix in production for host-locking security."""

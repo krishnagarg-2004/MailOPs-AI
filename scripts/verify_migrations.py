@@ -65,7 +65,11 @@ def run_alembic_verification():
     assert "users" in tables, "Table 'users' missing after upgrade."
     assert "oauth_accounts" in tables, "Table 'oauth_accounts' missing after upgrade."
     assert "sessions" in tables, "Table 'sessions' missing after upgrade."
-    print("Result: Schema verification PASSED ('users', 'oauth_accounts', 'sessions' exist).")
+    assert "email_threads" in tables, "Table 'email_threads' missing after upgrade."
+    assert "email_messages" in tables, "Table 'email_messages' missing after upgrade."
+    assert "attachments" in tables, "Table 'attachments' missing after upgrade."
+    assert "gmail_sync_states" in tables, "Table 'gmail_sync_states' missing after upgrade."
+    print("Result: Schema verification PASSED (all 7 tables exist).")
 
     # STEP 3: Downgrade to base
     print("\n--- Step 3: Alembic Downgrade to 'base' ---")
@@ -80,6 +84,10 @@ def run_alembic_verification():
     assert "users" not in reverted_tables, "Table 'users' still exists after downgrade."
     assert "oauth_accounts" not in reverted_tables, "Table 'oauth_accounts' still exists after downgrade."
     assert "sessions" not in reverted_tables, "Table 'sessions' still exists after downgrade."
+    assert "email_threads" not in reverted_tables, "Table 'email_threads' still exists after downgrade."
+    assert "email_messages" not in reverted_tables, "Table 'email_messages' still exists after downgrade."
+    assert "attachments" not in reverted_tables, "Table 'attachments' still exists after downgrade."
+    assert "gmail_sync_states" not in reverted_tables, "Table 'gmail_sync_states' still exists after downgrade."
     print("Result: Schema reversion PASSED (all tables dropped).")
 
     # STEP 5: Upgrade again successfully
@@ -93,7 +101,12 @@ def run_alembic_verification():
     assert "users" in final_tables
     assert "oauth_accounts" in final_tables
     assert "sessions" in final_tables
+    assert "email_threads" in final_tables
+    assert "email_messages" in final_tables
+    assert "attachments" in final_tables
+    assert "gmail_sync_states" in final_tables
     print("Result: Final schema re-upgrade PASSED.")
+
 
 
     # Cleanup temporary migration test db file if created

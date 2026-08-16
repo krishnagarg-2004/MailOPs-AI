@@ -23,3 +23,16 @@
 - Executed and verified 5-stage Alembic migration lifecycle test against live PostgreSQL 16 container (Upgrade -> Verify schema -> Downgrade -> Verify schema drop -> Re-upgrade -> Verify schema).
 - Created Docker Compose configuration (`docker-compose.yml`) for local PostgreSQL development using `pgvector/pgvector:pg16` image and verified `pgvector` extension.
 - Expanded Pytest suite (`backend/tests/unit/test_models.py` and `backend/tests/integration/test_database.py`) covering connection, persistence, relationships, cascade deletes, unique constraints, and transaction rollbacks against live PostgreSQL 16 (13/13 passing).
+
+## August 2026 — Milestone 3: Core Authentication & Google OAuth Complete
+
+- Added security & authentication dependencies (`cryptography`, `itsdangerous`, `pyjwt`, `httpx`, `email-validator`) to `backend/pyproject.toml` and `.venv`.
+- Implemented Fernet symmetric token encryption at rest (`backend/app/core/crypto.py`) with support for multi-key rotation and zero credential logging.
+- Created security utilities (`backend/app/core/security.py`) for 256-bit unguessable session token hashing (SHA-256), OIDC transaction nonce generation, signed OAuth state serialization (`itsdangerous`), and open redirect protection (`validate_return_to`).
+- Defined `UserSession` domain model (`backend/app/models/session.py`) and generated Alembic migration `002_create_sessions_table.py` for database-backed server-side sessions (`sessions` table).
+- Implemented Google OAuth 2.0 & OIDC integration client (`backend/app/integrations/google_oauth.py`) validating ID token signatures via Google JWKS, issuer (`https://accounts.google.com`), audience (`GOOGLE_CLIENT_ID`), expiration, `email_verified`, and transaction `nonce`.
+- Built authentication service layer (`backend/app/services/auth_service.py`) supporting Google `sub` identity resolution, strict email-verified account linking, Fernet token encryption before DB persistence, session creation, validation, and revocation.
+- Built FastAPI authentication router (`backend/app/api/v1/auth.py`) providing `/google/login` (307 redirect), `/google/callback` (state/nonce validation, token exchange, session set), `/me`, and `/logout`.
+- Implemented FastAPI `get_current_user` dependency (`backend/app/api/deps.py`) validating HttpOnly opaque session cookies (`mailops_session` / `__Host-mailops_session`) against PostgreSQL `sessions` records.
+- Built React 18 frontend authentication context (`AuthContext.tsx`), protected route component (`ProtectedRoute.tsx`), and login page (`Login.tsx`).
+- Expanded Pytest suite to 31 tests (`test_crypto.py`, `test_security.py`, `test_auth_service.py`, `test_auth_api.py`) verifying token encryption, OIDC nonce checks, session regeneration, state browser-binding, unauthorized `401` responses, and logout revocation against live PostgreSQL 16 (31/31 passing).

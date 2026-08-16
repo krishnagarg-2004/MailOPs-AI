@@ -1,7 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.core.config import settings
+from backend.app.api.v1.auth import router as auth_router
+from backend.app.core.config import settings
+
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -14,11 +16,15 @@ app = FastAPI(
 # Configure CORS for local development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[settings.FRONTEND_URL, "http://localhost:5173", "http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include API v1 Routers
+app.include_router(auth_router, prefix=settings.API_V1_STR)
+
 
 
 @app.get("/health", tags=["Health"])

@@ -64,7 +64,8 @@ def run_alembic_verification():
     print(f"Tables found: {tables}")
     assert "users" in tables, "Table 'users' missing after upgrade."
     assert "oauth_accounts" in tables, "Table 'oauth_accounts' missing after upgrade."
-    print("Result: Schema verification PASSED ('users' and 'oauth_accounts' exist).")
+    assert "sessions" in tables, "Table 'sessions' missing after upgrade."
+    print("Result: Schema verification PASSED ('users', 'oauth_accounts', 'sessions' exist).")
 
     # STEP 3: Downgrade to base
     print("\n--- Step 3: Alembic Downgrade to 'base' ---")
@@ -78,6 +79,7 @@ def run_alembic_verification():
     print(f"Tables found after downgrade: {reverted_tables}")
     assert "users" not in reverted_tables, "Table 'users' still exists after downgrade."
     assert "oauth_accounts" not in reverted_tables, "Table 'oauth_accounts' still exists after downgrade."
+    assert "sessions" not in reverted_tables, "Table 'sessions' still exists after downgrade."
     print("Result: Schema reversion PASSED (all tables dropped).")
 
     # STEP 5: Upgrade again successfully
@@ -90,7 +92,9 @@ def run_alembic_verification():
     print(f"Tables found after re-upgrade: {final_tables}")
     assert "users" in final_tables
     assert "oauth_accounts" in final_tables
+    assert "sessions" in final_tables
     print("Result: Final schema re-upgrade PASSED.")
+
 
     # Cleanup temporary migration test db file if created
     test_engine.dispose()

@@ -62,6 +62,10 @@ def db_session() -> Generator[Session, None, None]:
     finally:
         session.close()
         Base.metadata.drop_all(bind=test_engine)
+        with test_engine.connect() as conn:
+            conn.execute(text("DROP TABLE IF EXISTS alembic_version CASCADE"))
+            conn.commit()
+
 
 
 def test_database_connection():
@@ -228,7 +232,14 @@ def test_alembic_migration_lifecycle():
 
     alembic_cfg = Config("alembic.ini")
 
+    # Clean up pre-existing tables and alembic version tracking before migration test
+    Base.metadata.drop_all(bind=test_engine)
+    with test_engine.connect() as conn:
+        conn.execute(text("DROP TABLE IF EXISTS alembic_version CASCADE"))
+        conn.commit()
+
     # Step 1: Upgrade to head (initial migration)
+
     command.upgrade(alembic_cfg, "head")
     inspector_1 = inspect(test_engine)
     tables_step1 = inspector_1.get_table_names()

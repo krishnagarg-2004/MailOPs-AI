@@ -8,7 +8,7 @@ if str(root_dir) not in sys.path:
 
 from alembic import command
 from alembic.config import Config
-from sqlalchemy import create_engine, inspect
+from sqlalchemy import create_engine, inspect, text
 
 from backend.app.core.config import settings
 from backend.app.db.base import Base
@@ -45,8 +45,12 @@ def run_alembic_verification():
     alembic_cfg.set_main_option("sqlalchemy.url", target_uri)
     test_engine = create_engine(target_uri)
 
-    # Clean up any pre-existing test db tables
+    # Clean up any pre-existing test db tables and migration tracking table
     Base.metadata.drop_all(bind=test_engine)
+    with test_engine.connect() as conn:
+        conn.execute(text("DROP TABLE IF EXISTS alembic_version CASCADE"))
+        conn.commit()
+
 
     # STEP 1: Upgrade to head
     print("\n--- Step 1: Alembic Upgrade to 'head' ---")

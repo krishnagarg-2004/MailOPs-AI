@@ -90,7 +90,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_index(op.f("ix_oauth_accounts_user_id"), table_name="oauth_accounts")
-    op.drop_table("oauth_accounts")
-    op.drop_index(op.f("ix_users_email"), table_name="users")
-    op.drop_table("users")
+    op.drop_index(op.f("ix_oauth_accounts_user_id"), table_name="oauth_accounts", if_exists=True)
+    op.drop_table("oauth_accounts", if_exists=True)
+    op.drop_index(op.f("ix_users_email"), table_name="users", if_exists=True)
+    op.drop_table("users", if_exists=True)

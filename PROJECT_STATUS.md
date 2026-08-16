@@ -32,6 +32,6 @@
 - [x] Implemented canonical `OAuthAccount` domain model (`backend/app/models/oauth.py`) with unique provider account constraint and safe token storage boundary.
 - [x] Configured Alembic migration environment (`alembic.ini`, `database/migrations/env.py`, `script.py.mako`).
 - [x] Created initial migration revision `001_initial_user_and_oauth.py` creating `users` and `oauth_accounts` tables, foreign keys, and indexes.
-- [x] Verified complete Alembic migration lifecycle (upgrade -> verify schema -> downgrade -> verify revert -> re-upgrade -> verify schema).
-- [x] Created `docker-compose.yml` for local PostgreSQL 16 development environment with `pgvector/pgvector:pg16` image.
-- [x] Added unit tests (`test_models.py`) and integration tests (`test_database.py`) verifying connectivity, persistence, relationships, cascade deletes, unique constraints, and transaction rollbacks (13/13 passing).
+- [x] Verified complete Alembic migration lifecycle against live PostgreSQL 16 container (upgrade -> verify schema -> downgrade -> verify revert -> re-upgrade -> verify schema).
+- [x] Created `docker-compose.yml` for local PostgreSQL 16 development environment with `pgvector/pgvector:pg16` image and verified `pgvector` extension.
+- [x] Added unit tests (`test_models.py`) and integration tests (`test_database.py`) verifying connectivity, persistence, relationships, cascade deletes, unique constraints, and transaction rollbacks against live PostgreSQL 16 (13/13 passing).

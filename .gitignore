@@ -8,6 +8,8 @@ env/
 __pycache__/
 *.py[cod]
 *$py.class
+*.egg-info/
+*.egg
 .pytest_cache/
 .coverage
 htmlcov/

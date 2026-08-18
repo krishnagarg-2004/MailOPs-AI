@@ -6,8 +6,10 @@ from backend.app.api.v1.auth import router as auth_router
 from backend.app.api.v1.documents import router as documents_router
 from backend.app.api.v1.gmail import router as gmail_router
 from backend.app.api.v1.graph import router as graph_router
+from backend.app.api.v1.reply_drafts import router as reply_drafts_router
 from backend.app.api.v1.search import router as search_router
 from backend.app.core.config import settings
+
 
 
 
@@ -36,6 +38,7 @@ app.include_router(ai_router, prefix=settings.API_V1_STR)
 app.include_router(documents_router, prefix=settings.API_V1_STR)
 app.include_router(search_router, prefix=settings.API_V1_STR)
 app.include_router(graph_router, prefix=settings.API_V1_STR)
+app.include_router(reply_drafts_router, prefix=settings.API_V1_STR)
 
 
 

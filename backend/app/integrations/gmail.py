@@ -172,3 +172,40 @@ class GmailClient:
             if padding:
                 padded += "=" * (4 - padding)
             return base64.b64decode(padded)
+
+    async def create_draft(
+        self,
+        access_token: str,
+        raw_mime: str,
+        thread_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Create a draft in user's Gmail mailbox via POST /users/me/drafts."""
+        headers = {"Authorization": f"Bearer {access_token}", "Content-Type": "application/json"}
+        msg_payload: dict[str, Any] = {"raw": raw_mime}
+        if thread_id:
+            msg_payload["threadId"] = thread_id
+
+        payload = {"message": msg_payload}
+        async with httpx.AsyncClient(timeout=20.0) as client:
+            resp = await client.post(f"{self.BASE_URL}/drafts", headers=headers, json=payload)
+            if resp.status_code not in (200, 201):
+                raise GmailAPIError(resp.status_code, resp.text)
+            return resp.json()
+
+    async def send_message(
+        self,
+        access_token: str,
+        raw_mime: str,
+        thread_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Send an email message via POST /users/me/messages/send."""
+        headers = {"Authorization": f"Bearer {access_token}", "Content-Type": "application/json"}
+        payload: dict[str, Any] = {"raw": raw_mime}
+        if thread_id:
+            payload["threadId"] = thread_id
+
+        async with httpx.AsyncClient(timeout=20.0) as client:
+            resp = await client.post(f"{self.BASE_URL}/messages/send", headers=headers, json=payload)
+            if resp.status_code not in (200, 201):
+                raise GmailAPIError(resp.status_code, resp.text)
+            return resp.json()

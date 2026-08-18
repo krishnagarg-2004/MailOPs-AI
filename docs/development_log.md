@@ -106,5 +106,18 @@
 - Implemented explicit cross-user graph isolation security suite (`test_graph_isolation.py`) asserting User B cannot query, traverse, or reference User A's graph nodes.
 - Expanded Pytest suite to 90 tests (`test_graph_traversal.py`, `test_graph_service.py`, `test_graph_isolation.py`, `test_graph_api.py`), achieving 90/90 passing tests.
 
+## August 2026 — Milestone 9: Human-in-the-Loop Reply Drafting Workflow Complete
+
+- Configured Reply Drafting settings (`GMAIL_READONLY_SCOPE`, `GMAIL_COMPOSE_SCOPE`, `REPLY_DEFAULT_TONE="PROFESSIONAL"`) in `backend/app/core/config.py`.
+- Implemented SQLAlchemy domain model `ReplyDraft` (`backend/app/models/reply_draft.py`) with local-by-default status lifecycle (`DRAFTED`, `EDITED`, `APPROVED`, `SENT`, `DISCARDED`).
+- Generated and verified Alembic migration `008_create_reply_drafts_table.py` for `reply_drafts` table against live PostgreSQL 16 container.
+- Implemented incremental OAuth authorization endpoint `/api/v1/auth/google/authorize-compose` requesting minimum additional scope `https://www.googleapis.com/auth/gmail.compose`.
+- Built `ReplyDraftService` (`backend/app/services/reply_draft_service.py`) supporting multi-source context assembly (M4 threads + M5 actions + M6 docs + M8 graph), local persistence, compose scope verification (`has_compose_scope`), MIME threading header assembly (`In-Reply-To`, `References`, `threadId`), and Gmail draft creation/sending.
+- Built FastAPI Reply router (`backend/app/api/v1/reply_drafts.py`) providing `/reply-drafts/generate`, `/reply-drafts/message/{id}`, `/reply-drafts/{id}`, `/reply-drafts/{id}/sync-gmail`, `/reply-drafts/{id}/send`, and `DELETE /reply-drafts/{id}`.
+- Built React 18 frontend components (`frontend/src/types/reply_draft.ts`, `frontend/src/components/ReplyDraftWidget.tsx`) displaying controlled tone selector, editable text fields, provenance accordion, and explicit approval action buttons.
+- Built security & OAuth test suite (`test_reply_isolation.py`, `test_reply_oauth_scopes.py`) verifying local-by-default no-auto-send guarantee, cross-user isolation, and 403 Forbidden compose scope enforcement.
+- Expanded Pytest suite to 98 tests (`test_reply_draft.py`, `test_reply_isolation.py`, `test_reply_oauth_scopes.py`, `test_reply_api.py`), achieving 98/98 passing tests.
+
+
 
 

@@ -28,9 +28,19 @@ class AIProvider(Protocol):
     ) -> EmailExtractionResult:
         ...
 
+    async def generate_reply_draft(
+        self,
+        context_prompt: str,
+        tone: str = "PROFESSIONAL",
+        intent: str = "REPLY_RESPONSE",
+    ) -> Any:  # Returns ReplyDraftResult
+        ...
+
     @property
     def model_name(self) -> str:
         ...
+
+
 
 
 class GeminiProvider:
@@ -101,6 +111,41 @@ class GeminiProvider:
 
         raise RuntimeError(f"Gemini API extraction failed after {max_retries} retries: {last_exception}") from last_exception
 
+    async def generate_reply_draft(
+        self,
+        context_prompt: str,
+        tone: str = "PROFESSIONAL",
+        intent: str = "REPLY_RESPONSE",
+    ) -> Any:
+        from backend.app.schemas.reply_draft import ReplyDraftResult
+        if not self.client:
+            raise RuntimeError("google-genai client is not initialized.")
+
+        system_instruction = (
+            f"You are an AI assistant for MailOps. Generate a context-aware email reply draft in tone '{tone}' "
+            f"and intent '{intent}'. Structure output as JSON with fields: subject, body_text, recipient_email, rationale_and_provenance."
+        )
+
+        def _call():
+            from google.genai import types
+            config = types.GenerateContentConfig(
+                system_instruction=system_instruction,
+                response_mime_type="application/json",
+                response_schema=ReplyDraftResult,
+                temperature=0.2,
+            )
+            resp = self.client.models.generate_content(
+                model=self._model,
+                contents=context_prompt,
+                config=config,
+            )
+            return resp.parsed or ReplyDraftResult.model_validate_json(resp.text)
+
+        result = await asyncio.to_thread(_call)
+        if isinstance(result, ReplyDraftResult):
+            return result
+        return ReplyDraftResult.model_validate(result)
+
 
 class MockAIProvider:
     """Deterministic offline AI provider for testing, offline dev, and CI/CD."""
@@ -111,6 +156,35 @@ class MockAIProvider:
     @property
     def model_name(self) -> str:
         return self._model_name
+
+    async def generate_reply_draft(
+        self,
+        context_prompt: str,
+        tone: str = "PROFESSIONAL",
+        intent: str = "REPLY_RESPONSE",
+    ) -> Any:
+        from backend.app.schemas.reply_draft import ReplyDraftResult
+
+        body_intro = {
+            "PROFESSIONAL": "Thank you for reaching out regarding this matter.",
+            "CONCISE": "Acknowledged.",
+            "URGENT": "I am addressing this request immediately.",
+            "EMPATHETIC": "Thank you for your update; I understand the situation.",
+        }.get(tone.upper(), "Thank you for your message.")
+
+        return ReplyDraftResult(
+            subject="Re: Operational Response",
+            body_text=f"{body_intro}\n\nWe have reviewed the context and confirmed all action items.\n\nBest regards,\nMailOps AI Assistant",
+            recipient_email="sender@example.com",
+            rationale_and_provenance=[
+                {
+                    "source_type": "EMAIL_THREAD",
+                    "source_id": "mock_thread_id",
+                    "description": "Formulated response based on preceding email thread context.",
+                }
+            ],
+        )
+
 
     async def extract_email_intelligence(
         self,

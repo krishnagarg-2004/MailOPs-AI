@@ -15,24 +15,42 @@ GOOGLE_JWKS_URL = "https://www.googleapis.com/oauth2/v3/certs"
 _jwks_client = PyJWKClient(GOOGLE_JWKS_URL)
 
 
-def get_google_authorization_url(state: str, nonce: str) -> str:
+def get_google_authorization_url(state: str, nonce: str, include_compose: bool = False) -> str:
     """Construct Google OAuth 2.0 authorization URL with state, nonce, and Gmail scopes."""
+    scopes = [
+        "openid",
+        "email",
+        "profile",
+        settings.GMAIL_READONLY_SCOPE,
+    ]
+    if include_compose:
+        scopes.append(settings.GMAIL_COMPOSE_SCOPE)
+
     params = {
         "client_id": settings.GOOGLE_CLIENT_ID,
         "redirect_uri": settings.GOOGLE_REDIRECT_URI,
         "response_type": "code",
-        "scope": (
-            "openid email profile "
-            "https://www.googleapis.com/auth/gmail.readonly "
-            "https://www.googleapis.com/auth/gmail.compose "
-            "https://www.googleapis.com/auth/gmail.modify"
-        ),
+        "scope": " ".join(scopes),
         "state": state,
         "nonce": nonce,
         "access_type": "offline",
         "prompt": "consent",
     }
     return f"{GOOGLE_AUTH_URL}?{urlencode(params)}"
+
+
+def has_compose_scope(scopes_str: str | None) -> bool:
+    """Verify whether a space-separated scopes string includes compose/modify permissions."""
+    if not scopes_str:
+        return False
+    granted = set(scopes_str.split())
+    allowed = {
+        settings.GMAIL_COMPOSE_SCOPE,
+        "https://www.googleapis.com/auth/gmail.modify",
+        "https://mail.google.com/",
+    }
+    return bool(granted.intersection(allowed))
+
 
 
 async def exchange_code_for_tokens(code: str) -> GoogleTokenResponse:

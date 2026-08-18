@@ -55,6 +55,12 @@ class Settings(BaseSettings):
     # Action Graph & Relationship Layer Configuration
     GRAPH_MAX_TRAVERSAL_DEPTH: int = 10       # Max BFS traversal depth for dependency resolution
 
+    # Human-in-the-Loop Reply Drafting Configuration
+    GMAIL_READONLY_SCOPE: str = "https://www.googleapis.com/auth/gmail.readonly"
+    GMAIL_COMPOSE_SCOPE: str = "https://www.googleapis.com/auth/gmail.compose"
+    REPLY_DEFAULT_TONE: str = "PROFESSIONAL"
+
+
     @property
     def SESSION_COOKIE_NAME(self) -> str:
         """Use __Host- prefix in production for host-locking security."""

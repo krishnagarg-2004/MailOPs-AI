@@ -26,14 +26,9 @@ OAUTH_STATE_COOKIE = "mailops_oauth_state"
 
 @router.get("/google/login", status_code=status.HTTP_307_TEMPORARY_REDIRECT)
 async def google_login(return_to: str | None = None):
-    """Initiate Google OAuth 2.0 flow.
-    
-    Generates browser-bound signed state parameter and OIDC transaction nonce,
-    sets `mailops_oauth_state` HttpOnly cookie, and issues an HTTP 307 redirect
-    directly to Google's OAuth 2.0 authorization endpoint.
-    """
+    """Initiate Google OAuth 2.0 flow with standard read-only scopes."""
     signed_state, raw_state, nonce = generate_oauth_state(return_to=return_to)
-    auth_url = get_google_authorization_url(state=signed_state, nonce=nonce)
+    auth_url = get_google_authorization_url(state=signed_state, nonce=nonce, include_compose=False)
 
     response = RedirectResponse(
         url=auth_url,
@@ -49,6 +44,29 @@ async def google_login(return_to: str | None = None):
         path="/",
     )
     return response
+
+
+@router.get("/google/authorize-compose", status_code=status.HTTP_307_TEMPORARY_REDIRECT)
+async def google_authorize_compose(return_to: str | None = None):
+    """Initiate Google OAuth 2.0 flow requesting incremental `gmail.compose` scope."""
+    signed_state, raw_state, nonce = generate_oauth_state(return_to=return_to)
+    auth_url = get_google_authorization_url(state=signed_state, nonce=nonce, include_compose=True)
+
+    response = RedirectResponse(
+        url=auth_url,
+        status_code=status.HTTP_307_TEMPORARY_REDIRECT,
+    )
+    response.set_cookie(
+        key=OAUTH_STATE_COOKIE,
+        value=raw_state,
+        httponly=True,
+        samesite="lax",
+        secure=settings.SESSION_COOKIE_SECURE,
+        max_age=600,  # 10 minutes
+        path="/",
+    )
+    return response
+
 
 
 @router.get("/google/callback", status_code=status.HTTP_307_TEMPORARY_REDIRECT)

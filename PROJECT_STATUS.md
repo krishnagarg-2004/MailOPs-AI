@@ -1,6 +1,6 @@
 # MAILOPS AI — PROJECT STATUS
 
-**Current Stage**: Milestone 8 — Action Graph Relationship Layer & Domain Mapping Complete
+**Current Stage**: Milestone 9 — Human-in-the-Loop Reply Drafting Workflow Complete
 **Last Updated**: August 2026
 
 ---
@@ -17,8 +17,23 @@
 | **Milestone 6** | Document Intelligence & OCR Engine Integration | **COMPLETED** |
 | **Milestone 7** | Semantic Search & RAG with `pgvector` | **COMPLETED** |
 | **Milestone 8** | Action Graph Relationship Layer & Domain Mapping | **COMPLETED** |
-| **Milestone 9** | Human-in-the-Loop Reply Drafting Workflow | Pending |
+| **Milestone 9** | Human-in-the-Loop Reply Drafting Workflow | **COMPLETED** |
 | **Milestone 10** | Testing, AI Evaluation, Security & Polish | Pending |
+
+---
+
+## Current Accomplishments (Milestone 9)
+
+- [x] Configured Reply Drafting settings (`GMAIL_READONLY_SCOPE`, `GMAIL_COMPOSE_SCOPE`, `REPLY_DEFAULT_TONE="PROFESSIONAL"`) in `backend/app/core/config.py`.
+- [x] Implemented SQLAlchemy domain model `ReplyDraft` (`backend/app/models/reply_draft.py`) with local-by-default status lifecycle (`DRAFTED`, `EDITED`, `APPROVED`, `SENT`, `DISCARDED`).
+- [x] Generated and verified Alembic migration `008_create_reply_drafts_table.py` against live PostgreSQL 16 container.
+- [x] Implemented incremental OAuth authorization flow (`/api/v1/auth/google/authorize-compose`) requesting minimum additional scope `https://www.googleapis.com/auth/gmail.compose`.
+- [x] Built `ReplyDraftService` (`backend/app/services/reply_draft_service.py`) supporting multi-source context assembly (M4 threads + M5 actions + M6 docs + M8 graph), local persistence, scope verification (`has_compose_scope`), MIME threading header assembly (`In-Reply-To`, `References`, `threadId`), and Gmail draft creation/sending.
+- [x] Built FastAPI Reply router (`backend/app/api/v1/reply_drafts.py`) providing `/reply-drafts/generate`, `/reply-drafts/message/{id}`, `/reply-drafts/{id}`, `/reply-drafts/{id}/sync-gmail`, `/reply-drafts/{id}/send`, and `DELETE /reply-drafts/{id}`.
+- [x] Built React 18 frontend components (`frontend/src/types/reply_draft.ts`, `frontend/src/components/ReplyDraftWidget.tsx`) displaying controlled tone selector, editable text fields, provenance accordion, and explicit approval action buttons.
+- [x] Built security & OAuth test suite (`test_reply_isolation.py`, `test_reply_oauth_scopes.py`) verifying local-by-default no-auto-send guarantee, cross-user isolation, and 403 Forbidden compose scope enforcement.
+- [x] Expanded Pytest suite to 98 tests (`test_reply_draft.py`, `test_reply_isolation.py`, `test_reply_oauth_scopes.py`, `test_reply_api.py`), achieving 98/98 passing tests.
+
 
 ---
 

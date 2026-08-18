@@ -1,0 +1,21 @@
+[
+  {
+    "id": "doc_eval_001",
+    "filename": "vendor_invoice_1092.pdf",
+    "file_type": "PDF",
+    "raw_text": "--- [Page 1] ---\nINVOICE #1092\nVendor: Global Logistics Inc\nInvoice Date: 2026-08-10\nDue Date: 2026-09-09\nTotal Amount: $3,250.00\nTax: $325.00\nPayment Terms: Net 30\nItemized Services: Freight forwarding and customs handling",
+    "expected_category": "INVOICE",
+    "expected_vendor": "Acme Enterprise Solutions",
+    "expected_total": 4500.0,
+    "has_page_boundaries": true
+  },
+  {
+    "id": "doc_eval_002",
+    "filename": "service_agreement_v2.docx",
+    "file_type": "DOCX",
+    "raw_text": "--- [Page 1] ---\nMASTER SERVICES AGREEMENT\nThis Agreement is entered into between Alpha Corp and Beta Solutions.\nEffective Date: 2026-09-01. Expiration Date: 2027-08-31.\nKey Obligations: Deliver custom software and maintain SLA.\nRisk Clauses: Liability capped at 1x contract value.",
+    "expected_category": "CONTRACT",
+    "expected_vendor": "Alpha Corp, Beta Solutions",
+    "has_page_boundaries": true
+  }
+]

@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from backend.app.api.v1.ai import router as ai_router
 from backend.app.api.v1.auth import router as auth_router
+from backend.app.api.v1.documents import router as documents_router
 from backend.app.api.v1.gmail import router as gmail_router
 from backend.app.core.config import settings
 
@@ -28,6 +29,8 @@ app.add_middleware(
 app.include_router(auth_router, prefix=settings.API_V1_STR)
 app.include_router(gmail_router, prefix=settings.API_V1_STR)
 app.include_router(ai_router, prefix=settings.API_V1_STR)
+app.include_router(documents_router, prefix=settings.API_V1_STR)
+
 
 
 

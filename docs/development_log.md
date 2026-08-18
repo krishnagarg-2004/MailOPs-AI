@@ -64,3 +64,18 @@
 - Implemented React 18 frontend components (`frontend/src/components/EmailAnalysisCard.tsx`, `frontend/src/components/ActionItemsWidget.tsx`) displaying executive summaries, intent/priority tags, Human-in-the-Loop action checkboxes, and explainability evidence accordions.
 - Built evaluation fixture dataset (`backend/tests/evaluation/fixtures/email_samples.json`) and evaluation suite (`backend/tests/evaluation/test_ai_evaluation.py`) measuring schema validity, intent accuracy, and verbatim evidence rate.
 - Expanded Pytest suite to 68 tests (`test_evidence_validator.py`, `test_ai_prompts.py`, `test_ai_provider.py`, `test_prompt_injection.py`, `test_ai_repository.py`, `test_ai_api.py`, `test_ai_evaluation.py`) verifying prompt injection defense, idempotency, evidence validation, multi-tenant isolation, and API endpoints (68/68 passing).
+
+## August 2026 — Milestone 6: Document Intelligence & OCR Engine Integration Complete
+
+- Configured Document Intelligence & OCR limits (`DOC_MAX_EXTRACT_CHARS`, `DOC_OCR_MIN_CHAR_THRESHOLD`, `DOC_MAX_PDF_PAGES`, `DOC_MAX_OCR_PAGES`, `DOC_MAX_IMAGE_PIXELS`, `DOC_MAX_IMAGE_DIMENSION`, `DOC_ZIP_MAX_UNCOMPRESSED_BYTES`, `DOC_ZIP_MAX_RATIO`, `OCR_TESSERACT_PATH`, `POPPLER_PATH`) in `backend/app/core/config.py`.
+- Added dependencies `pypdf`, `pdf2image`, `pytesseract`, `pillow`, `python-docx` to `backend/pyproject.toml`.
+- Implemented SQLAlchemy domain models `DocumentExtraction` (`backend/app/models/document_extraction.py`) and `BusinessDocumentExtraction` (`backend/app/models/business_document_extraction.py`).
+- Generated and verified Alembic migration `005_create_document_extractions_table.py` for `document_extractions` and `business_document_extractions` tables against live PostgreSQL 16 container.
+- Implemented Pydantic document schemas (`InvoiceExtractionSchema`, `ContractExtractionSchema`, `DocumentExtractionRead`, `BusinessDocumentExtractionRead`) in `backend/app/schemas/document.py`.
+- Built document parsers with security guardrails: `PDFParser` (pdf2image rendering), `DOCXParser` (ZIP bomb defense and macro isolation), `ImageParser` (25 MP pixel limit), and `DocumentSanitizer` (null character removal & `--- [Page X] ---` provenance formatting) in `backend/app/documents/`.
+- Built Layer 1 service `DocumentProcessingService` (`backend/app/services/document_service.py`) and Layer 2 service `BusinessDocumentAIService` (`backend/app/services/business_document_ai_service.py`).
+- Built FastAPI Document router (`backend/app/api/v1/documents.py`) providing `/documents/process/{id}`, `/documents/extraction/{id}`, `/documents/analyze-business-doc/{id}`, and `/documents/business-doc/{id}`.
+- Implemented React 18 frontend components (`frontend/src/types/document.ts`, `frontend/src/components/DocumentViewerWidget.tsx`) displaying file metadata, page provenance text, and structured invoice/contract cards.
+- Built synthetic document evaluation fixture dataset (`document_samples.json`) and evaluation suite (`test_document_evaluation.py`).
+- Expanded Pytest suite to 77 tests (`test_doc_parsers.py`, `test_document_service.py`, `test_doc_security.py`, `test_document_api.py`, `test_document_evaluation.py`) verifying prompt injection defense, document parsing, page provenance, multi-tenant isolation, and API endpoints (77/77 passing).
+

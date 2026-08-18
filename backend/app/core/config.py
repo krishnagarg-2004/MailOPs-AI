@@ -38,6 +38,19 @@ class Settings(BaseSettings):
     AI_TIMEOUT_SECONDS: float = 30.0
     AI_CONFIDENCE_THRESHOLD: float = 0.6
 
+    # Document Intelligence & OCR Configuration
+    DOC_MAX_EXTRACT_CHARS: int = 20000        # Character limit per document
+    DOC_OCR_MIN_CHAR_THRESHOLD: int = 30      # Min chars/page before triggering OCR fallback
+    DOC_MAX_PDF_PAGES: int = 20               # Max PDF pages to parse per file
+    DOC_MAX_OCR_PAGES: int = 10               # Max pages to run through Tesseract OCR
+    DOC_MAX_IMAGE_PIXELS: int = 25_000_000    # Max allowed image resolution (25 Megapixels)
+    DOC_MAX_IMAGE_DIMENSION: int = 6000       # Max image dimension in pixels
+    DOC_ZIP_MAX_UNCOMPRESSED_BYTES: int = 50 * 1024 * 1024  # 50 MB DOCX uncompressed limit
+    DOC_ZIP_MAX_RATIO: float = 10.0           # Max ZIP compression ratio (ZIP bomb defense)
+    OCR_TESSERACT_PATH: str | None = None     # Optional explicit path to tesseract binary
+    POPPLER_PATH: str | None = None           # Optional explicit path to poppler binaries
+
+
 
     @property
     def SESSION_COOKIE_NAME(self) -> str:

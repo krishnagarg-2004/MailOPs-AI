@@ -30,6 +30,14 @@ class Settings(BaseSettings):
     INITIAL_SYNC_LIMIT: int = 500
     ATTACHMENT_MAX_SIZE_BYTES: int = 10 * 1024 * 1024  # 10 MB
 
+    # AI Engine & Gemini Configuration
+    GEMINI_API_KEY: str = ""
+    GEMINI_MODEL: str = "gemini-2.5-flash"
+    AI_PROVIDER_TYPE: str = "mock"  # Options: "gemini", "mock" (default to mock for offline/dev safety)
+    AI_MAX_RETRIES: int = 3
+    AI_TIMEOUT_SECONDS: float = 30.0
+    AI_CONFIDENCE_THRESHOLD: float = 0.6
+
 
     @property
     def SESSION_COOKIE_NAME(self) -> str:

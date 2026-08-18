@@ -1,4 +1,21 @@
+from backend.app.models.ai_analysis import AIAnalysis
+from backend.app.models.attachment import Attachment
+from backend.app.models.email_message import EmailMessage
+from backend.app.models.email_thread import EmailThread
+from backend.app.models.extracted_action import ExtractedAction
+from backend.app.models.gmail_sync_state import GmailSyncState
 from backend.app.models.oauth import OAuthAccount
+from backend.app.models.session import UserSession
 from backend.app.models.user import User
 
-__all__ = ["User", "OAuthAccount"]
+__all__ = [
+    "User",
+    "OAuthAccount",
+    "UserSession",
+    "EmailThread",
+    "EmailMessage",
+    "Attachment",
+    "GmailSyncState",
+    "AIAnalysis",
+    "ExtractedAction",
+]

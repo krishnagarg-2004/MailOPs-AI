@@ -49,4 +49,18 @@
 - Implemented selective document/image attachment downloading with UUID path sanitization (`storage/attachments/{user_id}/{uuid}.dat`) and strict 10MB byte limit verification.
 - Built FastAPI Gmail router (`backend/app/api/v1/gmail.py`) providing `/gmail/status`, `/gmail/sync` (background task runner), `/gmail/threads`, `/gmail/threads/{id}`, `/gmail/messages/{id}`, and `/gmail/disconnect`.
 - Built React 18 frontend Gmail sync widget (`frontend/src/components/GmailSyncWidget.tsx`).
-- Expanded Pytest suite to 50 tests (`test_mime_parser.py`, `test_gmail_client.py`, `test_attachment_security.py`, `test_gmail_repository.py`, `test_sync_service.py`, `test_user_isolation.py`, `test_gmail_api.py`) verifying MIME parsing, token refresh, upsert idempotency, 404 fallback, multi-tenant user isolation, and API routes (50/50 passing).
+## August 2026 — Milestone 5: AI Core Engine & Gemini Extraction Pipeline Complete
+
+- Configured AI settings (`GEMINI_API_KEY`, `GEMINI_MODEL`, `AI_PROVIDER_TYPE`, `AI_MAX_RETRIES`, `AI_TIMEOUT_SECONDS`, `AI_CONFIDENCE_THRESHOLD`) in `backend/app/core/config.py`.
+- Declared bounded dependency `"google-genai>=0.1.0"` in `backend/pyproject.toml`.
+- Implemented Pydantic structured output models (`EmailExtractionResult`, `ExtractedActionSchema`, `ExtractedDecisionSchema`, `ExtractedRiskSchema`, `AIAnalysisRead`, `ExtractedActionRead`) in `backend/app/schemas/ai.py`.
+- Implemented domain SQLAlchemy models `AIAnalysis` (`backend/app/models/ai_analysis.py`) and `ExtractedAction` (`backend/app/models/extracted_action.py`) enforcing composite uniqueness constraint (`uq_analysis_message_version`) on `(user_id, email_message_id, model_name, prompt_version)` for versioning and idempotency without persisting raw LLM responses.
+- Generated and verified Alembic migration `004_create_ai_entities_table.py` for `ai_analyses` and `extracted_actions` tables against live PostgreSQL 16 container.
+- Implemented Evidence Validator utility (`backend/app/utils/evidence_validator.py`) verifying exact and normalized verbatim text match of evidence snippets against source email body text.
+- Implemented versioned prompt engine (`PROMPT_VERSION = "1.0.0"`) in `backend/app/ai/prompts.py` enforcing instruction-data isolation via `<untrusted_content>` tags.
+- Implemented AI provider abstraction (`backend/app/ai/provider.py`) with `GeminiProvider` (using official `google-genai` SDK with native JSON schema mode and backoff retries) and `MockAIProvider` (deterministic offline provider).
+- Implemented database repository layer (`backend/app/repositories/ai_repository.py`) and orchestrator service (`backend/app/services/ai_extraction_service.py`).
+- Implemented FastAPI AI router (`backend/app/api/v1/ai.py`) providing `/ai/analyze/message/{id}`, `/ai/analyze/thread/{id}`, `/ai/analysis/message/{id}`, `/ai/actions`, and `/ai/actions/{id}` (Human-in-the-Loop status confirmation).
+- Implemented React 18 frontend components (`frontend/src/components/EmailAnalysisCard.tsx`, `frontend/src/components/ActionItemsWidget.tsx`) displaying executive summaries, intent/priority tags, Human-in-the-Loop action checkboxes, and explainability evidence accordions.
+- Built evaluation fixture dataset (`backend/tests/evaluation/fixtures/email_samples.json`) and evaluation suite (`backend/tests/evaluation/test_ai_evaluation.py`) measuring schema validity, intent accuracy, and verbatim evidence rate.
+- Expanded Pytest suite to 68 tests (`test_evidence_validator.py`, `test_ai_prompts.py`, `test_ai_provider.py`, `test_prompt_injection.py`, `test_ai_repository.py`, `test_ai_api.py`, `test_ai_evaluation.py`) verifying prompt injection defense, idempotency, evidence validation, multi-tenant isolation, and API endpoints (68/68 passing).

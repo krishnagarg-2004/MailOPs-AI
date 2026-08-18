@@ -1,0 +1,57 @@
+[
+  {
+    "id": "sample_001",
+    "subject": "Vendor Invoice #8832 Payment Required",
+    "sender": "accounts@vendor.com",
+    "body": "Hi team, please process payment for invoice #8832 amounting to $3,200 due on 2026-08-30.",
+    "expected_intent": "FINANCIAL_INVOICE",
+    "expected_priority": "HIGH",
+    "expected_action_contains": "invoice #8832",
+    "expected_due_date": "2026-08-30",
+    "expected_snippet_fragment": "invoice #8832"
+  },
+  {
+    "id": "sample_002",
+    "subject": "URGENT: Submit Project Deliverables",
+    "sender": "pm@enterprise.com",
+    "body": "Please review and submit the project status report by Friday 2026-08-25.",
+    "expected_intent": "URGENT_ACTION",
+    "expected_priority": "HIGH",
+    "expected_action_contains": "submit",
+    "expected_due_date": "2026-08-25",
+    "expected_snippet_fragment": "project status report"
+  },
+  {
+    "id": "sample_003",
+    "subject": "Weekly Newsletter August 2026",
+    "sender": "news@techdigest.com",
+    "body": "Welcome to our weekly newsletter with the latest AI technology highlights.",
+    "expected_intent": "INFORMATIONAL",
+    "expected_priority": "LOW",
+    "expected_action_contains": null,
+    "expected_due_date": null,
+    "expected_snippet_fragment": null
+  },
+  {
+    "id": "sample_004",
+    "subject": "Contract Renewal Discussion",
+    "sender": "legal@partner.com",
+    "body": "Please review the updated agreement clauses before signing by 2026-09-01.",
+    "expected_intent": "CONTRACT_LEGAL",
+    "expected_priority": "HIGH",
+    "expected_action_contains": "agreement",
+    "expected_due_date": "2026-09-01",
+    "expected_snippet_fragment": "updated agreement"
+  },
+  {
+    "id": "sample_005",
+    "subject": "Sprint Retrospective Notes",
+    "sender": "scrum@enterprise.com",
+    "body": "Here are the notes from our sprint retrospective. Great job everyone!",
+    "expected_intent": "STATUS_UPDATE",
+    "expected_priority": "LOW",
+    "expected_action_contains": null,
+    "expected_due_date": null,
+    "expected_snippet_fragment": null
+  }
+]

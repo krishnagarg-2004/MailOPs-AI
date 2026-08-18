@@ -8,6 +8,8 @@ from backend.app.models.extracted_action import ExtractedAction
 from backend.app.models.gmail_sync_state import GmailSyncState
 from backend.app.models.oauth import OAuthAccount
 from backend.app.models.session import UserSession
+from backend.app.models.graph_edge import GraphEdge
+from backend.app.models.graph_node import GraphNode
 from backend.app.models.user import User
 from backend.app.models.vector_embedding import VectorEmbedding
 
@@ -24,4 +26,6 @@ __all__ = [
     "DocumentExtraction",
     "BusinessDocumentExtraction",
     "VectorEmbedding",
+    "GraphNode",
+    "GraphEdge",
 ]

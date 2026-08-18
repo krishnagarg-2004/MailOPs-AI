@@ -94,4 +94,17 @@
 - Built synthetic RAG evaluation fixture dataset (`rag_samples.json`) and evaluation suite (`test_rag_evaluation.py`).
 - Expanded Pytest suite to 85 tests (`test_vector_chunking.py`, `test_embedding_provider.py`, `test_vector_search.py`, `test_search_api.py`, `test_rag_evaluation.py`) verifying vector dimension validation, pgvector indexing, hybrid retrieval, user isolation, and RAG citations (85/85 passing).
 
+## August 2026 — Milestone 8: Action Graph Relationship Layer & Domain Mapping Complete
+
+- Configured Action Graph traversal setting (`GRAPH_MAX_TRAVERSAL_DEPTH=10`) in `backend/app/core/config.py`.
+- Implemented SQLAlchemy domain models `GraphNode` (`backend/app/models/graph_node.py`) and `GraphEdge` (`backend/app/models/graph_edge.py`) referencing existing M1-M7 domain entities without data duplication.
+- Generated and verified Alembic migration `007_create_graph_tables.py` creating `graph_nodes` and `graph_edges` tables with `uq_graph_edge` unique constraint against live PostgreSQL 16 container.
+- Implemented Pydantic graph schemas (`GraphNodeRead`, `GraphEdgeRead`, `GraphNetworkResponse`, `DependencyChainResponse`) in `backend/app/schemas/graph.py`.
+- Built relational graph processing engine `ActionGraphService` (`backend/app/services/action_graph_service.py`) supporting node/edge construction from messages and actions, BFS dependency traversal, and strict multi-tenant user isolation (`user_id`).
+- Built FastAPI Graph router (`backend/app/api/v1/graph.py`) providing `/graph/nodes`, `/graph/edges`, `/graph/visual`, `/graph/dependencies/{action_id}`, and `/graph/rebuild`.
+- Implemented React 18 frontend components (`frontend/src/types/graph.ts`, `frontend/src/components/ActionGraphWidget.tsx`) displaying interactive node-link relationship cards and node property drawer.
+- Implemented explicit cross-user graph isolation security suite (`test_graph_isolation.py`) asserting User B cannot query, traverse, or reference User A's graph nodes.
+- Expanded Pytest suite to 90 tests (`test_graph_traversal.py`, `test_graph_service.py`, `test_graph_isolation.py`, `test_graph_api.py`), achieving 90/90 passing tests.
+
+
 

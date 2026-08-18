@@ -52,7 +52,9 @@ class Settings(BaseSettings):
     EMBEDDING_MODEL: str = "text-embedding-004"
     EMBEDDING_DIMENSION: int = 768            # Strict dimension verification invariant
     VECTOR_SEARCH_TOP_K: int = 5
-    RAG_MAX_CONTEXT_TOKENS: int = 4000
+    # Action Graph & Relationship Layer Configuration
+    GRAPH_MAX_TRAVERSAL_DEPTH: int = 10       # Max BFS traversal depth for dependency resolution
+
     @property
     def SESSION_COOKIE_NAME(self) -> str:
         """Use __Host- prefix in production for host-locking security."""

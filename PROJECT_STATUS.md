@@ -1,6 +1,6 @@
 # MAILOPS AI — PROJECT STATUS
 
-**Current Stage**: Milestone 7 — Semantic Search & RAG with pgvector Complete
+**Current Stage**: Milestone 8 — Action Graph Relationship Layer & Domain Mapping Complete
 **Last Updated**: August 2026
 
 ---
@@ -16,9 +16,24 @@
 | **Milestone 5** | AI Core Engine & Gemini Extraction Pipeline | **COMPLETED** |
 | **Milestone 6** | Document Intelligence & OCR Engine Integration | **COMPLETED** |
 | **Milestone 7** | Semantic Search & RAG with `pgvector` | **COMPLETED** |
-| **Milestone 8** | Action Graph Relationship Layer & Domain Mapping | Pending |
+| **Milestone 8** | Action Graph Relationship Layer & Domain Mapping | **COMPLETED** |
 | **Milestone 9** | Human-in-the-Loop Reply Drafting Workflow | Pending |
 | **Milestone 10** | Testing, AI Evaluation, Security & Polish | Pending |
+
+---
+
+## Current Accomplishments (Milestone 8)
+
+- [x] Configured Action Graph traversal setting (`GRAPH_MAX_TRAVERSAL_DEPTH=10`) in `backend/app/core/config.py`.
+- [x] Implemented SQLAlchemy domain models `GraphNode` (`backend/app/models/graph_node.py`) and `GraphEdge` (`backend/app/models/graph_edge.py`) referencing existing M1-M7 domain entities without data duplication.
+- [x] Generated and verified Alembic migration `007_create_graph_tables.py` creating `graph_nodes` and `graph_edges` tables with `uq_graph_edge` unique constraint against live PostgreSQL 16 container.
+- [x] Implemented Pydantic graph schemas (`GraphNodeRead`, `GraphEdgeRead`, `GraphNetworkResponse`, `DependencyChainResponse`) in `backend/app/schemas/graph.py`.
+- [x] Built relational graph processing engine `ActionGraphService` (`backend/app/services/action_graph_service.py`) supporting node/edge construction from messages and actions, BFS dependency traversal, and strict multi-tenant user isolation (`user_id`).
+- [x] Built FastAPI Graph router (`backend/app/api/v1/graph.py`) providing `/graph/nodes`, `/graph/edges`, `/graph/visual`, `/graph/dependencies/{action_id}`, and `/graph/rebuild`.
+- [x] Implemented React 18 frontend components (`frontend/src/types/graph.ts`, `frontend/src/components/ActionGraphWidget.tsx`) displaying interactive node-link relationship cards and node property drawer.
+- [x] Implemented explicit cross-user graph isolation security suite (`test_graph_isolation.py`) asserting User B cannot query, traverse, or reference User A's graph nodes.
+- [x] Expanded Pytest suite to 90 tests (`test_graph_traversal.py`, `test_graph_service.py`, `test_graph_isolation.py`, `test_graph_api.py`), achieving 90/90 passing tests.
+
 
 ---
 

@@ -1,0 +1,20 @@
+[
+  {
+    "id": "rag_eval_001",
+    "query": "What are the payment terms for the Acme Enterprise invoice?",
+    "retrieved_chunk": "Invoice #9921 Total Due: $4,500.00 Payment Terms: Net 30 days.",
+    "source_name": "invoice_9921.pdf",
+    "page_number": 1,
+    "expected_answer_contains": "Net 30",
+    "expected_citation": "invoice_9921.pdf"
+  },
+  {
+    "id": "rag_eval_002",
+    "query": "Who are the contracting parties in the Master Services Agreement?",
+    "retrieved_chunk": "MASTER SERVICES AGREEMENT between Alpha Corp and Beta Solutions.",
+    "source_name": "service_agreement.docx",
+    "page_number": 1,
+    "expected_answer_contains": "Alpha Corp",
+    "expected_citation": "service_agreement.docx"
+  }
+]

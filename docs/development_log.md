@@ -79,3 +79,19 @@
 - Built synthetic document evaluation fixture dataset (`document_samples.json`) and evaluation suite (`test_document_evaluation.py`).
 - Expanded Pytest suite to 77 tests (`test_doc_parsers.py`, `test_document_service.py`, `test_doc_security.py`, `test_document_api.py`, `test_document_evaluation.py`) verifying prompt injection defense, document parsing, page provenance, multi-tenant isolation, and API endpoints (77/77 passing).
 
+## August 2026 — Milestone 7: Semantic Search & RAG Engine with pgvector Complete
+
+- Configured Semantic Search & RAG settings (`EMBEDDING_MODEL`, `EMBEDDING_DIMENSION=768`, `VECTOR_SEARCH_TOP_K=5`, `RAG_MAX_CONTEXT_TOKENS=4000`) in `backend/app/core/config.py`.
+- Added `pgvector>=0.2.5` dependency to `backend/pyproject.toml`.
+- Implemented SQLAlchemy domain model `VectorEmbedding` (`backend/app/models/vector_embedding.py`) with `Vector(768)` column type.
+- Generated and verified Alembic migration `006_create_vector_embeddings_table.py` enabling `vector` extension and creating `vector_embeddings` table with HNSW cosine similarity index against live PostgreSQL 16 container.
+- Implemented Embedding Provider abstraction (`GeminiEmbeddingProvider` and `MockEmbeddingProvider`) in `backend/app/ai/embedding_provider.py` with mandatory runtime vector dimension validation asserting `len(vec) == 768`.
+- Implemented text chunker `TextChunker` (`backend/app/utils/chunker.py`) supporting sliding window email chunking and document page boundary parsing (`--- [Page X] ---`).
+- Implemented `VectorSearchService` (`backend/app/services/vector_search_service.py`) supporting pgvector similarity queries (`<=>`), strict multi-tenant user isolation (`user_id`), and Reciprocal Rank Fusion (RRF) hybrid keyword + vector retrieval.
+- Implemented `RAGService` (`backend/app/services/rag_service.py`) generating grounded AI answers with explicit source document and page citations (`[Source: filename.pdf, Page X]`).
+- Implemented FastAPI Search router (`backend/app/api/v1/search.py`) providing `/search/semantic`, `/search/hybrid`, `/search/rag-query`, and `/search/reindex`.
+- Implemented React 18 frontend components (`frontend/src/types/search.ts`, `frontend/src/components/SemanticSearchWidget.tsx`, `frontend/src/components/RAGChatWidget.tsx`).
+- Built synthetic RAG evaluation fixture dataset (`rag_samples.json`) and evaluation suite (`test_rag_evaluation.py`).
+- Expanded Pytest suite to 85 tests (`test_vector_chunking.py`, `test_embedding_provider.py`, `test_vector_search.py`, `test_search_api.py`, `test_rag_evaluation.py`) verifying vector dimension validation, pgvector indexing, hybrid retrieval, user isolation, and RAG citations (85/85 passing).
+
+

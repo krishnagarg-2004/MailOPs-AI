@@ -9,6 +9,7 @@ from backend.app.models.gmail_sync_state import GmailSyncState
 from backend.app.models.oauth import OAuthAccount
 from backend.app.models.session import UserSession
 from backend.app.models.user import User
+from backend.app.models.vector_embedding import VectorEmbedding
 
 __all__ = [
     "User",
@@ -22,4 +23,5 @@ __all__ = [
     "ExtractedAction",
     "DocumentExtraction",
     "BusinessDocumentExtraction",
+    "VectorEmbedding",
 ]

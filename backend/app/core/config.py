@@ -48,10 +48,11 @@ class Settings(BaseSettings):
     DOC_ZIP_MAX_UNCOMPRESSED_BYTES: int = 50 * 1024 * 1024  # 50 MB DOCX uncompressed limit
     DOC_ZIP_MAX_RATIO: float = 10.0           # Max ZIP compression ratio (ZIP bomb defense)
     OCR_TESSERACT_PATH: str | None = None     # Optional explicit path to tesseract binary
-    POPPLER_PATH: str | None = None           # Optional explicit path to poppler binaries
-
-
-
+    # Semantic Search & RAG Configuration
+    EMBEDDING_MODEL: str = "text-embedding-004"
+    EMBEDDING_DIMENSION: int = 768            # Strict dimension verification invariant
+    VECTOR_SEARCH_TOP_K: int = 5
+    RAG_MAX_CONTEXT_TOKENS: int = 4000
     @property
     def SESSION_COOKIE_NAME(self) -> str:
         """Use __Host- prefix in production for host-locking security."""

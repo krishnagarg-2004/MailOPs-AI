@@ -1,6 +1,6 @@
 # MAILOPS AI — PROJECT STATUS
 
-**Current Stage**: Milestone 6 — Document Intelligence & OCR Engine Integration Complete
+**Current Stage**: Milestone 7 — Semantic Search & RAG with pgvector Complete
 **Last Updated**: August 2026
 
 ---
@@ -15,10 +15,28 @@
 | **Milestone 4** | Gmail API Integration & Synchronizer Worker | **COMPLETED** |
 | **Milestone 5** | AI Core Engine & Gemini Extraction Pipeline | **COMPLETED** |
 | **Milestone 6** | Document Intelligence & OCR Engine Integration | **COMPLETED** |
-| **Milestone 7** | Semantic Search & RAG with `pgvector` | Pending |
+| **Milestone 7** | Semantic Search & RAG with `pgvector` | **COMPLETED** |
 | **Milestone 8** | Action Graph Relationship Layer & Domain Mapping | Pending |
 | **Milestone 9** | Human-in-the-Loop Reply Drafting Workflow | Pending |
 | **Milestone 10** | Testing, AI Evaluation, Security & Polish | Pending |
+
+---
+
+## Current Accomplishments (Milestone 7)
+
+- [x] Configured Semantic Search & RAG settings (`EMBEDDING_MODEL`, `EMBEDDING_DIMENSION=768`, `VECTOR_SEARCH_TOP_K=5`, `RAG_MAX_CONTEXT_TOKENS=4000`) in `backend/app/core/config.py`.
+- [x] Added `pgvector>=0.2.5` dependency to `backend/pyproject.toml`.
+- [x] Implemented SQLAlchemy domain model `VectorEmbedding` (`backend/app/models/vector_embedding.py`) with `Vector(768)` column type.
+- [x] Generated and verified Alembic migration `006_create_vector_embeddings_table.py` enabling `vector` extension and creating `vector_embeddings` table with HNSW cosine index against live PostgreSQL 16 container.
+- [x] Built Embedding Provider abstraction (`GeminiEmbeddingProvider` and `MockEmbeddingProvider`) in `backend/app/ai/embedding_provider.py` with strict runtime vector dimension validation asserting `len(vec) == 768`.
+- [x] Built text chunker `TextChunker` (`backend/app/utils/chunker.py`) supporting sliding window email chunking and document page boundary parsing (`--- [Page X] ---`).
+- [x] Built `VectorSearchService` (`backend/app/services/vector_search_service.py`) supporting pgvector similarity query (`<=>`), strict multi-tenant user isolation (`user_id`), and Reciprocal Rank Fusion (RRF) hybrid keyword + vector retrieval.
+- [x] Built `RAGService` (`backend/app/services/rag_service.py`) generating grounded AI answers with explicit source document and page citations (`[Source: filename.pdf, Page X]`).
+- [x] Built FastAPI Search router (`backend/app/api/v1/search.py`) providing `/search/semantic`, `/search/hybrid`, `/search/rag-query`, and `/search/reindex`.
+- [x] Built React 18 frontend components (`frontend/src/types/search.ts`, `frontend/src/components/SemanticSearchWidget.tsx`, `frontend/src/components/RAGChatWidget.tsx`).
+- [x] Built synthetic RAG evaluation fixture dataset (`rag_samples.json`) and evaluation suite (`test_rag_evaluation.py`).
+- [x] Expanded Pytest suite to 85 tests (`test_vector_chunking.py`, `test_embedding_provider.py`, `test_vector_search.py`, `test_search_api.py`, `test_rag_evaluation.py`), achieving 85/85 passing tests.
+
 
 ---
 

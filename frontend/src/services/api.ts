@@ -68,7 +68,12 @@ export const api = {
   getMessageAnalysis: (messageId: string) =>
     fetchJSON<AIAnalysisResult>(`/api/v1/ai/analysis/message/${messageId}`),
   updateActionStatus: (actionId: string, status: ActionStatusEnum) =>
-    fetchJSON<any>(`/api/v1/ai/actions/${actionId}/confirm?status=${status}`, { method: 'POST' }),
+    fetchJSON<any>(`/api/v1/ai/actions/${actionId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        status,
+      }),
+    }),
 
 
   // Document Intelligence

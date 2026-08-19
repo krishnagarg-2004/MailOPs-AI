@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ReplyDraftResult, ToneEnum } from '../types/reply_draft';
 
 interface ReplyDraftWidgetProps {

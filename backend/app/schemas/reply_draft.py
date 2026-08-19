@@ -45,8 +45,7 @@ class ReplyDraftResult(BaseModel):
     subject: str
     body_text: str
     recipient_email: str
-    rationale_and_provenance: list[dict] = Field(default_factory=list)
-
+    rationale_and_provenance: list[ProvenanceItem] = Field(default_factory=list)
 
 class ReplyDraftRead(BaseModel):
     id: uuid.UUID

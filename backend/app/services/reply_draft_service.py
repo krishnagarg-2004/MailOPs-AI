@@ -115,7 +115,10 @@ class ReplyDraftService:
             intent=intent,
             tone=tone.upper(),
             status="DRAFTED",
-            rationale_and_provenance=draft_result.rationale_and_provenance,
+            rationale_and_provenance=[
+                item.model_dump(mode="json") 
+                for item in draft_result.rationale_and_provenance
+            ],
         )
         db.add(draft)
         db.commit()

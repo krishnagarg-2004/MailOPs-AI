@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BusinessDocumentExtractionResult, DocumentExtractionResult } from '../types/document';
 
 interface DocumentViewerWidgetProps {
@@ -17,6 +17,10 @@ export const DocumentViewerWidget: React.FC<DocumentViewerWidgetProps> = ({
   onTriggerBusinessAnalysis,
 }) => {
   const [activeTab, setActiveTab] = useState<'text' | 'business'>('text');
+
+  useEffect(() => {
+    setActiveTab('text');
+  }, [filename]);
 
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg space-y-4 text-slate-100 font-sans">
@@ -39,12 +43,12 @@ export const DocumentViewerWidget: React.FC<DocumentViewerWidgetProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
-          {!extraction && (
+          {(!extraction || extraction.status === 'FAILED') && (
             <button
               onClick={onTriggerProcess}
               className="text-xs bg-purple-600/20 text-purple-300 border border-purple-500/40 px-3 py-1 rounded hover:bg-purple-600/30 transition font-medium"
             >
-              Extract Text & OCR
+              {extraction?.status === 'FAILED' ? 'Retry Text Extraction' : 'Extract Text & OCR'}
             </button>
           )}
           {extraction && !businessExtraction && (
@@ -71,11 +75,10 @@ export const DocumentViewerWidget: React.FC<DocumentViewerWidgetProps> = ({
           <div className="flex items-center gap-4 text-xs border-b border-slate-800">
             <button
               onClick={() => setActiveTab('text')}
-              className={`pb-2 border-b-2 font-medium transition ${
-                activeTab === 'text'
-                  ? 'border-purple-500 text-purple-400'
-                  : 'border-transparent text-slate-400 hover:text-slate-200'
-              }`}
+              className={`pb-2 border-b-2 font-medium transition ${activeTab === 'text'
+                ? 'border-purple-500 text-purple-400'
+                : 'border-transparent text-slate-400 hover:text-slate-200'
+                }`}
             >
               Extracted Text ({extraction.char_count} chars
               {extraction.page_count ? `, ${extraction.page_count} pages` : ''})
@@ -84,11 +87,10 @@ export const DocumentViewerWidget: React.FC<DocumentViewerWidgetProps> = ({
             {businessExtraction && (
               <button
                 onClick={() => setActiveTab('business')}
-                className={`pb-2 border-b-2 font-medium transition ${
-                  activeTab === 'business'
-                    ? 'border-purple-500 text-purple-400'
-                    : 'border-transparent text-slate-400 hover:text-slate-200'
-                }`}
+                className={`pb-2 border-b-2 font-medium transition ${activeTab === 'business'
+                  ? 'border-purple-500 text-purple-400'
+                  : 'border-transparent text-slate-400 hover:text-slate-200'
+                  }`}
               >
                 Structured Business Metadata ({businessExtraction.document_category})
               </button>
@@ -121,8 +123,9 @@ export const DocumentViewerWidget: React.FC<DocumentViewerWidgetProps> = ({
                 <div>
                   <span className="text-slate-400 block text-[11px]">Financial Total</span>
                   <strong className="text-emerald-400 text-sm">
-                    {businessExtraction.financial_total !== undefined && businessExtraction.financial_total !== null
-                      ? `$${businessExtraction.financial_total.toLocaleString()}`
+                    {businessExtraction.financial_total !== undefined &&
+                      businessExtraction.financial_total !== null
+                      ? businessExtraction.financial_total.toLocaleString()
                       : 'N/A'}
                   </strong>
                 </div>

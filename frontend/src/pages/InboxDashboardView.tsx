@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { ActionItemsWidget } from '../components/ActionItemsWidget';
 import { EmailAnalysisCard } from '../components/EmailAnalysisCard';
 import { ReplyDraftWidget } from '../components/ReplyDraftWidget';
 import { EmailMessageSummary, EmailThreadSummary, api } from '../services/api';
@@ -185,11 +184,10 @@ export const InboxDashboardView: React.FC = () => {
                     setSelectedThread(t);
                     if (t.messages.length > 0) handleSelectMessage(t.messages[0]);
                   }}
-                  className={`p-3 rounded-lg border cursor-pointer transition ${
-                    selectedThread?.id === t.id
+                  className={`p-3 rounded-lg border cursor-pointer transition ${selectedThread?.id === t.id
                       ? 'bg-slate-800 border-indigo-500/50'
                       : 'bg-slate-950/60 border-slate-800/80 hover:border-slate-700'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center justify-between text-xs mb-1">
                     <span className="font-semibold text-slate-200 truncate max-w-[180px]">
@@ -241,14 +239,6 @@ export const InboxDashboardView: React.FC = () => {
                 <EmailAnalysisCard
                   analysis={analysis}
                   onActionStatusChange={handleActionStatusChange}
-                />
-              )}
-
-              {/* Action Items Widget */}
-              {analysis?.extracted_items && analysis.extracted_items.length > 0 && (
-                <ActionItemsWidget
-                  actions={analysis.extracted_items}
-                  onStatusUpdate={handleActionStatusChange}
                 />
               )}
 

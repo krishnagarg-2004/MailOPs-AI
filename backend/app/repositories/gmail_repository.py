@@ -52,11 +52,15 @@ class GmailRepository:
             state.last_history_id = last_history_id
         if synced_message_count is not None:
             state.synced_message_count = synced_message_count
-        if error_message is not None:
-            state.error_message = error_message
         if sync_status == "COMPLETED":
             state.last_synced_at = datetime.now(timezone.utc)
-            state.error_message = None
+            # Only auto-clear error_message on a clean COMPLETED (no partial failure note).
+            # If an explicit error_message is provided alongside COMPLETED, preserve it
+            # so partial-success states are visible in the DB.
+            if error_message is None:
+                state.error_message = None
+        if error_message is not None:
+            state.error_message = error_message
 
         db.add(state)
         db.commit()

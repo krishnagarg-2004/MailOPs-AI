@@ -13,10 +13,13 @@ export const RAGChatWidget: React.FC<RAGChatWidgetProps> = ({
   isLoading = false,
 }) => {
   const [question, setQuestion] = useState('');
+  const [hasAsked, setHasAsked] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
     if (question.trim() && onAskRAG) {
+      setHasAsked(true);
       onAskRAG(question.trim());
     }
   };
@@ -50,7 +53,7 @@ export const RAGChatWidget: React.FC<RAGChatWidgetProps> = ({
       </form>
 
       {/* Answer & Citations Card */}
-      {ragResponse && (
+      {hasAsked && !isLoading && ragResponse && (
         <div className="bg-slate-950 p-4 rounded-xl border border-purple-500/30 space-y-3">
           <div className="text-xs text-slate-200 leading-relaxed font-sans">
             <span className="font-semibold text-purple-400 block mb-1">Grounded Answer:</span>

@@ -14,10 +14,13 @@ export const SemanticSearchWidget: React.FC<SemanticSearchWidgetProps> = ({
 }) => {
   const [query, setQuery] = useState('');
   const [mode, setMode] = useState<'semantic' | 'hybrid'>('hybrid');
+  const [hasSearched, setHasSearched] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
     if (query.trim() && onSearch) {
+      setHasSearched(true);
       onSearch(query.trim(), mode);
     }
   };
@@ -31,21 +34,19 @@ export const SemanticSearchWidget: React.FC<SemanticSearchWidgetProps> = ({
         <div className="flex items-center gap-2 text-xs">
           <button
             onClick={() => setMode('hybrid')}
-            className={`px-2.5 py-1 rounded font-medium transition ${
-              mode === 'hybrid'
+            className={`px-2.5 py-1 rounded font-medium transition ${mode === 'hybrid'
                 ? 'bg-purple-600/30 border border-purple-500/50 text-purple-300'
                 : 'bg-slate-800 text-slate-400 hover:text-slate-200'
-            }`}
+              }`}
           >
             Hybrid (Keyword + Vector)
           </button>
           <button
             onClick={() => setMode('semantic')}
-            className={`px-2.5 py-1 rounded font-medium transition ${
-              mode === 'semantic'
+            className={`px-2.5 py-1 rounded font-medium transition ${mode === 'semantic'
                 ? 'bg-indigo-600/30 border border-indigo-500/50 text-indigo-300'
                 : 'bg-slate-800 text-slate-400 hover:text-slate-200'
-            }`}
+              }`}
           >
             Vector Only
           </button>
@@ -69,19 +70,29 @@ export const SemanticSearchWidget: React.FC<SemanticSearchWidgetProps> = ({
         </button>
       </form>
 
-      {/* Results List */}
+      {/* Search Results */}
+      {hasSearched && !isLoading && (
+        <div className="flex items-center justify-between pt-2">
+          <span className="text-xs font-semibold text-slate-400">
+            Search Results
+          </span>
+          <span className="text-[11px] text-slate-500">
+            {results.length} result{results.length !== 1 ? 's' : ''}
+          </span>
+        </div>
+      )}
+
       {results.length > 0 && (
-        <div className="space-y-3 pt-2">
+        <div className="space-y-3">
           {results.map((item) => (
             <div key={item.id} className="bg-slate-950 border border-slate-800/80 rounded-lg p-3 space-y-2 text-xs">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span
-                    className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase ${
-                      item.source_type === 'DOCUMENT'
+                    className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase ${item.source_type === 'DOCUMENT'
                         ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
                         : 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
-                    }`}
+                      }`}
                   >
                     {item.source_type}
                   </span>
@@ -103,6 +114,13 @@ export const SemanticSearchWidget: React.FC<SemanticSearchWidgetProps> = ({
           ))}
         </div>
       )}
+
+      {hasSearched && !isLoading && results.length === 0 && (
+        <div className="text-center py-6 text-xs text-slate-500">
+          No matching results found. Try another search.
+        </div>
+      )}
+
     </div>
   );
 };

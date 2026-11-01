@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
 interface SyncState {
   sync_status: string;
@@ -8,7 +9,6 @@ interface SyncState {
   synced_message_count: number;
   error_message: string | null;
 }
-
 
 interface GmailStatus {
   connected: boolean;
@@ -20,15 +20,19 @@ export const GmailSyncWidget: React.FC = () => {
   const [statusData, setStatusData] = useState<GmailStatus | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  // AbortController so two rapid clicks don't both fire the background sync.
+  const syncAbortControllerRef = useRef<AbortController | null>(null);
 
   const fetchStatus = async () => {
     try {
       const resp = await fetch(`${API_BASE_URL}/api/v1/gmail/status`, {
         credentials: 'include',
       });
+
       if (resp.ok) {
         const data: GmailStatus = await resp.json();
         setStatusData(data);
+
         if (data.sync_state?.sync_status === 'SYNCING') {
           setIsSyncing(true);
         } else {
@@ -44,32 +48,79 @@ export const GmailSyncWidget: React.FC = () => {
 
   useEffect(() => {
     fetchStatus();
+
     const interval = setInterval(fetchStatus, 5000);
+
     return () => clearInterval(interval);
   }, []);
 
   const triggerSync = async () => {
+    // Abort previous in-flight sync so two rapid clicks don't both fire.
+    const controller = new AbortController();
+    syncAbortControllerRef.current = controller;
+
     try {
       setIsSyncing(true);
-      await fetch(`${API_BASE_URL}/api/v1/gmail/sync`, {
+
+      const resp = await fetch(`${API_BASE_URL}/api/v1/gmail/sync`, {
         method: 'POST',
         credentials: 'include',
+        signal: controller.signal,
       });
+
+      // Surface non-success responses so the user knows WHY the sync was rejected
+      // (e.g. no OAuth account, another sync already running, server error).
+      // Note: fetch() only rejects on network failure, NOT on HTTP error status.
+      if (!resp.ok) {
+        let msg = `Sync rejected (HTTP ${resp.status}).`;
+        try {
+          const detail = await resp.json();
+          msg = detail.detail || detail.message || msg;
+        } catch {
+          try {
+            msg = await resp.text();
+          } catch { /* keep default */ }
+        }
+        alert(msg);
+        return;
+      }
+
       fetchStatus();
-    } catch {
+    } catch (err: any) {
+      // Network-level failure (offline, DNS, aborted)
       setIsSyncing(false);
+      if (err?.name === 'AbortError') {
+        // A newer sync superseded this one — ignore silently.
+        return;
+      }
+      alert(`Sync attempt failed: ${err?.message || 'Network error'}`);
+    } finally {
+      // Only unset isSyncing if this is still the latest controller.
+      if (syncAbortControllerRef.current === controller) {
+        setIsSyncing(false);
+      }
     }
   };
 
   if (isLoading) {
-    return <div style={{ color: '#94a3b8' }}>Loading Gmail status...</div>;
+    return (
+      <div className="text-xs text-slate-400">
+        Loading Gmail status...
+      </div>
+    );
   }
 
   if (!statusData?.connected) {
     return (
-      <div style={{ padding: '1rem', backgroundColor: '#1e293b', borderRadius: '0.5rem', color: '#f8fafc' }}>
-        <h3 style={{ margin: '0 0 0.5rem 0', color: '#f1f5f9' }}>Gmail Connection</h3>
-        <p style={{ margin: 0, color: '#94a3b8' }}>No Gmail account connected. Please sign in with Google to enable email sync.</p>
+      <div className="w-full rounded-xl border border-slate-800 bg-slate-900 p-3 text-slate-100 shadow-sm">
+        <h3 className="text-sm font-bold text-sky-400">
+          Gmail Connection
+        </h3>
+
+        <p className="mt-2 text-[11px] leading-relaxed text-slate-400">
+          No Gmail account connected. Please sign in with Google to enable
+          email sync.
+        </p>
       </div>
     );
   }
@@ -77,51 +128,84 @@ export const GmailSyncWidget: React.FC = () => {
   const syncState = statusData.sync_state;
 
   return (
-    <div style={{ padding: '1.25rem', backgroundColor: '#1e293b', borderRadius: '0.5rem', color: '#f8fafc', fontFamily: 'sans-serif' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <div>
-          <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#38bdf8' }}>Gmail Synchronization</h3>
-          <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.875rem', color: '#94a3b8' }}>Connected as: {statusData.email}</p>
-        </div>
-        <button
-          onClick={triggerSync}
-          disabled={isSyncing}
-          style={{
-            padding: '0.5rem 1rem',
-            backgroundColor: isSyncing ? '#475569' : '#2563eb',
-            color: '#ffffff',
-            fontWeight: '600',
-            borderRadius: '0.375rem',
-            border: 'none',
-            cursor: isSyncing ? 'not-allowed' : 'pointer',
-          }}
+    <div className="w-full rounded-xl border border-slate-800 bg-slate-900 p-3 text-slate-100 shadow-sm">
+
+      {/* Header */}
+      <div className="mb-3">
+        <h3 className="text-sm font-bold text-sky-400">
+          Gmail Synchronization
+        </h3>
+
+        <p
+          className="mt-1 truncate text-[11px] text-slate-400"
+          title={statusData.email || ''}
         >
-          {isSyncing ? 'Syncing...' : 'Sync Inbox'}
-        </button>
+          {statusData.email || 'Gmail account'}
+        </p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', backgroundColor: '#0f172a', padding: '0.75rem', borderRadius: '0.375rem' }}>
-        <div>
-          <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Status</span>
-          <div style={{ fontWeight: '600', color: syncState?.sync_status === 'COMPLETED' ? '#4ade80' : syncState?.sync_status === 'FAILED' ? '#f87171' : '#facc15' }}>
+      {/* Sync Information */}
+      <div className="grid grid-cols-2 gap-2 rounded-lg bg-slate-950 p-2.5">
+
+        {/* Status */}
+        <div className="min-w-0">
+          <span className="block text-[9px] font-semibold uppercase tracking-wider text-slate-500">
+            Status
+          </span>
+
+          <div
+            className={`mt-1 truncate text-[11px] font-bold ${syncState?.sync_status === 'COMPLETED'
+                ? 'text-green-400'
+                : syncState?.sync_status === 'FAILED'
+                  ? 'text-red-400'
+                  : 'text-yellow-400'
+              }`}
+          >
             {syncState?.sync_status || 'IDLE'}
           </div>
         </div>
-        <div>
-          <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Synced Messages</span>
-          <div style={{ fontWeight: '600', color: '#f8fafc' }}>{syncState?.synced_message_count || 0}</div>
+
+        {/* Messages */}
+        <div className="min-w-0">
+          <span className="block text-[9px] font-semibold uppercase tracking-wider text-slate-500">
+            Messages
+          </span>
+
+          <div className="mt-1 text-sm font-bold text-slate-100">
+            {syncState?.synced_message_count || 0}
+          </div>
         </div>
-        <div>
-          <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Last Synced</span>
-          <div style={{ fontSize: '0.875rem', color: '#cbd5e1' }}>
-            {syncState?.last_synced_at ? new Date(syncState.last_synced_at).toLocaleTimeString() : 'Never'}
+
+        {/* Last Synced */}
+        <div className="col-span-2 border-t border-slate-800 pt-2">
+          <span className="block text-[9px] font-semibold uppercase tracking-wider text-slate-500">
+            Last Synced
+          </span>
+
+          <div className="mt-1 truncate text-[11px] text-slate-300">
+            {syncState?.last_synced_at
+              ? new Date(syncState.last_synced_at).toLocaleTimeString()
+              : 'Never'}
           </div>
         </div>
       </div>
 
+      {/* Sync Button */}
+      <button
+        onClick={triggerSync}
+        disabled={isSyncing}
+        className={`mt-3 w-full rounded-lg px-3 py-2 text-xs font-semibold text-white transition ${isSyncing
+            ? 'cursor-not-allowed bg-slate-700'
+            : 'bg-indigo-600 hover:bg-indigo-500'
+          }`}
+      >
+        {isSyncing ? 'Syncing...' : 'Sync Inbox'}
+      </button>
+
+      {/* Error */}
       {syncState?.error_message && (
-        <div style={{ marginTop: '0.75rem', padding: '0.5rem', backgroundColor: '#450a0a', color: '#fca5a5', borderRadius: '0.25rem', fontSize: '0.875rem' }}>
-          Error: {syncState.error_message}
+        <div className="mt-2 rounded-lg border border-red-900/50 bg-red-950/40 p-2 text-[10px] leading-relaxed text-red-300">
+          {syncState.error_message}
         </div>
       )}
     </div>

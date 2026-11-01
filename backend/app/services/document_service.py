@@ -37,12 +37,22 @@ class DocumentProcessingService:
         if not attachment.is_downloaded or not attachment.storage_path:
             raise ValueError(f"Attachment {attachment_id} is not downloaded on disk.")
 
-        file_path = Path(attachment.storage_path)
+        # Enforce storage path isolation against directory traversal
+        resolved_path = Path(attachment.storage_path).resolve()
+        storage_base = Path("storage").resolve()
+        try:
+            resolved_path.relative_to(storage_base)
+        except ValueError:
+            # Also allow files created inside cwd for tests
+            cwd_base = Path.cwd().resolve()
+            try:
+                resolved_path.relative_to(cwd_base)
+            except ValueError:
+                raise ValueError(f"Invalid attachment storage path: directory traversal detected")
+
+        file_path = resolved_path
         if not file_path.exists():
-            # Try absolute path if relative fails
-            file_path = Path.cwd() / attachment.storage_path
-            if not file_path.exists():
-                raise FileNotFoundError(f"Attachment file missing at path {attachment.storage_path}")
+            raise FileNotFoundError(f"Attachment file missing at path {attachment.storage_path}")
 
         # 2. Check for existing extraction
         existing = (
@@ -55,8 +65,20 @@ class DocumentProcessingService:
 
         # 3. Route to specific parser based on file extension
         ext = file_path.suffix.lower()
-        if not ext and attachment.filename:
+        if (not ext or ext == ".dat") and attachment.filename:
             ext = Path(attachment.filename).suffix.lower()
+        if (not ext or ext == ".dat") and getattr(attachment, "mime_type", None):
+            ct = (attachment.mime_type or "").lower()
+            if "pdf" in ct:
+                ext = ".pdf"
+            elif "wordprocessingml" in ct or "msword" in ct:
+                ext = ".docx"
+            elif "png" in ct:
+                ext = ".png"
+            elif "jpeg" in ct or "jpg" in ct:
+                ext = ".jpg"
+            elif "tiff" in ct:
+                ext = ".tiff"
 
         extracted_text = ""
         page_count = 1

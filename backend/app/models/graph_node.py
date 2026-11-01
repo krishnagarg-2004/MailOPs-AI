@@ -1,8 +1,8 @@
 from datetime import datetime
 import uuid
 from typing import TYPE_CHECKING
-from sqlalchemy import DateTime, ForeignKey, String, func
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy import DateTime, ForeignKey, String, func, JSON as SQLAlchemyJSON
+from sqlalchemy.dialects.postgresql import JSONB, UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from backend.app.db.base_class import Base
 
@@ -17,12 +17,12 @@ class GraphNode(Base):
     __tablename__ = "graph_nodes"
 
     id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        PGUUID(as_uuid=True),
         primary_key=True,
         default=uuid.uuid4,
     )
     user_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        PGUUID(as_uuid=True),
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
@@ -32,9 +32,9 @@ class GraphNode(Base):
     )  # EMAIL_MESSAGE, EMAIL_THREAD, ACTION_ITEM, INVOICE, CONTRACT, PERSON, ORGANIZATION, PROJECT
     label: Mapped[str] = mapped_column(String(255), nullable=False)
     entity_reference_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), nullable=True, index=True
+        PGUUID(as_uuid=True), nullable=True, index=True
     )
-    properties: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    properties: Mapped[dict] = mapped_column(SQLAlchemyJSON, nullable=False, default=dict)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),

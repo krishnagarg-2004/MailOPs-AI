@@ -1,3 +1,4 @@
+import logging
 import uuid
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from sqlalchemy import select
@@ -21,6 +22,8 @@ from backend.app.services.gmail_sync_service import GmailSyncService
 
 router = APIRouter(prefix="/gmail", tags=["gmail"])
 
+logger = logging.getLogger(__name__)
+
 
 def _run_async_sync(user_id: uuid.UUID):
     """Background task runner executing sync in a new database session."""
@@ -34,6 +37,42 @@ def _run_async_sync(user_id: uuid.UUID):
             if user:
                 sync_service = GmailSyncService()
                 await sync_service.execute_sync(db, user)
+            else:
+                # FIX-SYNC-2: User deleted between sync trigger and background execution.
+                # Mark FAILED so the state is not permanently stuck at SYNCING.
+                logger.warning(
+                    "Background sync: user_id=%s not found. Marking sync FAILED.",
+                    user_id,
+                )
+                GmailRepository.update_sync_state(
+                    db,
+                    user_id,
+                    sync_status="FAILED",
+                    error_message="User account not found during background sync.",
+                )
+        except Exception as exc:
+            # ANY failure (not just execute_sync) must flip the state to FAILED
+            # so users are never permanently blocked at SYNCING. The outer handler
+            # below is intentionally broad; inner paths inside execute_sync already
+            # have their own FAILED-flipping logic but this guard covers any
+            # exception introduced by the worker itself (DB drop, session close, etc.).
+            logger.error(
+                "Background sync unhandled exception: user_id=%s error=%s",
+                user_id,
+                type(exc).__name__,
+            )
+            try:
+                GmailRepository.update_sync_state(
+                    db,
+                    user_id,
+                    sync_status="FAILED",
+                    error_message=f"Background sync terminated unexpectedly: {type(exc).__name__}",
+                )
+            except Exception as db_exc:  # pragma: no cover - best-effort state reset
+                logger.critical(
+                    "Could not reset SYNCING state to FAILED after background sync failure: %s",
+                    db_exc,
+                )
         finally:
             db.close()
 
@@ -82,7 +121,16 @@ def trigger_gmail_sync(
             detail="No connected Google OAuth account found. Please login with Google first.",
         )
 
-    # Update sync state to SYNCING
+    # FIX-SYNC-3: Prevent concurrent syncs for the same user. A sync already
+    # in progress would produce conflicting DB sessions and duplicate work.
+    sync_state = GmailRepository.get_or_create_sync_state(db, current_user.id)
+    if sync_state.sync_status == "SYNCING":
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="A Gmail sync is already in progress for this account. Please wait for it to complete.",
+        )
+
+    # Update sync state to SYNCING (acts as an optimistic lock against second concurrent trigger)
     GmailRepository.update_sync_state(db, current_user.id, sync_status="SYNCING")
 
     # Queue background sync task

@@ -1,5 +1,6 @@
 from datetime import datetime, timezone, timedelta
 from typing import Any
+import base64
 import httpx
 from sqlalchemy.orm import Session
 

@@ -81,13 +81,21 @@ def authenticate_google_user(
         db.flush()  # assign user.id
 
     # Create new linked OAuthAccount
+    # FIX-AUTH-2: Guard against missing refresh_token — Google does not always
+    # return a refresh token (e.g., when consent was previously granted without
+    # prompt=consent). Never call encrypt_token(None).
+    encrypted_refresh = (
+        encrypt_token(token_resp.refresh_token)
+        if token_resp.refresh_token
+        else None
+    )
     new_oauth = OAuthAccount(
         user_id=user.id,
         provider="google",
         provider_account_id=claims.sub,
         email=claims.email,
         encrypted_access_token=encrypt_token(token_resp.access_token),
-        encrypted_refresh_token=encrypt_token(token_resp.refresh_token),
+        encrypted_refresh_token=encrypted_refresh,
         token_expires_at=token_expires_at,
         scopes=token_resp.scope,
     )

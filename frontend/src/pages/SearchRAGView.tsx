@@ -25,7 +25,9 @@ export const SearchRAGView: React.FC = () => {
 
   const handleAskRAG = async (question: string) => {
     try {
+      setRagResponse(undefined);
       setIsRAGLoading(true);
+
       const res = await api.queryRAG(question);
       setRagResponse(res);
     } catch (err: any) {

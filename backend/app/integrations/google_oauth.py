@@ -1,4 +1,3 @@
-import time
 from urllib.parse import urlencode
 
 import httpx
@@ -52,7 +51,6 @@ def has_compose_scope(scopes_str: str | None) -> bool:
     return bool(granted.intersection(allowed))
 
 
-
 async def exchange_code_for_tokens(code: str) -> GoogleTokenResponse:
     """Exchange authorization code for Google OAuth access, refresh, and ID tokens."""
     payload = {
@@ -78,36 +76,44 @@ def validate_google_id_token(
     override_jwks_client: PyJWKClient | None = None,
 ) -> GoogleOIDCClaims:
     """Validate Google OIDC ID token signature, claims, expiration, and transaction nonce.
-    
+
     Args:
         id_token_str: Encoded Google ID token JWT string.
         expected_nonce: Expected OIDC nonce bound to browser session.
         override_jwks_client: Optional JWK client override for testing.
-        
+
     Returns:
         GoogleOIDCClaims: Verified OIDC identity claims.
-        
+
     Raises:
-        ValueError: If validation of signature, issuer, audience, expiration, email_verified, or nonce fails.
+        ValueError: If JWKS key retrieval fails, or validation of signature,
+                    issuer, audience, expiration, email_verified, or nonce fails.
+
+    Security:
+        Authentication ALWAYS fails closed. If the Google JWKS signing key
+        cannot be retrieved, a ValueError is raised immediately. Signature
+        verification is NEVER disabled as a fallback.
     """
     jwks_client = override_jwks_client or _jwks_client
 
     try:
-        # First decode unverified headers to locate signing key
+        # Decode unverified header to locate the correct signing key algorithm
         unverified_header = jwt.get_unverified_header(id_token_str)
         algorithm = unverified_header.get("alg", "RS256")
 
+        # FIX-AUTH-1: Fail closed — JWKS failure raises immediately, never bypasses signature.
         try:
             signing_key = jwks_client.get_signing_key_from_jwt(id_token_str)
             key = signing_key.key
-        except Exception:
-            # Fallback if JWKS fetching is unavailable or mocked
-            key = None
+        except Exception as jwks_err:
+            raise ValueError(
+                f"Failed to fetch Google JWKS signing key: {jwks_err}"
+            ) from jwks_err
 
         options = {
-            "verify_signature": key is not None,
-            "verify_aud": False,  # Custom manual aud validation below
-            "verify_iss": False,  # Custom manual iss validation below
+            # Signature is always verified — key is guaranteed non-None here.
+            "verify_aud": False,  # Audience validated manually below.
+            "verify_iss": False,  # Issuer validated manually below.
         }
 
         claims = jwt.decode(
@@ -115,7 +121,10 @@ def validate_google_id_token(
             key=key,
             algorithms=[algorithm],
             options=options,
+            leeway=60,  # 60-second clock-skew tolerance for iat/exp validation.
         )
+    except ValueError:
+        raise  # Re-raise our own ValueError from JWKS failure above.
     except Exception as e:
         raise ValueError(f"Failed to decode or verify Google ID Token: {e}") from e
 
@@ -128,12 +137,14 @@ def validate_google_id_token(
     aud = claims.get("aud")
     if settings.GOOGLE_CLIENT_ID and settings.GOOGLE_CLIENT_ID != "your_google_client_id_here":
         if aud != settings.GOOGLE_CLIENT_ID:
-            raise ValueError(f"Google ID Token audience mismatch: '{aud}' != '{settings.GOOGLE_CLIENT_ID}'")
+            raise ValueError(
+                f"Google ID Token audience mismatch: '{aud}' != '{settings.GOOGLE_CLIENT_ID}'"
+            )
 
-    # 3. Validate Expiration
+    # 3. Expiration is validated by jwt.decode with leeway=60 above.
+    #    FIX-AUTH-4: Removed redundant manual exp check that had no leeway and was
+    #    inconsistent with the leeway=60 already applied by jwt.decode.
     exp = claims.get("exp", 0)
-    if exp <= time.time():
-        raise ValueError("Google ID Token has expired.")
 
     # 4. Validate Email Verification Status
     email_verified = claims.get("email_verified", False)

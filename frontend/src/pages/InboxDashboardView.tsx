@@ -185,8 +185,8 @@ export const InboxDashboardView: React.FC = () => {
                     if (t.messages.length > 0) handleSelectMessage(t.messages[0]);
                   }}
                   className={`p-3 rounded-lg border cursor-pointer transition ${selectedThread?.id === t.id
-                      ? 'bg-slate-800 border-indigo-500/50'
-                      : 'bg-slate-950/60 border-slate-800/80 hover:border-slate-700'
+                    ? 'bg-slate-800 border-indigo-500/50'
+                    : 'bg-slate-950/60 border-slate-800/80 hover:border-slate-700'
                     }`}
                 >
                   <div className="flex items-center justify-between text-xs mb-1">

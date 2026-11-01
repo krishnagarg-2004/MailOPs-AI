@@ -1423,9 +1423,7 @@ Implementation decisions should be made deliberately, and significant architectu
 
 For the actual implementation progress, current milestone, completed work, and next development steps, see:
 
-[`PROJECT_STATUS.md`](PROJECT_STATUS.md)
-
----
+`PROJECT_STATUS.md`
 
 ## License
 

@@ -1,8 +1,8 @@
 from datetime import datetime
 import uuid
 from typing import TYPE_CHECKING
-from sqlalchemy import DateTime, Float, ForeignKey, String, Text, func
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy import DateTime, Float, ForeignKey, JSON as SQLAlchemyJSON, String, Text, func
+from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from backend.app.db.base_class import Base
 
@@ -18,24 +18,24 @@ class BusinessDocumentExtraction(Base):
     __tablename__ = "business_document_extractions"
 
     id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        PGUUID(as_uuid=True),
         primary_key=True,
         default=uuid.uuid4,
     )
     user_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        PGUUID(as_uuid=True),
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
     attachment_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        PGUUID(as_uuid=True),
         ForeignKey("attachments.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
     document_extraction_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        PGUUID(as_uuid=True),
         ForeignKey("document_extractions.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
@@ -44,7 +44,7 @@ class BusinessDocumentExtraction(Base):
         String(50), nullable=False, default="OTHER"
     )  # INVOICE, CONTRACT, RECEIPT, PURCHASE_ORDER, OTHER
     extracted_data: Mapped[dict] = mapped_column(
-        JSONB, nullable=False, default=dict
+        SQLAlchemyJSON, nullable=False, default=dict
     )  # Full JSON payload adhering to InvoiceExtractionSchema or ContractExtractionSchema
     vendor_or_party: Mapped[str | None] = mapped_column(String(255), nullable=True)
     document_reference_number: Mapped[str | None] = mapped_column(String(100), nullable=True)

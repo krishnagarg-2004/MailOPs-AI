@@ -138,7 +138,7 @@ export const ReplyDraftWidget: React.FC<ReplyDraftWidgetProps> = ({
           </span>
 
           <a
-            href="/api/v1/auth/google/authorize-compose"
+            href={`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/v1/auth/google/authorize-compose`}
             className="bg-amber-600 text-slate-950 font-semibold px-3 py-1 rounded hover:bg-amber-500 transition ml-2"
           >
             Authorize Compose Scope

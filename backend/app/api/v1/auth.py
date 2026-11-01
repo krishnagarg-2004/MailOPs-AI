@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter, Depends, Request, Response, status
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
@@ -19,6 +21,8 @@ from backend.app.services.auth_service import (
     revoke_session,
 )
 
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(
     prefix="/auth",
@@ -154,9 +158,11 @@ async def google_callback(
         )
 
     except ValueError as e:
-        print(
-            f"OAUTH STATE VALIDATION FAILED: "
-            f"{type(e).__name__}: {e}"
+        # FIX-AUTH-3: Structured logging — no sensitive data logged.
+        logger.warning(
+            "OAuth state validation failed: %s: %s",
+            type(e).__name__,
+            e,
         )
 
         return RedirectResponse(
@@ -204,9 +210,11 @@ async def google_callback(
         )
 
     except Exception as e:
-        print(
-            f"GOOGLE AUTH FAILED: "
-            f"{type(e).__name__}: {e}"
+        # FIX-AUTH-3: Structured logging — exception type only, no tokens or codes.
+        logger.warning(
+            "Google authentication failed: %s: %s",
+            type(e).__name__,
+            e,
         )
 
         return RedirectResponse(

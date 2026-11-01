@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { GraphEdgeResult, GraphNodeResult } from '../types/graph';
 
 interface ActionGraphWidgetProps {
@@ -18,6 +18,15 @@ export const ActionGraphWidget: React.FC<ActionGraphWidgetProps> = ({
 }) => {
   const [selectedNode, setSelectedNode] = useState<GraphNodeResult | null>(null);
   const [filterType, setFilterType] = useState<string>('ALL');
+
+  useEffect(() => {
+    if (
+      selectedNode &&
+      !nodes.some((node) => node.id === selectedNode.id)
+    ) {
+      setSelectedNode(null);
+    }
+  }, [nodes, selectedNode]);
 
   const filteredNodes = filterType === 'ALL'
     ? nodes
@@ -84,22 +93,27 @@ export const ActionGraphWidget: React.FC<ActionGraphWidgetProps> = ({
       </div>
 
       {/* Node Grid Layout Representation */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-80 overflow-y-auto pr-1">
-        {filteredNodes.map((node) => (
-          <div
-            key={node.id}
-            onClick={() => handleNodeSelect(node)}
-            className={`border rounded-lg p-3 cursor-pointer transition hover:scale-[1.01] ${getNodeColor(node.node_type)} ${
-              selectedNode?.id === node.id ? 'ring-2 ring-amber-400' : ''
-            }`}
-          >
-            <div className="flex items-center justify-between text-[10px] font-semibold tracking-wider uppercase mb-1">
-              <span>{node.node_type}</span>
+      {filteredNodes.length === 0 ? (
+        <div className="text-center py-8 text-xs text-slate-500">
+          No nodes found for this filter.
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-80 overflow-y-auto pr-1">
+          {filteredNodes.map((node) => (
+            <div
+              key={node.id}
+              onClick={() => handleNodeSelect(node)}
+              className={`border rounded-lg p-3 cursor-pointer transition hover:scale-[1.01] ${getNodeColor(node.node_type)} ${selectedNode?.id === node.id ? 'ring-2 ring-amber-400' : ''
+                }`}
+            >
+              <div className="flex items-center justify-between text-[10px] font-semibold tracking-wider uppercase mb-1">
+                <span>{node.node_type}</span>
+              </div>
+              <div className="font-semibold text-xs text-slate-100 truncate">{node.label}</div>
             </div>
-            <div className="font-semibold text-xs text-slate-100 truncate">{node.label}</div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Selected Node Drawer */}
       {selectedNode && (

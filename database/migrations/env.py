@@ -30,11 +30,13 @@ target_metadata = Base.metadata
 
 
 def get_url() -> str:
-    """Retrieve database URI from Alembic config or fallback to application settings."""
+    """Retrieve database URI from application settings or fallback to Alembic config."""
+    if settings.SQLALCHEMY_DATABASE_URI:
+        return settings.SQLALCHEMY_DATABASE_URI
     url = config.get_main_option("sqlalchemy.url")
     if url:
         return url
-    return settings.SQLALCHEMY_DATABASE_URI
+    return ""
 
 
 

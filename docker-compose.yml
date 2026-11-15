@@ -71,6 +71,8 @@ services:
       - "3000:80"
     environment:
       VITE_API_BASE_URL: ""
+    volumes:
+      - ./frontend/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
 
 volumes:
   postgres_data:

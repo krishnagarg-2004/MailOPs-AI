@@ -93,7 +93,11 @@ def seed_demo_environment(
         existing_session = db.execute(
             select(UserSession).where(UserSession.session_token_hash == session_hash)
         ).scalar_one_or_none()
-        if not existing_session:
+        if existing_session:
+            existing_session.revoked_at = None
+            existing_session.expires_at = now + timedelta(days=30)
+            existing_session.last_accessed_at = now
+        else:
             db.add(
                 UserSession(
                     session_token_hash=session_hash,

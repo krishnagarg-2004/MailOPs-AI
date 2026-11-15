@@ -37,6 +37,7 @@ OAUTH_STATE_COOKIE = "mailops_oauth_state"
     status_code=status.HTTP_200_OK,
 )
 async def demo_login(
+    request: Request,
     response: Response,
     db: Session = Depends(get_db),
 ):
@@ -44,10 +45,23 @@ async def demo_login(
     One-click demo login for evaluators and showcase presentations.
     Seeds rich enterprise mock data and establishes an authenticated session.
     """
+    from sqlalchemy import select
     from backend.app.scripts.seed_demo_data import seed_demo_environment
 
     seed_result = seed_demo_environment(db=db)
-    session_token = str(seed_result["session_token"])
+    demo_email = str(seed_result["demo_user"])
+    demo_user = db.execute(select(User).where(User.email == demo_email)).scalar_one()
+
+    ip_addr = request.client.host if request.client else None
+    user_agent = request.headers.get("user-agent")
+
+    # Generate a fresh, valid session
+    session_token, _ = create_user_session(
+        db=db,
+        user=demo_user,
+        ip_address=ip_addr,
+        user_agent=user_agent,
+    )
 
     # Set authenticated session cookie
     response.set_cookie(

@@ -5,7 +5,7 @@ import { ReplyDraftResult, ReplyDraftUpdateRequest, ToneEnum } from '../types/re
 import { RAGQueryResponse, SearchResultItem } from '../types/search';
 
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '';
 
 async function fetchJSON<T>(url: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${url}`, {

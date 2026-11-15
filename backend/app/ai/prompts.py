@@ -2,9 +2,14 @@
 Prompt Architecture and Guardrails for MailOps AI.
 
 Contains versioned system prompts and prompt builders with instruction-data separation boundaries (<untrusted_content>).
+Supports dynamic loading of DSPy MIPRO-optimized prompt artifacts.
 """
 
+import json
+from pathlib import Path
+
 PROMPT_VERSION = "1.0.0"
+COMPILED_PROMPT_PATH = Path(__file__).resolve().parent / "compiled_prompts.json"
 
 SYSTEM_EXTRACTION_PROMPT = """You are MailOps AI, an enterprise work-intelligence analyzer.
 Your objective is to analyze email communications and extract structured operational intelligence.
@@ -71,3 +76,20 @@ Subject: {clean_subject}
 {clean_body}{truncation_notice}
 </untrusted_content>
 """
+
+
+def get_active_system_prompt() -> str:
+    """
+    Returns the active system extraction prompt.
+    Prioritizes MIPRO-compiled optimization artifacts if present,
+    falling back to static SYSTEM_EXTRACTION_PROMPT.
+    """
+    if COMPILED_PROMPT_PATH.exists():
+        try:
+            with open(COMPILED_PROMPT_PATH, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if isinstance(data, dict) and "system_instruction" in data:
+                    return data["system_instruction"]
+        except Exception:
+            pass
+    return SYSTEM_EXTRACTION_PROMPT

@@ -172,4 +172,10 @@ export const api = {
     document.body.removeChild(a);
     window.URL.revokeObjectURL(url);
   },
+
+  // Demo Environment
+  seedDemoData: () =>
+    fetchJSON<{ status: string; message: string; details: any }>('/api/v1/auth/seed-demo', {
+      method: 'POST',
+    }),
 };

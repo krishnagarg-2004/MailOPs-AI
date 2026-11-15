@@ -59,10 +59,11 @@ The remaining work is primarily final real-environment verification and release 
 | **Phase 7** | Enterprise Multi-Tenancy, Collaboration & Compliance | **COMPLETED** |
 | **Phase 8** | Cloud-Native Real-Time Ingestion & Distributed Workers | **COMPLETED** |
 | **Phase 9** | Modern 3-Pane UI, Rich-Text AI Copilot & Executive Reporting | **COMPLETED** |
+| **Phase 10** | Power-User Experience, Instant Demo Seeding & Enterprise Polish | **COMPLETED** |
 
 ---
 
-# Advanced Enterprise Milestones (Phases 6 – 9)
+# Advanced Enterprise Milestones (Phases 6 – 10)
 
 ## Phase 6 — Advanced Retrieval, Re-ranking & Agentic Tool Execution
 - [x] **Cross-Encoder Precision Re-ranking:** Implemented `CrossEncoderReranker` for lexical-semantic cross-attention scoring in `backend/app/services/reranker.py`.
@@ -83,6 +84,14 @@ The remaining work is primarily final real-environment verification and release 
 - [x] **Desktop-Class 3-Pane Email Client:** Ergonomic 3-pane split layout in `frontend/src/pages/InboxDashboardView.tsx` (Thread navigator with search & status badges ➔ Conversation reader & attachments ➔ Collapsible AI inspector).
 - [x] **AI Copilot Reply Editor with Ghost-Text Autocomplete:** Rich-text toolbar and tab-to-accept ghost completion in `frontend/src/components/ReplyDraftWidget.tsx`.
 - [x] **Executive Digest & Multi-Format Intelligence Export:** Aggregated cross-mailbox KPIs, action trackers, and downloadable CSV/Markdown reports via `GET /api/v1/digest/summary` and `GET /api/v1/digest/export` with interactive modal.
+
+## Phase 10 — Power-User Experience, Instant Demo Seeding & Enterprise Polish
+- [x] **Superhuman-Style Keyboard Hotkeys:** Navigation (`j`/`k`), AI analyze (`a`), reply copilot (`r`), inspector toggle (`x`), and cheatsheet modal (`?`) in `InboxDashboardView.tsx`.
+- [x] **1-Click Demo Mailbox Seeding:** `POST /api/v1/auth/seed-demo` endpoint and UI button in header/empty state to instantly populate rich enterprise threads and relationships.
+- [x] **Action-Oriented Command Palette:** Extended `CommandPalette.tsx` (`Ctrl+K`) with 1-click triggers for demo seeding, CSV/Markdown digest exports, and shortcuts guide.
+- [x] **Document Search & OCR Text Exporter:** Category filter pills (PDF, Image, DOCX), search input, and 1-click `.txt` OCR plaintext exporter in `DocumentsView.tsx`.
+- [x] **Action Graph Category Filters:** Interactive node-type filter pills and search bar in `ActionGraphView.tsx`.
+- [x] **AI Confidence Gauge & Explainability Drawer:** Visual circular confidence gauge (`96% High Confidence`) with rationale breakdown in `EmailAnalysisCard.tsx`.
 
 ---
 

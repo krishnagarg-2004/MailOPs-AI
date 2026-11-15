@@ -25,6 +25,7 @@ export const InboxDashboardView: React.FC = () => {
   const [isExporting, setIsExporting] = useState<boolean>(false);
   const [digestSummary, setDigestSummary] = useState<any>(null);
   const [showDigestModal, setShowDigestModal] = useState<boolean>(false);
+  const [showShortcutsModal, setShowShortcutsModal] = useState<boolean>(false);
 
   const fetchThreads = async () => {
     try {
@@ -208,9 +209,64 @@ export const InboxDashboardView: React.FC = () => {
     return true;
   });
 
+  // Superhuman-Style Keyboard Shortcuts Listener (j/k, r, a, x, ?)
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      // Ignore if user is currently typing in an input or textarea
+      const target = e.target as HTMLElement;
+      if (
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.isContentEditable
+      ) {
+        return;
+      }
+
+      if (e.key === '?' || (e.shiftKey && e.key === '/')) {
+        e.preventDefault();
+        setShowShortcutsModal((prev) => !prev);
+      } else if (e.key === 'j' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (filteredThreads.length === 0) return;
+        const currentIndex = filteredThreads.findIndex((t) => t.id === selectedThread?.id);
+        const nextIndex = currentIndex < filteredThreads.length - 1 ? currentIndex + 1 : 0;
+        const nextThread = filteredThreads[nextIndex];
+        setSelectedThread(nextThread);
+        if (nextThread.messages.length > 0) handleSelectMessage(nextThread.messages[0]);
+      } else if (e.key === 'k' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (filteredThreads.length === 0) return;
+        const currentIndex = filteredThreads.findIndex((t) => t.id === selectedThread?.id);
+        const prevIndex = currentIndex > 0 ? currentIndex - 1 : filteredThreads.length - 1;
+        const prevThread = filteredThreads[prevIndex];
+        setSelectedThread(prevThread);
+        if (prevThread.messages.length > 0) handleSelectMessage(prevThread.messages[0]);
+      } else if (e.key.toLowerCase() === 'a') {
+        e.preventDefault();
+        handleTriggerAnalysis();
+      } else if (e.key.toLowerCase() === 'r') {
+        e.preventDefault();
+        setActiveInspectorTab('COPILOT');
+        if (!isInspectorOpen) setIsInspectorOpen(true);
+      } else if (e.key.toLowerCase() === 'x') {
+        e.preventDefault();
+        setIsInspectorOpen((prev) => !prev);
+      }
+    };
+
+    const handleCustomOpenShortcuts = () => setShowShortcutsModal(true);
+
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    window.addEventListener('open-keyboard-shortcuts', handleCustomOpenShortcuts);
+    return () => {
+      window.removeEventListener('keydown', handleGlobalKeyDown);
+      window.removeEventListener('open-keyboard-shortcuts', handleCustomOpenShortcuts);
+    };
+  }, [filteredThreads, selectedThread, isInspectorOpen]);
+
   return (
     <div className="flex flex-col h-[calc(100vh-6rem)]">
-      {/* Top Bar with View Controls & Export */}
+      {/* Top Bar with View Controls, Hotkeys & Export */}
       <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-3 shrink-0">
         <div>
           <div className="flex items-center gap-2">
@@ -225,6 +281,16 @@ export const InboxDashboardView: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowShortcutsModal(true)}
+            className="text-xs bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-800 px-2.5 py-1.5 rounded-lg transition font-mono flex items-center gap-1"
+            title="View keyboard hotkeys (?)"
+          >
+            <span>⌨️</span>
+            <span>Hotkeys</span>
+            <kbd className="text-[10px] bg-slate-800 px-1 rounded text-slate-500">?</kbd>
+          </button>
+
           <button
             onClick={handleOpenDigest}
             disabled={isExporting}
@@ -241,7 +307,7 @@ export const InboxDashboardView: React.FC = () => {
                 : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200'
             }`}
           >
-            {isInspectorOpen ? 'Hide AI Inspector' : 'Show AI Inspector'}
+            {isInspectorOpen ? 'Hide AI Inspector (x)' : 'Show AI Inspector (x)'}
           </button>
         </div>
       </div>
@@ -284,7 +350,20 @@ export const InboxDashboardView: React.FC = () => {
             {isLoadingThreads ? (
               <div className="text-xs text-slate-500 py-12 text-center">Loading mailbox threads...</div>
             ) : filteredThreads.length === 0 ? (
-              <div className="text-xs text-slate-500 py-12 text-center">No matching email threads.</div>
+              <div className="text-xs text-slate-500 py-12 text-center space-y-2">
+                <p>No matching email threads.</p>
+                <button
+                  onClick={async () => {
+                    try {
+                      await api.seedDemoData();
+                      fetchThreads();
+                    } catch {}
+                  }}
+                  className="text-[11px] text-emerald-400 underline hover:text-emerald-300"
+                >
+                  ⚡ Load Demo Mailbox
+                </button>
+              </div>
             ) : (
               filteredThreads.map((t) => {
                 const isSelected = selectedThread?.id === t.id;
@@ -298,7 +377,7 @@ export const InboxDashboardView: React.FC = () => {
                     }}
                     className={`p-3 rounded-lg cursor-pointer transition text-left ${
                       isSelected
-                        ? 'bg-indigo-950/40 border border-indigo-500/40'
+                        ? 'bg-indigo-950/40 border border-indigo-500/40 shadow-xs'
                         : 'hover:bg-slate-800/50 border border-transparent'
                     }`}
                   >
@@ -355,8 +434,9 @@ export const InboxDashboardView: React.FC = () => {
                     onClick={handleTriggerAnalysis}
                     disabled={isAnalyzing}
                     className="text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-3 py-1.5 rounded-lg transition disabled:opacity-50 shadow-sm"
+                    title="Run Gemini analysis (Hot-key: a)"
                   >
-                    {isAnalyzing ? 'Extracting...' : '✨ Analyze with Gemini'}
+                    {isAnalyzing ? 'Extracting...' : '✨ Analyze (a)'}
                   </button>
 
                   <button
@@ -370,8 +450,9 @@ export const InboxDashboardView: React.FC = () => {
                     }}
                     disabled={isDrafting}
                     className="text-xs bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 px-3 py-1.5 rounded-lg transition font-medium"
+                    title="Open AI Copilot (Hot-key: r)"
                   >
-                    {isDrafting ? 'Drafting...' : '✍️ Reply / Copilot'}
+                    {isDrafting ? 'Drafting...' : '✍️ Reply (r)'}
                   </button>
                 </div>
               </div>
@@ -406,8 +487,19 @@ export const InboxDashboardView: React.FC = () => {
               </div>
             </div>
           ) : (
-            <div className="flex-1 flex items-center justify-center text-xs text-slate-500 p-8 text-center">
-              Select an email thread from the left to read conversation content.
+            <div className="flex-1 flex flex-col items-center justify-center text-xs text-slate-500 p-8 text-center space-y-3">
+              <p>Select an email thread from the left or press <code>j</code> / <code>k</code> to navigate.</p>
+              <button
+                onClick={async () => {
+                  try {
+                    await api.seedDemoData();
+                    fetchThreads();
+                  } catch {}
+                }}
+                className="text-xs bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/40 px-3 py-1.5 rounded-lg transition"
+              >
+                ⚡ Load Sample Enterprise Mailbox
+              </button>
             </div>
           )}
         </div>
@@ -442,10 +534,10 @@ export const InboxDashboardView: React.FC = () => {
 
               <button
                 onClick={() => setIsInspectorOpen(false)}
-                title="Collapse Inspector"
-                className="text-slate-400 hover:text-slate-200 text-xs px-2 py-1 rounded hover:bg-slate-800 transition"
+                title="Collapse Inspector (x)"
+                className="text-slate-400 hover:text-slate-200 text-xs px-2 py-1 rounded hover:bg-slate-800 transition font-mono"
               >
-                ✕
+                ✕ (x)
               </button>
             </div>
 
@@ -465,7 +557,7 @@ export const InboxDashboardView: React.FC = () => {
                       disabled={isAnalyzing}
                       className="text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-4 py-2 rounded-lg transition disabled:opacity-50"
                     >
-                      {isAnalyzing ? 'Extracting...' : 'Analyze with Gemini'}
+                      {isAnalyzing ? 'Extracting...' : '✨ Analyze with Gemini (a)'}
                     </button>
                   </div>
                 )
@@ -485,6 +577,61 @@ export const InboxDashboardView: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Keyboard Shortcuts Cheat Sheet Modal */}
+      {showShortcutsModal && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-5 shadow-2xl space-y-4 animate-fadeIn">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-base">⌨️</span>
+                <h3 className="text-sm font-bold text-slate-100">Superhuman Keyboard Shortcuts</h3>
+              </div>
+              <button
+                onClick={() => setShowShortcutsModal(false)}
+                className="text-slate-400 hover:text-slate-200 text-xs px-2 py-1 rounded hover:bg-slate-800"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-2.5 text-xs">
+              <div className="flex items-center justify-between p-2 rounded bg-slate-950 border border-slate-800/80">
+                <span className="text-slate-300">Navigate down threads</span>
+                <kbd className="bg-slate-800 text-slate-200 font-mono px-2 py-0.5 rounded border border-slate-700">j</kbd>
+              </div>
+              <div className="flex items-center justify-between p-2 rounded bg-slate-950 border border-slate-800/80">
+                <span className="text-slate-300">Navigate up threads</span>
+                <kbd className="bg-slate-800 text-slate-200 font-mono px-2 py-0.5 rounded border border-slate-700">k</kbd>
+              </div>
+              <div className="flex items-center justify-between p-2 rounded bg-slate-950 border border-slate-800/80">
+                <span className="text-slate-300">Run Gemini AI analysis</span>
+                <kbd className="bg-slate-800 text-slate-200 font-mono px-2 py-0.5 rounded border border-slate-700">a</kbd>
+              </div>
+              <div className="flex items-center justify-between p-2 rounded bg-slate-950 border border-slate-800/80">
+                <span className="text-slate-300">Focus AI Copilot Reply</span>
+                <kbd className="bg-slate-800 text-slate-200 font-mono px-2 py-0.5 rounded border border-slate-700">r</kbd>
+              </div>
+              <div className="flex items-center justify-between p-2 rounded bg-slate-950 border border-slate-800/80">
+                <span className="text-slate-300">Toggle AI Inspector pane</span>
+                <kbd className="bg-slate-800 text-slate-200 font-mono px-2 py-0.5 rounded border border-slate-700">x</kbd>
+              </div>
+              <div className="flex items-center justify-between p-2 rounded bg-slate-950 border border-slate-800/80">
+                <span className="text-slate-300">Open Command Palette</span>
+                <kbd className="bg-slate-800 text-slate-200 font-mono px-2 py-0.5 rounded border border-slate-700">Ctrl+K</kbd>
+              </div>
+              <div className="flex items-center justify-between p-2 rounded bg-slate-950 border border-slate-800/80">
+                <span className="text-slate-300">Accept ghost autocomplete</span>
+                <kbd className="bg-slate-800 text-slate-200 font-mono px-2 py-0.5 rounded border border-slate-700">Tab</kbd>
+              </div>
+              <div className="flex items-center justify-between p-2 rounded bg-slate-950 border border-slate-800/80">
+                <span className="text-slate-300">Show keyboard shortcuts</span>
+                <kbd className="bg-slate-800 text-slate-200 font-mono px-2 py-0.5 rounded border border-slate-700">?</kbd>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Executive Digest Modal */}
       {showDigestModal && digestSummary && (

@@ -67,6 +67,27 @@ async def demo_login(
     }
 
 
+@router.post(
+    "/seed-demo",
+    status_code=status.HTTP_200_OK,
+)
+async def seed_user_demo(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Populates the current authenticated user's account with realistic enterprise demo data.
+    """
+    from backend.app.scripts.seed_demo_data import seed_demo_environment
+
+    seed_result = seed_demo_environment(db=db, target_user=current_user)
+    return {
+        "status": "success",
+        "message": "Loaded enterprise demo threads, invoices, and action graph.",
+        "details": seed_result,
+    }
+
+
 @router.get(
     "/google/login",
     status_code=status.HTTP_307_TEMPORARY_REDIRECT,

@@ -12,6 +12,10 @@ export const ActionGraphView: React.FC = () => {
   const [viewMode, setViewMode] = useState<'canvas' | 'grid'>('canvas');
   const [dependencyChain, setDependencyChain] = useState<DependencyChainResponse | null>(null);
 
+  // Node Filters
+  const [nodeTypeFilter, setNodeTypeFilter] = useState<string>('ALL');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+
   const fetchGraphData = async () => {
     try {
       setIsLoading(true);
@@ -54,6 +58,26 @@ export const ActionGraphView: React.FC = () => {
     }
   };
 
+  // Filter nodes by selected type and search query
+  const filteredNodes = nodes.filter((n) => {
+    const matchesSearch =
+      !searchQuery ||
+      n.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      n.node_type.toLowerCase().includes(searchQuery.toLowerCase());
+
+    if (!matchesSearch) return false;
+
+    if (nodeTypeFilter === 'ALL') return true;
+    return n.node_type === nodeTypeFilter;
+  });
+
+  const visibleNodeIds = new Set(filteredNodes.map((n) => n.id));
+
+  // Edges are visible only if both source and target are visible
+  const filteredEdges = edges.filter(
+    (e) => visibleNodeIds.has(e.source_node_id) && visibleNodeIds.has(e.target_node_id)
+  );
+
   return (
     <div className="space-y-6 font-sans">
       <div className="flex flex-wrap items-center justify-between border-b border-slate-800 pb-4 gap-3">
@@ -88,18 +112,58 @@ export const ActionGraphView: React.FC = () => {
         </div>
       </div>
 
+      {/* Filter Toolbar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-900 border border-slate-800 p-3 rounded-xl">
+        <div className="flex flex-wrap items-center gap-1.5 text-xs">
+          <span className="text-slate-400 font-semibold mr-1">Filter Nodes:</span>
+          {[
+            { id: 'ALL', label: 'All Nodes' },
+            { id: 'ACTION_ITEM', label: '⚡ Actions' },
+            { id: 'EMAIL_THREAD', label: '📬 Threads' },
+            { id: 'DOCUMENT', label: '📄 Documents' },
+            { id: 'DECISION', label: '⚖️ Decisions' },
+            { id: 'RISK', label: '⚠️ Risks' },
+          ].map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => setNodeTypeFilter(cat.id)}
+              className={`px-2.5 py-1 rounded-md font-medium transition ${
+                nodeTypeFilter === cat.id
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-slate-950 text-slate-400 hover:text-slate-200 border border-slate-800'
+              }`}
+            >
+              {cat.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            placeholder="Search nodes..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="bg-slate-950 border border-slate-800 rounded-lg text-xs px-3 py-1 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 w-44"
+          />
+          <span className="text-[11px] text-slate-500 font-mono">
+            {filteredNodes.length}/{nodes.length} nodes
+          </span>
+        </div>
+      </div>
+
       {/* Visual Canvas Mode */}
       {viewMode === 'canvas' ? (
         <InteractiveActionGraph
-          nodes={nodes}
-          edges={edges}
+          nodes={filteredNodes}
+          edges={filteredEdges}
           onNodeClick={handleNodeClick}
           selectedNodeId={selectedNodeId}
         />
       ) : (
         <ActionGraphWidget
-          nodes={nodes}
-          edges={edges}
+          nodes={filteredNodes}
+          edges={filteredEdges}
           onNodeClick={handleNodeClick}
           onRebuildGraph={handleRebuildGraph}
           isLoading={isLoading}

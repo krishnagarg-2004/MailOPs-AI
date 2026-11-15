@@ -12,6 +12,7 @@ export const EmailAnalysisCard: React.FC<EmailAnalysisCardProps> = ({
   onActionStatusChange,
 }) => {
   const [showEvidence, setShowEvidence] = useState(false);
+  const [showExplainability, setShowExplainability] = useState(false);
   const [schedulingId, setSchedulingId] = useState<string | null>(null);
   const [scheduledLinks, setScheduledLinks] = useState<Record<string, string>>({});
 
@@ -57,6 +58,14 @@ export const EmailAnalysisCard: React.FC<EmailAnalysisCardProps> = ({
     }
   };
 
+  const getConfidenceLevel = (score: number) => {
+    if (score >= 0.9) return { label: 'High Confidence', color: 'text-emerald-400', bg: 'bg-emerald-500/20 border-emerald-500/30' };
+    if (score >= 0.75) return { label: 'Moderate Confidence', color: 'text-amber-400', bg: 'bg-amber-500/20 border-amber-500/30' };
+    return { label: 'Review Suggested', color: 'text-rose-400', bg: 'bg-rose-500/20 border-rose-500/30' };
+  };
+
+  const conf = getConfidenceLevel(analysis.confidence_score);
+
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg space-y-4 font-sans text-slate-100">
       {/* Header Bar */}
@@ -69,12 +78,50 @@ export const EmailAnalysisCard: React.FC<EmailAnalysisCardProps> = ({
           <span className={`text-xs px-2 py-0.5 rounded border ${getPriorityBadge(analysis.priority)} font-medium`}>
             {analysis.priority}
           </span>
+          {analysis.sentiment && (
+            <span className="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 font-mono">
+              {analysis.sentiment === 'NEGATIVE' ? '⚠️ Negative' : analysis.sentiment === 'POSITIVE' ? '✅ Positive' : '⚖️ Neutral'}
+            </span>
+          )}
         </div>
-        <div className="flex items-center gap-3 text-xs text-slate-400">
-          <span>Confidence: <strong className="text-slate-200">{(analysis.confidence_score * 100).toFixed(0)}%</strong></span>
-          <span>Model: <code className="text-slate-300 font-mono text-[11px]">{analysis.model_name}</code></span>
+
+        {/* Visual Confidence Gauge Pill */}
+        <div className="flex items-center gap-2 text-xs">
+          <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border ${conf.bg}`}>
+            <span className={`w-2 h-2 rounded-full ${analysis.confidence_score >= 0.9 ? 'bg-emerald-400' : analysis.confidence_score >= 0.75 ? 'bg-amber-400' : 'bg-rose-400'} animate-pulse`} />
+            <span className={`font-semibold ${conf.color}`}>
+              {(analysis.confidence_score * 100).toFixed(0)}%
+            </span>
+            <span className="text-slate-400 text-[10px]">({conf.label})</span>
+          </div>
+          <button
+            onClick={() => setShowExplainability(!showExplainability)}
+            className="text-[11px] text-indigo-400 hover:text-indigo-300 underline transition ml-1"
+          >
+            {showExplainability ? 'Hide Explainability' : 'Explainability'}
+          </button>
         </div>
       </div>
+
+      {/* AI Explainability & Verification Drawer */}
+      {showExplainability && (
+        <div className="bg-slate-950 p-3.5 rounded-lg border border-indigo-500/30 space-y-2 text-xs animate-fadeIn">
+          <div className="flex items-center justify-between text-indigo-300 font-semibold border-b border-slate-800 pb-1.5">
+            <span>Model Explainability Breakdown</span>
+            <code className="text-[10px] text-slate-400 font-mono">{analysis.model_name} (v{analysis.prompt_version})</code>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-slate-300 pt-1">
+            <div>
+              <strong className="text-slate-400 block mb-0.5">Intent Reasoning:</strong>
+              <span>Classified as <code>{analysis.intent}</code> based on explicit operational requests in text.</span>
+            </div>
+            <div>
+              <strong className="text-slate-400 block mb-0.5">Priority Calculation:</strong>
+              <span>Weighted as <code>{analysis.priority}</code> based on detected deadlines and SLA commitments.</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Executive Summary */}
       <div>
@@ -159,13 +206,13 @@ export const EmailAnalysisCard: React.FC<EmailAnalysisCardProps> = ({
                       </button>
                       <button
                         onClick={() => onActionStatusChange && onActionStatusChange(item.id, 'DISMISSED')}
-                        className="text-[11px] px-2 py-1 rounded bg-slate-800 text-slate-400 hover:bg-slate-700 transition"
+                        className="text-[11px] px-2.5 py-1 rounded bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-700 font-medium transition"
                       >
                         Dismiss
                       </button>
                     </>
                   ) : (
-                    <span className="text-[11px] font-medium px-2 py-0.5 rounded bg-slate-800 text-slate-300">
+                    <span className="text-[11px] px-2 py-0.5 rounded font-mono font-medium border bg-slate-800 text-slate-300 border-slate-700">
                       {item.status}
                     </span>
                   )}
@@ -176,30 +223,31 @@ export const EmailAnalysisCard: React.FC<EmailAnalysisCardProps> = ({
         </div>
       )}
 
-      {/* Provenance / Evidence Accordion */}
-      <div className="pt-2 border-t border-slate-800/80">
-        <button
-          onClick={() => setShowEvidence(!showEvidence)}
-          className="text-xs text-sky-400 hover:text-sky-300 flex items-center gap-1 font-medium"
-        >
-          <span>{showEvidence ? '▼ Hide Evidence Snippets' : '▶ Show Explainability Evidence'}</span>
-        </button>
-
-        {showEvidence && (
-          <div className="mt-2 space-y-2 text-xs bg-slate-950 p-3 rounded-lg border border-slate-800 font-mono text-slate-300">
-            {analysis.extracted_items.map((item, idx) => (
-              <div key={idx} className="border-b border-slate-900 pb-2 last:border-0 last:pb-0">
-                <span className="text-slate-400 font-sans block text-[11px] mb-0.5 font-semibold">
-                  [{item.item_type}] {item.description}:
-                </span>
-                <p className="bg-slate-900 p-2 rounded text-emerald-300/90 text-[11px] italic">
-                  "{item.evidence_snippet || 'No snippet provided'}"
-                </p>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      {/* Supporting Evidence Drawer Toggle */}
+      {analysis.extracted_items && analysis.extracted_items.some((i) => i.evidence_snippet) && (
+        <div className="border-t border-slate-800 pt-3">
+          <button
+            onClick={() => setShowEvidence(!showEvidence)}
+            className="text-xs text-indigo-400 hover:text-indigo-300 font-medium flex items-center gap-1 transition"
+          >
+            <span>{showEvidence ? '▼ Hide' : '▶ Show'} Grounding Evidence Snippets</span>
+          </button>
+          {showEvidence && (
+            <div className="mt-2 space-y-2 bg-slate-950 p-3 rounded-lg border border-slate-800 text-xs">
+              {analysis.extracted_items.map((item: ExtractedActionItem) =>
+                item.evidence_snippet ? (
+                  <div key={`ev-${item.id}`} className="space-y-0.5 border-b border-slate-900 pb-1.5 last:border-b-0">
+                    <span className="text-[11px] font-semibold text-slate-300">{item.description}:</span>
+                    <blockquote className="text-slate-400 italic border-l-2 border-indigo-500/50 pl-2">
+                      "{item.evidence_snippet}"
+                    </blockquote>
+                  </div>
+                ) : null
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

@@ -38,9 +38,14 @@ DEMO_USER_NAME = "Alex Morgan (VP of Product Operations)"
 DEMO_USER_AVATAR = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150"
 
 
-def seed_demo_environment(db: Session | None = None, include_embeddings: bool = True) -> dict[str, str | int]:
+def seed_demo_environment(
+    db: Session | None = None,
+    include_embeddings: bool = True,
+    target_user: User | None = None,
+) -> dict[str, str | int]:
     """
     Seeds comprehensive realistic enterprise mock data into the database.
+    If target_user is provided, seeds data for that specific user.
     Returns summary metrics.
     """
     should_close = False
@@ -51,18 +56,21 @@ def seed_demo_environment(db: Session | None = None, include_embeddings: bool = 
     try:
         now = datetime.now(timezone.utc)
 
-        # 1. Create or retrieve demo user
-        user = db.execute(select(User).where(User.email == DEMO_USER_EMAIL)).scalar_one_or_none()
-        if not user:
-            user = User(
-                email=DEMO_USER_EMAIL,
-                full_name=DEMO_USER_NAME,
-                avatar_url=DEMO_USER_AVATAR,
-                is_active=True,
-                is_superuser=False,
-            )
-            db.add(user)
-            db.flush()
+        # 1. Create or retrieve user
+        if target_user:
+            user = target_user
+        else:
+            user = db.execute(select(User).where(User.email == DEMO_USER_EMAIL)).scalar_one_or_none()
+            if not user:
+                user = User(
+                    email=DEMO_USER_EMAIL,
+                    full_name=DEMO_USER_NAME,
+                    avatar_url=DEMO_USER_AVATAR,
+                    is_active=True,
+                    is_superuser=False,
+                )
+                db.add(user)
+                db.flush()
 
         # 2. Add or update linked OAuth account
         oauth = db.execute(select(OAuthAccount).where(OAuthAccount.user_id == user.id)).scalar_one_or_none()

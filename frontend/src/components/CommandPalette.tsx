@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { api } from '../services/api';
 
 interface CommandItem {
   id: string;
@@ -79,6 +80,66 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
           navigate('/dashboard');
         }
         onClose();
+      },
+    },
+    {
+      id: 'action-seed-demo',
+      title: '⚡ Seed Realistic Enterprise Demo Data',
+      description: 'Populate mailbox with simulated customer escalations, invoices, and graph dependencies',
+      category: 'Actions',
+      icon: '🚀',
+      action: async () => {
+        onClose();
+        if (confirm('Load realistic enterprise demo threads, invoices, and graph relationships?')) {
+          try {
+            const res = await api.seedDemoData();
+            alert(res.message || 'Demo data loaded successfully!');
+            window.location.reload();
+          } catch (e: any) {
+            alert(`Demo seed failed: ${e.message}`);
+          }
+        }
+      },
+    },
+    {
+      id: 'action-export-digest-csv',
+      title: '📊 Export Executive Digest (CSV)',
+      description: 'Download spreadsheet report of pending actions, business risks, and financial totals',
+      category: 'Actions',
+      icon: '📥',
+      action: async () => {
+        onClose();
+        try {
+          await api.downloadDigestExport('csv');
+        } catch (e: any) {
+          alert(`Export failed: ${e.message}`);
+        }
+      },
+    },
+    {
+      id: 'action-export-digest-md',
+      title: '📝 Export Executive Digest (Markdown)',
+      description: 'Download formatted markdown executive briefing report',
+      category: 'Actions',
+      icon: '📋',
+      action: async () => {
+        onClose();
+        try {
+          await api.downloadDigestExport('markdown');
+        } catch (e: any) {
+          alert(`Export failed: ${e.message}`);
+        }
+      },
+    },
+    {
+      id: 'action-shortcuts-help',
+      title: '⌨️ Keyboard Shortcuts Help',
+      description: 'View Superhuman-style navigation hotkeys (j/k, r, a, x, ?)',
+      category: 'Actions',
+      icon: '⌨️',
+      action: () => {
+        onClose();
+        window.dispatchEvent(new CustomEvent('open-keyboard-shortcuts'));
       },
     },
   ];

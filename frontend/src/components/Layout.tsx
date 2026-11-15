@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { api } from '../services/api';
 import { GmailSyncWidget } from './GmailSyncWidget';
 import { CommandPalette } from './CommandPalette';
 
@@ -51,6 +52,24 @@ export const Layout: React.FC = () => {
 
         {/* User Controls */}
         <div className="flex items-center gap-3">
+          <button
+            onClick={async () => {
+              if (confirm('Load realistic enterprise demo threads, invoices, and graph dependencies?')) {
+                try {
+                  const res = await api.seedDemoData();
+                  alert(res.message || 'Demo data successfully loaded!');
+                  window.location.reload();
+                } catch (e: any) {
+                  alert(`Demo seed failed: ${e.message}`);
+                }
+              }
+            }}
+            className="flex items-center gap-1.5 bg-gradient-to-r from-emerald-600/30 to-teal-600/30 hover:from-emerald-600/50 hover:to-teal-600/50 text-emerald-300 border border-emerald-500/40 text-xs px-2.5 py-1.5 rounded-lg transition font-medium"
+            title="Populate account with sample enterprise data"
+          >
+            <span>⚡ Seed Demo</span>
+          </button>
+
           <button
             onClick={() => setIsCommandPaletteOpen(true)}
             className="flex items-center gap-2 bg-slate-950 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-800 text-xs px-3 py-1.5 rounded-lg transition"

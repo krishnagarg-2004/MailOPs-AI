@@ -39,6 +39,42 @@ The platform capabilities include:
 
 ---
 
+## 🚀 Quickstart with Docker Compose (One Command)
+
+You can launch the entire MailOps AI application stack (PostgreSQL with `pgvector`, FastAPI backend with auto-migrations, and React frontend) with a single command:
+
+```bash
+docker compose up
+```
+
+Once running, access the services:
+- **Frontend Application Shell:** [http://localhost:3000](http://localhost:3000)
+- **FastAPI REST API:** [http://localhost:8000](http://localhost:8000)
+- **Interactive Swagger API Docs:** [http://localhost:8000/docs](http://localhost:8000/docs)
+- **Prometheus Health Telemetry:** [http://localhost:8000/api/v1/webhooks/metrics](http://localhost:8000/api/v1/webhooks/metrics)
+
+> **💡 Instant Demo Mode:** You do **not** need a live Google OAuth setup or Gemini API key to evaluate the platform. The system defaults to safe mock provider mode and provides a **"⚡ Seed Demo"** button in the header bar and login page to immediately load realistic enterprise escalation threads, multi-page invoices, and action graph dependencies.
+
+---
+
+## 💾 Why is a Database Required in MailOps AI?
+
+MailOps AI uses **PostgreSQL 16 with the `pgvector` extension** as an essential architectural foundation. The database is required for:
+
+1. **High-Dimensional Vector Embeddings (`pgvector`):**
+   - Email text, attachment paragraphs, and document chunks are converted into 768-dimensional dense vector embeddings.
+   - Performing cosine distance (`<=>`) vector similarity searches for Retrieval-Augmented Generation (RAG) and hybrid search requires pgvector indexing inside PostgreSQL.
+2. **Relational Action Graph & Dependency Mapping:**
+   - Operational tasks have blocking relationships (e.g. *Invoice Payment* depends on *Purchase Order Approval*). These are modeled as relational nodes and edges (`graph_nodes`, `graph_edges`), allowing breadth-first search (BFS) graph traversal across database keys.
+3. **Enterprise Compliance & Tamper-Evident Audit Logs:**
+   - Every human action (approving drafts, confirming tasks, modifying permissions) is committed to an immutable append-only `audit_logs` table for SOC2/ISO compliance.
+4. **Offline Resilience & Zero-Latency Caching:**
+   - Inbound emails, OAuth tokens, user sessions, and heavy multi-page OCR extractions are cached in PostgreSQL so the application loads instantly without repeatedly polling Google APIs or re-running OCR.
+5. **Zero Setup via Docker:**
+   - You do **not** need to install or configure PostgreSQL manually. When you run `docker compose up`, Docker automatically pulls `pgvector/pgvector:pg16`, configures the volume, and Alembic applies all migrations on startup.
+
+---
+
 # 1. Project Identity
 
 ## Working Title
@@ -437,9 +473,9 @@ The application provides a unified operational overview of:
 
 ---
 
-# Advanced Enterprise Platform Capabilities (Phases 6 – 9)
+# Advanced Enterprise Platform Capabilities (Phases 6 – 10)
 
-In addition to core single-mailbox processing, MailOps AI includes an advanced enterprise suite across four key dimensions:
+In addition to core single-mailbox processing, MailOps AI includes an advanced enterprise suite across five key dimensions:
 
 ### 1. Advanced Retrieval, Re-Ranking & Agentic Tools (Phase 6)
 - **Cross-Encoder Precision Re-Ranking (`CrossEncoderReranker`):** Integrates lexical-semantic cross-attention scoring. Doubles the candidate retrieval pool before LLM synthesis and re-ranks top candidates by token proximity and density.
@@ -466,6 +502,14 @@ In addition to core single-mailbox processing, MailOps AI includes an advanced e
   - *Pane 3 (Right):* Collapsible AI Work Intelligence Inspector & Copilot.
 - **Rich-Text AI Copilot (`ReplyDraftWidget`):** Formatting toolbar (bold, italic, lists, quotes, code), instant context injection chips, and inline **Tab-to-accept ghost text autocomplete**.
 - **Executive Intelligence Digest:** Summary dashboard and multi-format downloadable reports (`GET /api/v1/digest/export?format=csv|markdown|json`) capturing high-level KPIs, open risk registries, and financial totals.
+
+### 5. Power-User Experience, Instant Demo Seeding & Enterprise Polish (Phase 10)
+- **Superhuman-Style Keyboard Hotkeys:** Rapid navigation with `j`/`k` (or arrows), `a` (AI extraction), `r` (reply copilot), `x` (toggle inspector), and `?` (shortcuts cheat sheet modal).
+- **1-Click Demo Mailbox Seeding:** `POST /api/v1/auth/seed-demo` endpoint and UI button in header/empty state to instantly populate rich enterprise threads and relationships without needing OAuth.
+- **Action-Oriented Command Palette:** Extended `CommandPalette.tsx` (`Ctrl+K`) with 1-click triggers for demo seeding, CSV/Markdown digest exports, and shortcuts guide.
+- **Document Search & Plaintext OCR Exporter:** Category filter pills (PDF, Image, DOCX), search input, and 1-click `.txt` OCR plaintext exporter in `DocumentsView.tsx`.
+- **Action Graph Category Filters:** Interactive node-type filter pills and search bar in `ActionGraphView.tsx`.
+- **AI Confidence Gauge & Explainability Drawer:** Visual circular confidence gauge (`96% High Confidence`) with rationale breakdown in `EmailAnalysisCard.tsx`.
 
 ---
 

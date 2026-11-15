@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM python:3.14-slim
+FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -22,15 +22,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-# Install Python dependencies first (better layer caching)
+# Copy dependency spec and application code
 COPY backend/pyproject.toml ./
-RUN pip install --upgrade pip \
-    && pip install -e .[dev]
-
-# Copy application code
 COPY backend/ ./backend/
 COPY alembic.ini ./
 COPY database ./database
+
+RUN pip install --upgrade pip \
+    && pip install -e .[dev]
 
 # Backend listens on port 8000
 EXPOSE 8000

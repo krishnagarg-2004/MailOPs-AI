@@ -1,10 +1,23 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { GmailSyncWidget } from './GmailSyncWidget';
+import { CommandPalette } from './CommandPalette';
 
 export const Layout: React.FC = () => {
   const { user, logout } = useAuth();
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsCommandPaletteOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const navItems = [
     { path: '/dashboard', label: 'Inbox & AI Reply', icon: '📬' },
@@ -38,6 +51,14 @@ export const Layout: React.FC = () => {
 
         {/* User Controls */}
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => setIsCommandPaletteOpen(true)}
+            className="flex items-center gap-2 bg-slate-950 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-800 text-xs px-3 py-1.5 rounded-lg transition"
+          >
+            <span>Quick Jump</span>
+            <kbd className="text-[10px] bg-slate-800 px-1.5 py-0.5 rounded font-mono text-slate-400">Ctrl+K</kbd>
+          </button>
+
           <div className="text-right hidden sm:block">
             <div className="text-xs font-semibold text-slate-200">
               {user?.full_name || 'User Account'}
@@ -103,6 +124,12 @@ export const Layout: React.FC = () => {
 
         </main>
       </div>
+
+      {/* Global Command Palette (Cmd+K) */}
+      <CommandPalette
+        isOpen={isCommandPaletteOpen}
+        onClose={() => setIsCommandPaletteOpen(false)}
+      />
     </div>
   );
 };

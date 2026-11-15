@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ActionGraphWidget } from '../components/ActionGraphWidget';
+import { InteractiveActionGraph } from '../components/InteractiveActionGraph';
 import { api } from '../services/api';
 import { DependencyChainResponse, GraphEdgeResult, GraphNodeResult } from '../types/graph';
 
@@ -7,6 +8,8 @@ export const ActionGraphView: React.FC = () => {
   const [nodes, setNodes] = useState<GraphNodeResult[]>([]);
   const [edges, setEdges] = useState<GraphEdgeResult[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'canvas' | 'grid'>('canvas');
   const [dependencyChain, setDependencyChain] = useState<DependencyChainResponse | null>(null);
 
   const fetchGraphData = async () => {
@@ -38,6 +41,7 @@ export const ActionGraphView: React.FC = () => {
   };
 
   const handleNodeClick = async (node: GraphNodeResult) => {
+    setSelectedNodeId(node.id);
     if (node.node_type === 'ACTION_ITEM' && node.entity_reference_id) {
       try {
         const chain = await api.getGraphDependencies(node.entity_reference_id);
@@ -52,21 +56,55 @@ export const ActionGraphView: React.FC = () => {
 
   return (
     <div className="space-y-6 font-sans">
-      <div className="border-b border-slate-800 pb-4">
-        <h2 className="text-lg font-bold text-slate-100">Action Graph & Relationship Workspace</h2>
-        <p className="text-xs text-slate-400">
-          Inspect relational dependencies across emails, actions, invoices, contracts, and people with BFS traversal.
-        </p>
+      <div className="flex flex-wrap items-center justify-between border-b border-slate-800 pb-4 gap-3">
+        <div>
+          <h2 className="text-lg font-bold text-slate-100">Action Graph & Relationship Workspace</h2>
+          <p className="text-xs text-slate-400">
+            Inspect relational dependencies across emails, actions, invoices, contracts, and people with BFS traversal.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 p-1 rounded-lg text-xs">
+          <button
+            onClick={() => setViewMode('canvas')}
+            className={`px-3 py-1 rounded-md font-medium transition ${
+              viewMode === 'canvas'
+                ? 'bg-sky-500/20 text-sky-300 border border-sky-500/30'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            🎨 Interactive Canvas
+          </button>
+          <button
+            onClick={() => setViewMode('grid')}
+            className={`px-3 py-1 rounded-md font-medium transition ${
+              viewMode === 'grid'
+                ? 'bg-sky-500/20 text-sky-300 border border-sky-500/30'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            📋 Grid Cards
+          </button>
+        </div>
       </div>
 
-      {/* Main Action Graph Widget */}
-      <ActionGraphWidget
-        nodes={nodes}
-        edges={edges}
-        onNodeClick={handleNodeClick}
-        onRebuildGraph={handleRebuildGraph}
-        isLoading={isLoading}
-      />
+      {/* Visual Canvas Mode */}
+      {viewMode === 'canvas' ? (
+        <InteractiveActionGraph
+          nodes={nodes}
+          edges={edges}
+          onNodeClick={handleNodeClick}
+          selectedNodeId={selectedNodeId}
+        />
+      ) : (
+        <ActionGraphWidget
+          nodes={nodes}
+          edges={edges}
+          onNodeClick={handleNodeClick}
+          onRebuildGraph={handleRebuildGraph}
+          isLoading={isLoading}
+        />
+      )}
 
       {/* BFS Dependency Chain Resolution Drawer */}
       {dependencyChain && (

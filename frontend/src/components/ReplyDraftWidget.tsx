@@ -85,45 +85,42 @@ export const ReplyDraftWidget: React.FC<ReplyDraftWidgetProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
 
           <label className="text-xs font-medium text-slate-400">
-            Tone:
+            Tone Preset:
           </label>
 
-          <select
-            value={tone}
-            onChange={(e) => {
-              setTone(e.target.value as ToneEnum);
-              setIsEditing(true);
-            }}
-            className="bg-slate-950 border border-slate-800 rounded text-xs px-2.5 py-1 text-slate-200 focus:outline-none"
-          >
-            <option value="PROFESSIONAL">
-              Professional
-            </option>
-
-            <option value="CONCISE">
-              Concise
-            </option>
-
-            <option value="URGENT">
-              Urgent
-            </option>
-
-            <option value="EMPATHETIC">
-              Empathetic
-            </option>
-          </select>
+          <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800">
+            {(['PROFESSIONAL', 'CONCISE', 'URGENT', 'EMPATHETIC'] as ToneEnum[]).map((t) => (
+              <button
+                key={t}
+                onClick={() => {
+                  setTone(t);
+                  if (onGenerateDraft) {
+                    onGenerateDraft(t);
+                  }
+                }}
+                disabled={isLoading}
+                className={`text-[11px] px-2.5 py-1 rounded-md font-medium transition ${
+                  tone === t
+                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-xs'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                }`}
+              >
+                {t.charAt(0) + t.slice(1).toLowerCase()}
+              </button>
+            ))}
+          </div>
 
           <button
             onClick={handleGenerate}
             disabled={isLoading}
-            className="text-xs bg-emerald-600 text-white px-3 py-1 rounded hover:bg-emerald-500 transition font-medium disabled:opacity-50"
+            className="text-xs bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-1.5 rounded-lg transition font-medium disabled:opacity-50 shadow-sm ml-1"
           >
             {isLoading
               ? 'Drafting...'
-              : 'Generate AI Draft'}
+              : '⚡ Regenerate'}
           </button>
 
         </div>

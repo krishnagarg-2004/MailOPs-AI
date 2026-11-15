@@ -76,7 +76,9 @@ class Settings(BaseSettings):
     def SQLALCHEMY_DATABASE_URI(self) -> str:
         """Construct SQLAlchemy database connection URI."""
         if self.DATABASE_URL:
-            # Normalize driver if user supplied standard postgresql://
+            # Normalize driver if external provider supplied postgres:// (Render/Neon/Supabase) or postgresql://
+            if self.DATABASE_URL.startswith("postgres://"):
+                return self.DATABASE_URL.replace("postgres://", "postgresql+psycopg://", 1)
             if self.DATABASE_URL.startswith("postgresql://"):
                 return self.DATABASE_URL.replace("postgresql://", "postgresql+psycopg://", 1)
             return self.DATABASE_URL

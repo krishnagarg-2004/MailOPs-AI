@@ -42,6 +42,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     window.location.href = url;
   };
 
+  const loginDemo = async () => {
+    try {
+      setIsLoading(true);
+      const res = await fetch(`${API_BASE_URL}/api/v1/auth/demo-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+      });
+      if (res.ok) {
+        await checkAuth();
+        window.location.href = '/dashboard';
+      }
+    } catch {
+      // fallback
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const logout = async () => {
     try {
       await fetch(`${API_BASE_URL}/api/v1/auth/logout`, {
@@ -61,6 +80,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAuthenticated: !!user,
         isLoading,
         login,
+        loginDemo,
         logout,
         checkAuth,
       }}

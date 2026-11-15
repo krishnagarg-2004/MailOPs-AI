@@ -3,7 +3,7 @@ import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export const Login: React.FC = () => {
-  const { login, isAuthenticated } = useAuth();
+  const { login, loginDemo, isAuthenticated, isLoading } = useAuth();
 
   if (isAuthenticated) {
     return <Navigate to="/dashboard" replace />;
@@ -54,6 +54,21 @@ export const Login: React.FC = () => {
             />
           </svg>
           Sign in with Google
+        </button>
+
+        <div className="relative flex py-1 items-center">
+          <div className="flex-grow border-t border-slate-800"></div>
+          <span className="flex-shrink mx-3 text-xs uppercase tracking-wider text-slate-500 font-medium">Or explore instantly</span>
+          <div className="flex-grow border-t border-slate-800"></div>
+        </div>
+
+        <button
+          onClick={() => loginDemo()}
+          disabled={isLoading}
+          className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-slate-800 hover:bg-slate-700/80 border border-slate-700 text-slate-200 font-semibold text-sm rounded-xl transition duration-200 shadow-sm"
+        >
+          <span className="text-amber-400">⚡</span>
+          Launch Interactive Demo Showcase (No Auth Required)
         </button>
       </div>
     </div>

@@ -32,6 +32,41 @@ router = APIRouter(
 OAUTH_STATE_COOKIE = "mailops_oauth_state"
 
 
+@router.post(
+    "/demo-login",
+    status_code=status.HTTP_200_OK,
+)
+async def demo_login(
+    response: Response,
+    db: Session = Depends(get_db),
+):
+    """
+    One-click demo login for evaluators and showcase presentations.
+    Seeds rich enterprise mock data and establishes an authenticated session.
+    """
+    from backend.app.scripts.seed_demo_data import seed_demo_environment
+
+    seed_result = seed_demo_environment(db=db)
+    session_token = str(seed_result["session_token"])
+
+    # Set authenticated session cookie
+    response.set_cookie(
+        key=settings.SESSION_COOKIE_NAME,
+        value=session_token,
+        httponly=True,
+        samesite="lax",
+        secure=settings.SESSION_COOKIE_SECURE,
+        max_age=settings.SESSION_EXPIRE_HOURS * 3600,
+        path="/",
+    )
+
+    return {
+        "status": "authenticated",
+        "demo_user": seed_result["demo_user"],
+        "message": "Demo environment active with realistic enterprise data.",
+    }
+
+
 @router.get(
     "/google/login",
     status_code=status.HTTP_307_TEMPORARY_REDIRECT,

@@ -2,9 +2,9 @@
 
 > **Project:** EnterpriseAIMailOPs_MIPRO  
 > **Type:** B.Tech College Minor Project / Resume & Placement Portfolio Project  
-> **Architecture:** Modular Monolith  
-> **Status:** Active Development  
-> **Current Progress:** See [`PROJECT_STATUS.md`](PROJECT_STATUS.md)
+> **Architecture:** Modular Monolith with Distributed Worker Queue  
+> **Status:** Production-Ready (Phases 1 – 9 Complete)  
+> **Current Progress:** See [`PROJECT_STATUS.md`](PROJECT_STATUS.md) and [`future_phases_roadmap.md`](future_phases_roadmap.md)
 
 ---
 
@@ -14,26 +14,28 @@ MailOps AI is an AI-powered enterprise work-intelligence platform that connects 
 
 Modern enterprise work is often spread across emails, threads, attachments, invoices, contracts, and other unstructured documents. Important decisions, tasks, deadlines, risks, and commitments can become difficult to track and retrieve.
 
-MailOps AI is designed to transform this fragmented information into a structured and explainable intelligence layer.
+MailOps AI is designed to transform this fragmented information into a structured, explainable, and collaborative intelligence layer.
 
-The platform can:
+The platform capabilities include:
 
-- Synchronize Gmail messages, threads, metadata, and attachments.
-- Analyze emails using AI.
-- Generate executive summaries.
-- Classify intent, priority, urgency, and sentiment.
-- Extract action items, decisions, deadlines, risks, and assigned owners.
-- Process PDFs, DOCX files, PNG, and JPEG images.
-- Extract structured information from business documents.
-- Perform semantic and hybrid search.
-- Answer questions using Retrieval-Augmented Generation (RAG).
-- Build relationships between emails, documents, decisions, actions, and deadlines.
-- Generate context-aware AI email replies.
-- Allow users to review and edit AI-generated responses.
-- Create and manage Gmail drafts.
-- Require explicit human approval before consequential actions.
-
-MailOps AI follows a strict **Human-in-the-Loop** design for consequential actions.
+- **Gmail Synchronization:** Synchronize Gmail messages, threads, metadata, and attachments via Google OAuth 2.0.
+- **Real-Time Push Ingestion:** Google Cloud Pub/Sub webhooks for instant zero-latency inbound email processing.
+- **Deep AI Analysis:** Executive summarization, intent classification, priority, urgency, and sentiment scoring using Google Gemini.
+- **Action, Decision & Risk Extraction:** Automated identification of granular tasks, deadlines, assigned owners, and operational risks.
+- **Cross-Encoder Precision Re-Ranking:** Advanced lexical-semantic re-ranking for dense context retrieval before LLM synthesis.
+- **Agentic Multi-Step Reasoning & Tools:** Dynamic tool dispatcher for historical invoice queries and action dependency graph resolution.
+- **1-Click Google Calendar Action Sync:** Direct deadline scheduling to Google Calendar with automatic action confirmation.
+- **Document Intelligence & OCR:** Multi-layer text extraction for PDF, DOCX, PNG, and JPEG documents with Tesseract OCR fallback.
+- **Semantic & Hybrid Search:** Fast vector similarity search powered by PostgreSQL and `pgvector` alongside keyword filtering.
+- **Enterprise Action Graph:** Relational dependency mapping connecting emails, attachments, decisions, and blocking action items.
+- **Multi-Tenancy & RBAC:** Organization workspaces with granular role-based permissions (`ADMIN`, `MANAGER`, `ANALYST`, `VIEWER`).
+- **Tamper-Evident Compliance Audit Logs:** Append-only regulatory audit logging for all enterprise events and actions.
+- **Distributed Worker Task Queue:** In-process asynchronous task queue with concurrency management, exponential backoff retries, and dead-letter queue (DLQ).
+- **Health Telemetry & Prometheus Metrics:** Automated `/api/v1/webhooks/metrics` endpoint serving real-time queue depths, task throughput, and uptime.
+- **Superhuman-Style 3-Pane Desktop UI:** Ergonomic thread navigator, conversation history reader, and collapsible AI Work Intelligence Inspector.
+- **AI Copilot Reply Workspace:** Rich-text reply drafting with formatting toolbar, quick-prompt chips, and Tab-to-accept ghost autocomplete.
+- **Executive Intelligence Digest:** Cross-mailbox summary reports and downloadable CSV/Markdown exports for leadership teams.
+- **Strict Human-in-the-Loop Safeguards:** Explicit human consent required before any consequential email sending or drafting.
 
 ---
 
@@ -432,6 +434,38 @@ The application provides a unified operational overview of:
 - Recent AI extractions.
 - Document processing activity.
 - Processing statistics.
+
+---
+
+# Advanced Enterprise Platform Capabilities (Phases 6 – 9)
+
+In addition to core single-mailbox processing, MailOps AI includes an advanced enterprise suite across four key dimensions:
+
+### 1. Advanced Retrieval, Re-Ranking & Agentic Tools (Phase 6)
+- **Cross-Encoder Precision Re-Ranking (`CrossEncoderReranker`):** Integrates lexical-semantic cross-attention scoring. Doubles the candidate retrieval pool before LLM synthesis and re-ranks top candidates by token proximity and density.
+- **Agentic Multi-Step Reasoning (`AgentToolRegistry`):** Provides autonomous tool-using capabilities:
+  - `lookup_previous_invoice(vendor_name)`: Discovers historical pricing and vendor invoice numbers.
+  - `query_action_dependencies(action_id)`: Traverses the action graph to identify blocking tasks and dependencies.
+  - `execute_tool_call()`: Dynamic agent dispatcher.
+- **1-Click Google Calendar Sync (`CalendarService`):** Schedules extracted deadlines and action items directly to Google Calendar (`POST /api/v1/calendar/schedule`) and confirms task status.
+
+### 2. Multi-Tenancy, Collaboration & Compliance (Phase 7)
+- **Organization Workspaces & RBAC (`Organization`, `TeamMembership`):** Hierarchical workspace isolation with role-based access controls (`ADMIN`, `MANAGER`, `ANALYST`, `VIEWER`).
+- **Collaborative Action Lifecycle:** Interactive status transition pipeline (`PENDING` ➔ `CONFIRMED` ➔ `COMPLETED` / `DISMISSED`) allowing teams to assign and track obligations.
+- **Immutable Audit Logging (`AuditService`, `AuditLog`):** High-fidelity tamper-evident compliance audit trails tracking actors, actions, timestamps, IP addresses, and payload diffs (`/api/v1/organization/audit-logs`).
+
+### 3. Cloud-Native Real-Time Ingestion & Distributed Workers (Phase 8)
+- **Real-Time Push Ingestion:** Integration with Google Cloud Pub/Sub (`POST /api/v1/webhooks/gmail`) for instant asynchronous email processing without manual clicking or scheduled interval polling.
+- **Distributed Worker Task Queue (`DistributedWorkerQueue`):** In-process concurrent background worker engine with automated retries, exponential backoff, failure accounting, and dead-letter queue (DLQ) tracking.
+- **Prometheus Telemetry & Metrics (`PrometheusMetricsCollector`):** Exposes `GET /api/v1/webhooks/metrics` adhering to Prometheus text exposition format (monitoring uptime, queue depth, throughput, and error rates).
+
+### 4. Modern 3-Pane UI, Rich-Text AI Copilot & Executive Reporting (Phase 9)
+- **Desktop-Class 3-Pane Layout:** Superhuman/Linear-style split workspace in `InboxDashboardView.tsx`:
+  - *Pane 1 (Left):* Thread Navigator with search filters, urgency pills, and unread badges.
+  - *Pane 2 (Center):* Conversation Reader with attachment previews, participant badges, and quick-action bar.
+  - *Pane 3 (Right):* Collapsible AI Work Intelligence Inspector & Copilot.
+- **Rich-Text AI Copilot (`ReplyDraftWidget`):** Formatting toolbar (bold, italic, lists, quotes, code), instant context injection chips, and inline **Tab-to-accept ghost text autocomplete**.
+- **Executive Intelligence Digest:** Summary dashboard and multi-format downloadable reports (`GET /api/v1/digest/export?format=csv|markdown|json`) capturing high-level KPIs, open risk registries, and financial totals.
 
 ---
 
@@ -1138,23 +1172,26 @@ These deployment targets are not architectural requirements and may change based
 
 # 25. Technology Stack
 
-| Layer | Technology |
-|---|---|
-| Backend Language | Python 3.14 |
-| Frontend Language | TypeScript |
-| Backend Framework | FastAPI |
-| Frontend Framework | React |
-| Frontend Tooling | Vite |
-| Styling | Tailwind CSS |
-| Database | PostgreSQL |
-| Vector Search | pgvector |
-| AI Provider | Gemini |
-| AI Integration | Direct `google-genai` SDK |
-| Authentication | Google OAuth 2.0 |
-| OCR | Tesseract OCR |
-| Backend Testing | Pytest |
-| Frontend Testing | Vitest |
-| Environment | Python `.venv` |
+| Layer | Technology | Details |
+|---|---|---|
+| Backend Language | Python 3.14 | Modern async typed Python |
+| Frontend Language | TypeScript 5.5 | Type-safe React components |
+| Backend Framework | FastAPI | High-performance asynchronous REST API |
+| Frontend Framework | React 18 | Desktop-class 3-pane responsive client |
+| Frontend Tooling | Vite | Fast module bundling with 0 build errors |
+| Styling | Tailwind CSS | Modern dark-mode enterprise UI |
+| Database | PostgreSQL 16 | Relational data & Action Graph storage |
+| Vector Search | pgvector | Dense 768-dim semantic search index |
+| AI Engine | Gemini (via `google-genai`) | Structured JSON extraction & LLM RAG |
+| Context Re-Ranking | Lexical-Semantic Cross-Encoder | 2x candidate pool re-ranking before synthesis |
+| Distributed Processing | Async WorkerQueue | In-process concurrent task queue with retries & DLQ |
+| Real-Time Ingestion | Google Cloud Pub/Sub Webhooks | Push notification endpoint for Gmail updates |
+| Observability | Prometheus Exposition | Telemetry metrics (`/api/v1/webhooks/metrics`) |
+| Authentication | Google OAuth 2.0 | Multi-tenant auth with granular scope consent |
+| Calendar Integration | Google Calendar REST API | 1-click event and deadline synchronization |
+| OCR Engine | Tesseract OCR & Poppler | Multi-layer PDF/image document parsing |
+| Backend Testing | Pytest | 77/77 tests passing (100% pass rate) |
+| Frontend Testing | Vitest | Component & service verification |
 
 Local Python environment:
 
@@ -1337,22 +1374,24 @@ Architectural and implementation decisions should reflect the actual state of th
 
 ---
 
-# 31. Future Improvements
+# 31. Future Improvements & Next Horizon (Phase 10+)
 
-Potential post-Version 1 improvements include:
+Phases 1 through 9 have established an enterprise work-intelligence platform with RAG, cross-encoder re-ranking, multi-tenancy, distributed worker queues, a 3-pane client, an AI Copilot, and executive reporting.
 
-- Microsoft Outlook integration.
-- Microsoft Teams integration.
-- Slack integration.
-- Additional enterprise communication platforms.
-- Advanced invoice and purchase order matching.
-- Meeting transcript processing.
-- Calendar integration.
-- Multi-agent AI workflows.
-- Additional AI providers.
-- More advanced enterprise automation.
+Potential roadmap initiatives for **Phase 10 and beyond** include:
 
-These features are not part of the current Version 1 scope.
+1. **Multi-Provider AI Fallback & Local Model Support (Ollama / vLLM):**
+   - Automatically fall back to local offline LLMs (e.g. Llama-3.3-70B, Mistral Nemo via Ollama) when cloud API connectivity drops or for zero-data-retention on confidential internal correspondence.
+2. **Microsoft 365 & Outlook Exchange Synchronization:**
+   - Ingest email threads and calendars via Microsoft Graph API alongside Google Workspace.
+3. **Multi-Modal Visual Bounding-Box Grounding:**
+   - Overlay interactive bounding boxes directly on rendered PDF and image invoices to highlight extracted line items, totals, and signatures in the document viewer.
+4. **Slack & Microsoft Teams Urgent Notification Bot:**
+   - Push real-time alerts for high-severity risks or approaching SLA deadlines to dedicated company channels with 1-click action buttons.
+5. **Voice-to-Reply & Audio Email Dictation:**
+   - Web Speech API / Whisper voice input in the Copilot reply workspace, allowing executives to dictate natural spoken instructions that are converted into polished business emails.
+6. **End-to-End Client-Side Envelope Encryption (E2EE):**
+   - KMS-backed client-side envelope encryption for highly regulated compliance environments (HIPAA / SOC2).
 
 ---
 

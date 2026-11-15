@@ -36,7 +36,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       POSTGRES_DB: ${POSTGRES_DB:-mailops_db}
-      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://postgres:postgres@postgres:5432/mailops_db}
+      DATABASE_URL: ${DOCKER_DATABASE_URL:-postgresql+psycopg://postgres:postgres@postgres:5432/mailops_db}
       SECRET_KEY: ${SECRET_KEY:-dev-secret-change-me}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY:-4xW8Z3vK9uF2mP7qR1tY6bV5cN8jL0kH4gF2dS6aQ1w=}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}

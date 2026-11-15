@@ -47,6 +47,7 @@ def _ensure_migrations_applied() -> None:
             current_rev = ctx.get_current_revision()
 
         alembic_cfg = Config("alembic.ini")
+        alembic_cfg.set_main_option("sqlalchemy.url", settings.SQLALCHEMY_DATABASE_URI)
         script = ScriptDirectory.from_config(alembic_cfg)
         head_rev = script.get_current_head()
 

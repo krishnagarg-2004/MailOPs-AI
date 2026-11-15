@@ -31,10 +31,14 @@ class GmailClient:
         now_utc = datetime.now(timezone.utc)
 
         # 1. If access token is valid (expires in > 5 minutes), decrypt and return
+        token_expires = oauth_account.token_expires_at
+        if token_expires and token_expires.tzinfo is None:
+            token_expires = token_expires.replace(tzinfo=timezone.utc)
+
         if (
             oauth_account.encrypted_access_token
-            and oauth_account.token_expires_at
-            and oauth_account.token_expires_at > (now_utc + timedelta(minutes=5))
+            and token_expires
+            and token_expires > (now_utc + timedelta(minutes=5))
         ):
             decrypted = decrypt_token(oauth_account.encrypted_access_token)
             if decrypted:

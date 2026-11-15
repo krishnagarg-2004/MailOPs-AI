@@ -8,6 +8,8 @@ Supports dynamic loading of DSPy MIPRO-optimized prompt artifacts.
 import json
 from pathlib import Path
 
+from backend.app.core.pii_guardrail import PIIGuardrail
+
 PROMPT_VERSION = "1.0.0"
 COMPILED_PROMPT_PATH = Path(__file__).resolve().parent / "compiled_prompts.json"
 
@@ -56,7 +58,11 @@ def build_email_extraction_prompt(subject: str | None, body: str | None, sender:
     """
     clean_subject = subject.strip() if subject else "(No Subject)"
     clean_sender = sender.strip() if sender else "(Unknown Sender)"
-    clean_body = body.strip() if body else "(Empty Body)"
+    raw_body = body.strip() if body else "(Empty Body)"
+
+    # Pass through PII and secret redaction guardrail
+    sanitized_result = PIIGuardrail.sanitize(raw_body)
+    clean_body = sanitized_result.sanitized_text
 
     # Truncate body if exceeding context safety bounds (12,000 characters)
     max_len = 12000

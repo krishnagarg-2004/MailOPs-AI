@@ -63,7 +63,10 @@ def db_session() -> Generator[Session, None, None]:
         session.close()
         Base.metadata.drop_all(bind=test_engine)
         with test_engine.connect() as conn:
-            conn.execute(text("DROP TABLE IF EXISTS alembic_version CASCADE"))
+            if "sqlite" in str(test_engine.url):
+                conn.execute(text("DROP TABLE IF EXISTS alembic_version"))
+            else:
+                conn.execute(text("DROP TABLE IF EXISTS alembic_version CASCADE"))
             conn.commit()
 
 

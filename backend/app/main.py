@@ -14,6 +14,7 @@ from backend.app.api.v1.graph import router as graph_router
 from backend.app.api.v1.organization import router as organization_router
 from backend.app.api.v1.reply_drafts import router as reply_drafts_router
 from backend.app.api.v1.search import router as search_router
+from backend.app.api.v1.webhooks import router as webhooks_router
 from backend.app.core.config import settings
 
 log = logging.getLogger("mailops.startup")
@@ -142,7 +143,15 @@ async def lifespan(app_instance: FastAPI):
     """
     _ensure_migrations_applied()
     _reset_stale_syncing_states()
+    
+    # Start distributed background task worker queue
+    from backend.app.core.worker_queue import worker_queue
+    await worker_queue.start()
+
     yield
+
+    # Clean shutdown
+    await worker_queue.stop()
 
 
 app = FastAPI(
@@ -174,6 +183,7 @@ app.include_router(search_router, prefix=settings.API_V1_STR)
 app.include_router(graph_router, prefix=settings.API_V1_STR)
 app.include_router(organization_router, prefix=settings.API_V1_STR)
 app.include_router(reply_drafts_router, prefix=settings.API_V1_STR)
+app.include_router(webhooks_router, prefix=settings.API_V1_STR)
 
 
 @app.get("/health", tags=["Health"])

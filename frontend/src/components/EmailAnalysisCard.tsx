@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { AIAnalysisResult, ActionStatusEnum, ExtractedActionItem } from '../types/ai';
+import { api } from '../services/api';
 
 interface EmailAnalysisCardProps {
   analysis: AIAnalysisResult;
@@ -11,6 +12,23 @@ export const EmailAnalysisCard: React.FC<EmailAnalysisCardProps> = ({
   onActionStatusChange,
 }) => {
   const [showEvidence, setShowEvidence] = useState(false);
+  const [schedulingId, setSchedulingId] = useState<string | null>(null);
+  const [scheduledLinks, setScheduledLinks] = useState<Record<string, string>>({});
+
+  const handleScheduleAction = async (item: ExtractedActionItem) => {
+    try {
+      setSchedulingId(item.id);
+      const res = await api.scheduleActionItem(item.id, `[MailOps] ${item.description}`);
+      setScheduledLinks((prev) => ({ ...prev, [item.id]: res.calendar_url }));
+      if (onActionStatusChange) {
+        onActionStatusChange(item.id, 'CONFIRMED');
+      }
+    } catch (err: any) {
+      alert(`Scheduling error: ${err.message}`);
+    } finally {
+      setSchedulingId(null);
+    }
+  };
 
   const getPriorityBadge = (p: string) => {
     switch (p) {
@@ -101,7 +119,29 @@ export const EmailAnalysisCard: React.FC<EmailAnalysisCardProps> = ({
                 </div>
 
                 {/* Human-in-the-Loop Action Status Controls */}
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {/* Google Calendar 1-Click Sync Button */}
+                  {scheduledLinks[item.id] ? (
+                    <a
+                      href={scheduledLinks[item.id]}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[11px] px-2 py-1 rounded bg-sky-600/20 text-sky-300 border border-sky-500/40 font-medium hover:bg-sky-600/30 transition flex items-center gap-1"
+                      title="Open in Google Calendar"
+                    >
+                      <span>📅</span> View GCal
+                    </a>
+                  ) : (
+                    <button
+                      onClick={() => handleScheduleAction(item)}
+                      disabled={schedulingId === item.id}
+                      className="text-[11px] px-2 py-1 rounded bg-indigo-600/20 text-indigo-300 hover:bg-indigo-600/30 border border-indigo-500/40 font-medium transition flex items-center gap-1 disabled:opacity-50"
+                      title="Schedule Deadline into Google Calendar"
+                    >
+                      <span>📅</span> {schedulingId === item.id ? 'Syncing...' : 'Sync GCal'}
+                    </button>
+                  )}
+
                   {item.status === 'PENDING' ? (
                     <>
                       <button

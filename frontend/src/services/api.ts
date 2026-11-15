@@ -121,4 +121,20 @@ export const api = {
     fetchJSON<ReplyDraftResult>(`/api/v1/reply-drafts/${draftId}/send`, { method: 'POST' }),
   discardReplyDraft: (draftId: string) =>
     fetchJSON<{ id: string; status: string }>(`/api/v1/reply-drafts/${draftId}`, { method: 'DELETE' }),
+
+  // Calendar Scheduling
+  scheduleActionItem: (actionId: string, calendarTitle?: string) =>
+    fetchJSON<{
+      status: string;
+      event_id: string;
+      action_id: string;
+      title: string;
+      start_time: string;
+      end_time: string;
+      calendar_url: string;
+      message: string;
+    }>('/api/v1/calendar/schedule', {
+      method: 'POST',
+      body: JSON.stringify({ action_id: actionId, calendar_title: calendarTitle }),
+    }),
 };

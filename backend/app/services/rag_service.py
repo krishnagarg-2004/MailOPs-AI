@@ -2,6 +2,7 @@ import logging
 import uuid
 from sqlalchemy.orm import Session
 from backend.app.ai.provider import AIProvider, get_ai_provider
+from backend.app.services.reranker import CrossEncoderReranker
 from backend.app.services.vector_search_service import VectorSearchService
 
 logger = logging.getLogger(__name__)
@@ -34,15 +35,18 @@ class RAGService:
         """
         Execute Hybrid Vector Search, assemble grounded prompt context with citations, and generate AI response.
         """
-        # 1. Retrieve Hybrid Search Top-K Candidates
-        retrieved_chunks = self.vector_service.hybrid_search(db, user_id, query_text, top_k=top_k)
+        # 1. Retrieve Hybrid Search Candidates (Fetch 2x top_k for reranking pool)
+        raw_candidates = self.vector_service.hybrid_search(db, user_id, query_text, top_k=max(10, top_k * 2))
 
-        if not retrieved_chunks:
+        if not raw_candidates:
             return {
                 "answer": "No relevant documents or emails were found matching your query.",
                 "citations": [],
                 "retrieved_chunks": [],
             }
+
+        # 2. Precision Cross-Encoder Reranking
+        retrieved_chunks = CrossEncoderReranker.rerank(query=query_text, candidates=raw_candidates, top_n=top_k)
 
         # 2. Assemble Grounded Context Blocks
         context_blocks: list[str] = []

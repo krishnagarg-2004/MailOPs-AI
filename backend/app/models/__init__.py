@@ -10,6 +10,8 @@ from backend.app.models.oauth import OAuthAccount
 from backend.app.models.session import UserSession
 from backend.app.models.graph_edge import GraphEdge
 from backend.app.models.graph_node import GraphNode
+from backend.app.models.audit_log import AuditLog
+from backend.app.models.organization import Organization, TeamMembership
 from backend.app.models.reply_draft import ReplyDraft
 from backend.app.models.user import User
 from backend.app.models.vector_embedding import VectorEmbedding
@@ -18,6 +20,9 @@ __all__ = [
     "User",
     "OAuthAccount",
     "UserSession",
+    "Organization",
+    "TeamMembership",
+    "AuditLog",
     "EmailThread",
     "EmailMessage",
     "Attachment",

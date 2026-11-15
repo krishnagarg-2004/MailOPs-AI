@@ -151,6 +151,13 @@ export const EmailAnalysisCard: React.FC<EmailAnalysisCardProps> = ({
                         Confirm
                       </button>
                       <button
+                        onClick={() => onActionStatusChange && onActionStatusChange(item.id, 'COMPLETED')}
+                        className="text-[11px] px-2.5 py-1 rounded bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 border border-blue-500/40 font-medium transition"
+                        title="Mark Complete"
+                      >
+                        Complete
+                      </button>
+                      <button
                         onClick={() => onActionStatusChange && onActionStatusChange(item.id, 'DISMISSED')}
                         className="text-[11px] px-2 py-1 rounded bg-slate-800 text-slate-400 hover:bg-slate-700 transition"
                       >

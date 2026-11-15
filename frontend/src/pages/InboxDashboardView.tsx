@@ -17,6 +17,15 @@ export const InboxDashboardView: React.FC = () => {
   const [isDrafting, setIsDrafting] = useState<boolean>(false);
   const [requiresComposeConsent, setRequiresComposeConsent] = useState<boolean>(false);
 
+  // 3-Pane Filter & View States
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [filterMode, setFilterMode] = useState<'ALL' | 'UNREAD' | 'URGENT' | 'ACTIONS'>('ALL');
+  const [isInspectorOpen, setIsInspectorOpen] = useState<boolean>(true);
+  const [activeInspectorTab, setActiveInspectorTab] = useState<'INTELLIGENCE' | 'COPILOT'>('INTELLIGENCE');
+  const [isExporting, setIsExporting] = useState<boolean>(false);
+  const [digestSummary, setDigestSummary] = useState<any>(null);
+  const [showDigestModal, setShowDigestModal] = useState<boolean>(false);
+
   const fetchThreads = async () => {
     try {
       setIsLoadingThreads(true);
@@ -68,6 +77,8 @@ export const InboxDashboardView: React.FC = () => {
       setIsAnalyzing(true);
       const result = await api.analyzeMessage(selectedMessage.id);
       setAnalysis(result);
+      setActiveInspectorTab('INTELLIGENCE');
+      if (!isInspectorOpen) setIsInspectorOpen(true);
     } catch (err: any) {
       alert(`AI Extraction Error: ${err.message}`);
     } finally {
@@ -93,6 +104,8 @@ export const InboxDashboardView: React.FC = () => {
       setIsDrafting(true);
       const result = await api.generateReplyDraft(selectedMessage.id, tone);
       setDraft(result);
+      setActiveInspectorTab('COPILOT');
+      if (!isInspectorOpen) setIsInspectorOpen(true);
     } catch (err: any) {
       alert(`Reply Generation Error: ${err.message}`);
     } finally {
@@ -153,114 +166,434 @@ export const InboxDashboardView: React.FC = () => {
     }
   };
 
+  const handleOpenDigest = async () => {
+    try {
+      setIsExporting(true);
+      const summary = await api.getExecutiveDigest();
+      setDigestSummary(summary);
+      setShowDigestModal(true);
+    } catch (err: any) {
+      alert(`Executive Digest Error: ${err.message}`);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleDownloadExport = async (format: 'csv' | 'markdown' | 'json') => {
+    try {
+      await api.downloadDigestExport(format);
+    } catch (err: any) {
+      alert(`Export failed: ${err.message}`);
+    }
+  };
+
+  // Filter threads by search query and filter badge
+  const filteredThreads = threads.filter((t) => {
+    const firstMsg = t.messages[0];
+    const matchSearch =
+      !searchQuery ||
+      t.snippet?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      firstMsg?.subject?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      firstMsg?.sender?.toLowerCase().includes(searchQuery.toLowerCase());
+
+    if (!matchSearch) return false;
+
+    if (filterMode === 'URGENT') {
+      const subj = firstMsg?.subject?.toLowerCase() || '';
+      return subj.includes('urgent') || subj.includes('asap') || subj.includes('deadline');
+    }
+    if (filterMode === 'ACTIONS') {
+      return (t.messages.length > 1) || (firstMsg?.has_attachments);
+    }
+    return true;
+  });
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+    <div className="flex flex-col h-[calc(100vh-6rem)]">
+      {/* Top Bar with View Controls & Export */}
+      <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-3 shrink-0">
         <div>
-          <h2 className="text-lg font-bold text-slate-100">Inbox & AI Reply Workspace</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-base font-bold text-slate-100">3-Pane Work Intelligence & AI Workspace</h2>
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-sky-500/10 text-sky-400 border border-sky-500/30">
+              Superhuman View
+            </span>
+          </div>
           <p className="text-xs text-slate-400">
-            Browser synced email threads, trigger Gemini intelligence extractions, review action items, and draft replies.
+            Streamlined thread navigator, full conversation reader, and integrated AI copilot inspector.
           </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleOpenDigest}
+            disabled={isExporting}
+            className="flex items-center gap-1.5 text-xs bg-slate-900 hover:bg-slate-800 text-indigo-300 border border-indigo-500/30 px-3 py-1.5 rounded-lg transition font-medium"
+          >
+            <span>📊 Executive Digest</span>
+          </button>
+
+          <button
+            onClick={() => setIsInspectorOpen(!isInspectorOpen)}
+            className={`text-xs px-3 py-1.5 rounded-lg border transition font-medium ${
+              isInspectorOpen
+                ? 'bg-indigo-600/20 text-indigo-300 border-indigo-500/40'
+                : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200'
+            }`}
+          >
+            {isInspectorOpen ? 'Hide AI Inspector' : 'Show AI Inspector'}
+          </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column: Email Thread Browser */}
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-            Email Threads ({threads.length})
-          </h3>
-
-          {isLoadingThreads ? (
-            <div className="text-xs text-slate-500 py-8 text-center">Loading mailbox threads...</div>
-          ) : threads.length === 0 ? (
-            <div className="text-xs text-slate-500 py-8 text-center">No email threads synced yet. Click <strong>Sync Inbox</strong> above.</div>
-          ) : (
-            <div className="space-y-2 max-h-[600px] overflow-y-auto pr-1">
-              {threads.map((t) => (
-                <div
-                  key={t.id}
-                  onClick={() => {
-                    setSelectedThread(t);
-                    if (t.messages.length > 0) handleSelectMessage(t.messages[0]);
-                  }}
-                  className={`p-3 rounded-lg border cursor-pointer transition ${selectedThread?.id === t.id
-                    ? 'bg-slate-800 border-indigo-500/50'
-                    : 'bg-slate-950/60 border-slate-800/80 hover:border-slate-700'
-                    }`}
+      {/* 3-Pane Split Layout Grid */}
+      <div className="flex-1 grid grid-cols-12 gap-4 min-h-0 overflow-hidden">
+        {/* Pane 1: Left Thread Navigator (3 cols) */}
+        <div className="col-span-12 md:col-span-4 lg:col-span-3 flex flex-col bg-slate-900 border border-slate-800 rounded-xl overflow-hidden min-h-0">
+          {/* Search & Filter Header */}
+          <div className="p-3 border-b border-slate-800 space-y-2 bg-slate-950/40">
+            <input
+              type="text"
+              placeholder="Search threads (sender, subject)..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-slate-900 border border-slate-800 rounded-lg text-xs px-3 py-1.5 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+            />
+            <div className="flex items-center gap-1 text-[10px]">
+              {(['ALL', 'URGENT', 'ACTIONS'] as const).map((mode) => (
+                <button
+                  key={mode}
+                  onClick={() => setFilterMode(mode)}
+                  className={`px-2 py-0.5 rounded font-medium transition ${
+                    filterMode === mode
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-slate-800/80 text-slate-400 hover:text-slate-200'
+                  }`}
                 >
-                  <div className="flex items-center justify-between text-xs mb-1">
-                    <span className="font-semibold text-slate-200 truncate max-w-[180px]">
-                      {t.messages[0]?.sender || 'Unknown Sender'}
-                    </span>
-                    <span className="text-[10px] text-slate-500">
-                      {t.messages.length} msg{t.messages.length > 1 ? 's' : ''}
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-300 font-medium truncate">
-                    {t.messages[0]?.subject || 'No Subject'}
-                  </p>
-                  <p className="text-[11px] text-slate-500 truncate mt-0.5">
-                    {t.snippet}
-                  </p>
-                </div>
+                  {mode}
+                </button>
               ))}
+              <span className="ml-auto text-slate-500 font-mono">
+                {filteredThreads.length}
+              </span>
             </div>
-          )}
+          </div>
+
+          {/* Thread List */}
+          <div className="flex-1 overflow-y-auto divide-y divide-slate-800/60 p-1">
+            {isLoadingThreads ? (
+              <div className="text-xs text-slate-500 py-12 text-center">Loading mailbox threads...</div>
+            ) : filteredThreads.length === 0 ? (
+              <div className="text-xs text-slate-500 py-12 text-center">No matching email threads.</div>
+            ) : (
+              filteredThreads.map((t) => {
+                const isSelected = selectedThread?.id === t.id;
+                const firstMsg = t.messages[0];
+                return (
+                  <div
+                    key={t.id}
+                    onClick={() => {
+                      setSelectedThread(t);
+                      if (t.messages.length > 0) handleSelectMessage(t.messages[0]);
+                    }}
+                    className={`p-3 rounded-lg cursor-pointer transition text-left ${
+                      isSelected
+                        ? 'bg-indigo-950/40 border border-indigo-500/40'
+                        : 'hover:bg-slate-800/50 border border-transparent'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between text-xs mb-1">
+                      <span className="font-semibold text-slate-200 truncate max-w-[140px]">
+                        {firstMsg?.sender?.split('<')[0]?.trim() || 'Unknown'}
+                      </span>
+                      <span className="text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.2 rounded font-mono">
+                        {t.messages.length} msg{t.messages.length > 1 ? 's' : ''}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-300 font-medium truncate">
+                      {firstMsg?.subject || 'No Subject'}
+                    </p>
+                    <p className="text-[11px] text-slate-500 truncate mt-1">
+                      {t.snippet}
+                    </p>
+                  </div>
+                );
+              })
+            )}
+          </div>
         </div>
 
-        {/* Right Column (2 Spans): Message Inspection & AI Workspace */}
-        <div className="lg:col-span-2 space-y-6">
+        {/* Pane 2: Center Message Thread Reader (5 cols or 9 cols if inspector closed) */}
+        <div
+          className={`${
+            isInspectorOpen ? 'col-span-12 md:col-span-8 lg:col-span-5' : 'col-span-12 md:col-span-8 lg:col-span-9'
+          } flex flex-col bg-slate-900 border border-slate-800 rounded-xl overflow-hidden min-h-0`}
+        >
           {selectedMessage ? (
-            <>
-              {/* Selected Email Message Card */}
-              <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-3">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h3 className="text-base font-bold text-slate-100">{selectedMessage.subject}</h3>
-                    <p className="text-xs text-slate-400 mt-0.5">From: {selectedMessage.sender}</p>
+            <div className="flex flex-col h-full min-h-0">
+              {/* Message Header & Action Toolbar */}
+              <div className="p-4 border-b border-slate-800 bg-slate-950/30 flex flex-wrap items-center justify-between gap-3 shrink-0">
+                <div className="min-w-0">
+                  <h3 className="text-sm font-bold text-slate-100 truncate">
+                    {selectedMessage.subject || 'No Subject'}
+                  </h3>
+                  <div className="flex items-center gap-2 mt-1 text-xs text-slate-400">
+                    <div className="w-5 h-5 rounded-full bg-indigo-600/30 text-indigo-300 flex items-center justify-center font-bold text-[10px]">
+                      {selectedMessage.sender?.[0]?.toUpperCase() || 'U'}
+                    </div>
+                    <span className="truncate">{selectedMessage.sender}</span>
+                    {selectedMessage.has_attachments && (
+                      <span className="text-[10px] bg-slate-800 text-amber-300 px-1.5 py-0.5 rounded border border-amber-500/30">
+                        📎 Attachment
+                      </span>
+                    )}
                   </div>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
                   <button
                     onClick={handleTriggerAnalysis}
                     disabled={isAnalyzing}
-                    className="text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-3 py-1.5 rounded-lg transition disabled:opacity-50"
+                    className="text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-3 py-1.5 rounded-lg transition disabled:opacity-50 shadow-sm"
                   >
-                    {isAnalyzing ? 'Extracting...' : 'Analyze with Gemini'}
+                    {isAnalyzing ? 'Extracting...' : '✨ Analyze with Gemini'}
                   </button>
-                </div>
 
-                <div className="bg-slate-950 p-4 rounded-lg border border-slate-800 text-xs text-slate-300 leading-relaxed font-mono whitespace-pre-wrap max-h-48 overflow-y-auto">
-                  {selectedMessage.body_plain || 'No body text.'}
+                  <button
+                    onClick={() => {
+                      if (!draft) {
+                        handleGenerateReply('PROFESSIONAL');
+                      } else {
+                        setActiveInspectorTab('COPILOT');
+                        if (!isInspectorOpen) setIsInspectorOpen(true);
+                      }
+                    }}
+                    disabled={isDrafting}
+                    className="text-xs bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 px-3 py-1.5 rounded-lg transition font-medium"
+                  >
+                    {isDrafting ? 'Drafting...' : '✍️ Reply / Copilot'}
+                  </button>
                 </div>
               </div>
 
-              {/* AI Extraction Analysis Component */}
-              {analysis && (
-                <EmailAnalysisCard
-                  analysis={analysis}
-                  onActionStatusChange={handleActionStatusChange}
-                />
-              )}
+              {/* Message Body Reader */}
+              <div className="flex-1 p-5 overflow-y-auto space-y-4">
+                {selectedMessage.attachments && selectedMessage.attachments.length > 0 && (
+                  <div className="bg-slate-950/60 p-3 rounded-lg border border-slate-800 space-y-1.5">
+                    <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
+                      Attachments ({selectedMessage.attachments.length})
+                    </span>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedMessage.attachments.map((att) => (
+                        <div
+                          key={att.id}
+                          className="flex items-center gap-2 bg-slate-900 border border-slate-800 px-2.5 py-1.5 rounded text-xs text-slate-300"
+                        >
+                          <span>📄</span>
+                          <span className="font-mono">{att.filename}</span>
+                          <span className="text-[10px] text-slate-500">
+                            ({Math.round(att.size_bytes / 1024)} KB)
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
-              {/* Human-in-the-Loop Reply Draft Component */}
-              <ReplyDraftWidget
-                draft={draft}
-                onGenerateDraft={handleGenerateReply}
-                onSaveEdits={handleSaveDraftEdits}
-                onSyncGmail={handleSyncGmailDraft}
-                onSendEmail={handleSendReplyEmail}
-                onDiscardDraft={handleDiscardDraft}
-                isLoading={isDrafting}
-                requiresComposeConsent={requiresComposeConsent}
-              />
-            </>
+                <div className="bg-slate-950 p-4 rounded-lg border border-slate-800 text-xs text-slate-200 leading-relaxed font-sans whitespace-pre-wrap">
+                  {selectedMessage.body_plain || 'No body text.'}
+                </div>
+              </div>
+            </div>
           ) : (
-            <div className="bg-slate-900 border border-slate-800 rounded-xl p-12 text-center text-xs text-slate-500">
-              Select an email message from the inbox list to inspect content and run AI intelligence.
+            <div className="flex-1 flex items-center justify-center text-xs text-slate-500 p-8 text-center">
+              Select an email thread from the left to read conversation content.
             </div>
           )}
         </div>
+
+        {/* Pane 3: Right Collapsible AI Work Intelligence Inspector & Copilot (4 cols) */}
+        {isInspectorOpen && (
+          <div className="col-span-12 lg:col-span-4 flex flex-col bg-slate-900 border border-slate-800 rounded-xl overflow-hidden min-h-0">
+            {/* Inspector Tab Selector */}
+            <div className="p-2 border-b border-slate-800 flex items-center justify-between bg-slate-950/40 shrink-0">
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setActiveInspectorTab('INTELLIGENCE')}
+                  className={`text-xs px-3 py-1 rounded-md font-medium transition ${
+                    activeInspectorTab === 'INTELLIGENCE'
+                      ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/40'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  ⚡ Intelligence
+                </button>
+                <button
+                  onClick={() => setActiveInspectorTab('COPILOT')}
+                  className={`text-xs px-3 py-1 rounded-md font-medium transition ${
+                    activeInspectorTab === 'COPILOT'
+                      ? 'bg-emerald-600/20 text-emerald-300 border border-emerald-500/40'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  🤖 Copilot Reply
+                </button>
+              </div>
+
+              <button
+                onClick={() => setIsInspectorOpen(false)}
+                title="Collapse Inspector"
+                className="text-slate-400 hover:text-slate-200 text-xs px-2 py-1 rounded hover:bg-slate-800 transition"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Inspector Tab Content */}
+            <div className="flex-1 p-4 overflow-y-auto space-y-4">
+              {activeInspectorTab === 'INTELLIGENCE' ? (
+                analysis ? (
+                  <EmailAnalysisCard
+                    analysis={analysis}
+                    onActionStatusChange={handleActionStatusChange}
+                  />
+                ) : (
+                  <div className="text-center py-16 text-slate-500 text-xs space-y-3">
+                    <p>No AI intelligence extraction generated for this email yet.</p>
+                    <button
+                      onClick={handleTriggerAnalysis}
+                      disabled={isAnalyzing}
+                      className="text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-4 py-2 rounded-lg transition disabled:opacity-50"
+                    >
+                      {isAnalyzing ? 'Extracting...' : 'Analyze with Gemini'}
+                    </button>
+                  </div>
+                )
+              ) : (
+                <ReplyDraftWidget
+                  draft={draft}
+                  onGenerateDraft={handleGenerateReply}
+                  onSaveEdits={handleSaveDraftEdits}
+                  onSyncGmail={handleSyncGmailDraft}
+                  onSendEmail={handleSendReplyEmail}
+                  onDiscardDraft={handleDiscardDraft}
+                  isLoading={isDrafting}
+                  requiresComposeConsent={requiresComposeConsent}
+                />
+              )}
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Executive Digest Modal */}
+      {showDigestModal && digestSummary && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-fadeIn">
+            <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/40">
+              <div>
+                <h3 className="text-base font-bold text-slate-100">MailOps Executive Intelligence Digest</h3>
+                <p className="text-xs text-slate-400">
+                  Aggregated cross-mailbox KPIs, action item tracking, and strategic risk registry.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowDigestModal(false)}
+                className="text-slate-400 hover:text-slate-200 text-sm px-2 py-1 rounded hover:bg-slate-800"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-5 overflow-y-auto space-y-5 text-xs text-slate-300">
+              {/* Metric KPI Tiles */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                  <span className="text-[10px] text-slate-500 uppercase font-semibold">Analyzed Emails</span>
+                  <p className="text-lg font-bold text-slate-100 mt-1">{digestSummary.total_emails_analyzed}</p>
+                </div>
+                <div className="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                  <span className="text-[10px] text-slate-500 uppercase font-semibold">Pending Actions</span>
+                  <p className="text-lg font-bold text-amber-400 mt-1">{digestSummary.pending_actions}</p>
+                </div>
+                <div className="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                  <span className="text-[10px] text-slate-500 uppercase font-semibold">High Risks</span>
+                  <p className="text-lg font-bold text-rose-400 mt-1">{digestSummary.high_severity_risks}</p>
+                </div>
+                <div className="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                  <span className="text-[10px] text-slate-500 uppercase font-semibold">Financial Total</span>
+                  <p className="text-lg font-bold text-emerald-400 mt-1">
+                    ${digestSummary.total_financial_value.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  </p>
+                </div>
+              </div>
+
+              {/* Top Pending Actions List */}
+              <div className="space-y-2">
+                <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wider">Priority Action Items</h4>
+                {digestSummary.top_actions?.length > 0 ? (
+                  <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+                    {digestSummary.top_actions.map((act: any) => (
+                      <div key={act.id} className="p-2.5 rounded-lg bg-slate-950 border border-slate-800/80 flex items-center justify-between">
+                        <div className="truncate max-w-[70%]">
+                          <span className="font-semibold text-slate-200 block truncate">{act.description}</span>
+                          <span className="text-[10px] text-slate-500">
+                            {act.assignee ? `Assigned to: ${act.assignee}` : 'Unassigned'}
+                            {act.due_date ? ` • Due: ${act.due_date.split('T')[0]}` : ''}
+                          </span>
+                        </div>
+                        <span className="text-[10px] px-2 py-0.5 rounded font-mono font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                          {act.status}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-slate-500 italic">No pending action items.</p>
+                )}
+              </div>
+
+              {/* Active Risks List */}
+              <div className="space-y-2">
+                <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wider">Active Business Risks</h4>
+                {digestSummary.active_risks?.length > 0 ? (
+                  <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+                    {digestSummary.active_risks.map((risk: any) => (
+                      <div key={risk.id} className="p-2.5 rounded-lg bg-slate-950 border border-slate-800/80 flex items-center justify-between">
+                        <span className="font-medium text-slate-200 truncate max-w-[75%]">{risk.description}</span>
+                        <span className="text-[10px] px-2 py-0.5 rounded font-mono font-semibold bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                          {risk.severity_or_priority}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-slate-500 italic">No active business risks recorded.</p>
+                )}
+              </div>
+            </div>
+
+            {/* Export Format Action Buttons */}
+            <div className="p-4 border-t border-slate-800 bg-slate-950/40 flex items-center justify-between">
+              <span className="text-xs text-slate-400">Download formatted export:</span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleDownloadExport('csv')}
+                  className="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg border border-slate-700 transition font-medium"
+                >
+                  📥 Export CSV
+                </button>
+                <button
+                  onClick={() => handleDownloadExport('markdown')}
+                  className="text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg transition font-medium shadow-xs"
+                >
+                  📝 Export Markdown
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

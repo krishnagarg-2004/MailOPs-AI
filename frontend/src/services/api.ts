@@ -137,4 +137,39 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ action_id: actionId, calendar_title: calendarTitle }),
     }),
+
+  // Executive Digest & Reporting
+  getExecutiveDigest: () =>
+    fetchJSON<{
+      generated_at: string;
+      user_email: string;
+      total_emails_analyzed: number;
+      total_actions: number;
+      pending_actions: number;
+      confirmed_actions: number;
+      completed_actions: number;
+      total_risks: number;
+      high_severity_risks: number;
+      total_decisions: number;
+      total_financial_value: number;
+      top_actions: Array<any>;
+      active_risks: Array<any>;
+      recent_decisions: Array<any>;
+    }>('/api/v1/digest/summary'),
+
+  downloadDigestExport: async (format: 'csv' | 'markdown' | 'json' = 'csv') => {
+    const res = await fetch(`${API_BASE_URL}/api/v1/digest/export?format=${format}`, {
+      credentials: 'include',
+    });
+    if (!res.ok) throw new Error(`Export download failed: ${res.statusText}`);
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `mailops-executive-digest.${format === 'markdown' ? 'md' : format}`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  },
 };

@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend.app.api.v1.ai import router as ai_router
 from backend.app.api.v1.auth import router as auth_router
 from backend.app.api.v1.calendar import router as calendar_router
+from backend.app.api.v1.digest import router as digest_router
 from backend.app.api.v1.documents import router as documents_router
 from backend.app.api.v1.events import router as events_router
 from backend.app.api.v1.gmail import router as gmail_router
@@ -175,6 +176,7 @@ app.add_middleware(
 # Include API v1 Routers
 app.include_router(auth_router, prefix=settings.API_V1_STR)
 app.include_router(calendar_router, prefix=settings.API_V1_STR)
+app.include_router(digest_router, prefix=settings.API_V1_STR)
 app.include_router(events_router, prefix=settings.API_V1_STR)
 app.include_router(gmail_router, prefix=settings.API_V1_STR)
 app.include_router(ai_router, prefix=settings.API_V1_STR)

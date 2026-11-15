@@ -20,6 +20,7 @@ export const GmailSyncWidget: React.FC = () => {
   const [statusData, setStatusData] = useState<GmailStatus | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  const [liveEventMessage, setLiveEventMessage] = useState<string | null>(null);
   // AbortController so two rapid clicks don't both fire the background sync.
   const syncAbortControllerRef = useRef<AbortController | null>(null);
 
@@ -49,9 +50,50 @@ export const GmailSyncWidget: React.FC = () => {
   useEffect(() => {
     fetchStatus();
 
-    const interval = setInterval(fetchStatus, 5000);
+    // Connect to live Server-Sent Events (SSE) stream
+    let eventSource: EventSource | null = null;
+    try {
+      eventSource = new EventSource(`${API_BASE_URL}/api/v1/events/stream`, {
+        withCredentials: true,
+      });
 
-    return () => clearInterval(interval);
+      eventSource.addEventListener('sync_started', () => {
+        setIsSyncing(true);
+        setLiveEventMessage('Sync started...');
+      });
+
+      eventSource.addEventListener('sync_progress', (e: MessageEvent) => {
+        try {
+          const data = JSON.parse(e.data);
+          setLiveEventMessage(`Syncing email ${data.processed}/${data.limit}...`);
+        } catch {
+          // ignore parse errors
+        }
+      });
+
+      eventSource.addEventListener('sync_completed', () => {
+        setIsSyncing(false);
+        setLiveEventMessage('Sync completed successfully.');
+        fetchStatus();
+        setTimeout(() => setLiveEventMessage(null), 4000);
+      });
+
+      eventSource.onerror = () => {
+        // SSE disconnected or closed
+      };
+    } catch {
+      // EventSource not supported or blocked
+    }
+
+    // Fallback polling interval every 15 seconds (reduced from 5s since SSE is active)
+    const interval = setInterval(fetchStatus, 15000);
+
+    return () => {
+      clearInterval(interval);
+      if (eventSource) {
+        eventSource.close();
+      }
+    };
   }, []);
 
   const triggerSync = async () => {
@@ -146,6 +188,14 @@ export const GmailSyncWidget: React.FC = () => {
 
       {/* Sync Information */}
       <div className="grid grid-cols-2 gap-2 rounded-lg bg-slate-950 p-2.5">
+
+        {/* Live SSE Notification Toast */}
+        {liveEventMessage && (
+          <div className="col-span-2 mb-1 flex items-center gap-1.5 rounded bg-sky-950/60 border border-sky-800/80 px-2 py-1 text-[10px] text-sky-300">
+            <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-ping"></span>
+            <span className="truncate">{liveEventMessage}</span>
+          </div>
+        )}
 
         {/* Status */}
         <div className="min-w-0">

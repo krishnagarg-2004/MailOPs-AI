@@ -7,6 +7,7 @@ import logging
 from sqlalchemy.orm import Session
 
 from backend.app.core.config import settings
+from backend.app.core.events import event_bus
 from backend.app.integrations.gmail import GmailAPIError, GmailClient
 from backend.app.models.oauth import OAuthAccount
 from backend.app.models.user import User
@@ -55,6 +56,11 @@ class GmailSyncService:
 
         # 3. Mark sync_status = SYNCING
         GmailRepository.update_sync_state(db, user.id, sync_status="SYNCING")
+        await event_bus.publish(
+            user.id,
+            "sync_started",
+            {"status": "SYNCING", "message": "Mailbox synchronization started."},
+        )
 
         try:
             if sync_state.last_history_id:
@@ -124,6 +130,15 @@ class GmailSyncService:
                 try:
                     await self._fetch_and_persist_message(db, user, access_token, msg_id)
                     messages_processed += 1
+                    await event_bus.publish(
+                        user.id,
+                        "sync_progress",
+                        {
+                            "processed": messages_processed,
+                            "limit": limit,
+                            "message_id": msg_id,
+                        },
+                    )
                 except Exception as exc:
                     logger.warning(
                         "Initial sync: skipping message_id=%s user_id=%s reason=%s",
@@ -152,6 +167,16 @@ class GmailSyncService:
             last_history_id=baseline_history_id,
             synced_message_count=messages_processed,
             error_message=partial_error,
+        )
+
+        await event_bus.publish(
+            user.id,
+            "sync_completed",
+            {
+                "status": "COMPLETED",
+                "synced_count": messages_processed,
+                "failed_count": failed_count,
+            },
         )
 
         return {

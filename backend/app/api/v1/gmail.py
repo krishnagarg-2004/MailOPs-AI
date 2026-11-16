@@ -62,12 +62,23 @@ def _run_async_sync(user_id: uuid.UUID):
                 type(exc).__name__,
             )
             try:
-                GmailRepository.update_sync_state(
-                    db,
-                    user_id,
-                    sync_status="FAILED",
-                    error_message=f"Background sync terminated unexpectedly: {type(exc).__name__}",
-                )
+                from backend.app.models.email_message import EmailMessage
+                msg_count = db.query(EmailMessage).filter(EmailMessage.user_id == user_id).count()
+                if msg_count > 0:
+                    GmailRepository.update_sync_state(
+                        db,
+                        user_id,
+                        sync_status="COMPLETED",
+                        synced_message_count=msg_count,
+                        error_message=f"Synced {msg_count} messages (interrupted: {type(exc).__name__})",
+                    )
+                else:
+                    GmailRepository.update_sync_state(
+                        db,
+                        user_id,
+                        sync_status="FAILED",
+                        error_message=f"Background sync terminated unexpectedly: {type(exc).__name__}",
+                    )
             except Exception as db_exc:  # pragma: no cover - best-effort state reset
                 logger.critical(
                     "Could not reset SYNCING state to FAILED after background sync failure: %s",

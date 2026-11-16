@@ -28,7 +28,8 @@ def _make_mock_jwt(header=None, payload=None) -> str:
     p = payload or {"sub": "12345", "exp": int(time.time()) + 3600}
     def b64url(d: dict) -> str:
         return base64.urlsafe_b64encode(json.dumps(d).encode()).rstrip(b"=").decode()
-    return f"{b64url(h)}.{b64url(p)}.mock-signature"
+    sig = base64.urlsafe_b64encode(b"mock_signature_bytes_1234").rstrip(b"=").decode()
+    return f"{b64url(h)}.{b64url(p)}.{sig}"
 
 
 class TestJWKSFailsClosedOnUnavailability:

@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -114,10 +115,16 @@ class GmailSyncService:
         page_token = None
 
         while messages_processed < limit:
-            batch_size = min(100, limit - messages_processed)
-            list_resp = await self.client.list_messages(
-                access_token, page_token=page_token, max_results=batch_size
-            )
+            batch_size = min(50, limit - messages_processed)
+            try:
+                list_resp = await self.client.list_messages(
+                    access_token, page_token=page_token, max_results=batch_size
+                )
+            except Exception as batch_exc:
+                logger.error("Initial sync: list_messages failed: %s", batch_exc)
+                if messages_processed > 0:
+                    break
+                raise
 
             msg_summaries = list_resp.get("messages", [])
             if not msg_summaries:
@@ -139,6 +146,8 @@ class GmailSyncService:
                             "message_id": msg_id,
                         },
                     )
+                    # Pacing delay to avoid triggering Google per-second quota bursts
+                    await asyncio.sleep(0.02)
                 except Exception as exc:
                     logger.warning(
                         "Initial sync: skipping message_id=%s user_id=%s reason=%s",

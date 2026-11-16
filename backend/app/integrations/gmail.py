@@ -1,4 +1,6 @@
+import asyncio
 from datetime import datetime, timezone, timedelta
+import logging
 from typing import Any
 import base64
 import httpx
@@ -7,6 +9,8 @@ from sqlalchemy.orm import Session
 from backend.app.core.config import settings
 from backend.app.core.crypto import decrypt_token, encrypt_token
 from backend.app.models.oauth import OAuthAccount
+
+logger = logging.getLogger(__name__)
 
 
 class GmailAPIError(Exception):
@@ -21,6 +25,71 @@ class GmailClient:
     """Async client for interacting with Google Gmail REST API with automatic OAuth token refresh."""
 
     BASE_URL = "https://gmail.googleapis.com/gmail/v1/users/me"
+    _shared_client: httpx.AsyncClient | None = None
+
+    @classmethod
+    def _get_client(cls) -> httpx.AsyncClient:
+        """Returns or initializes a shared AsyncClient with HTTP connection pooling."""
+        if cls._shared_client is None or cls._shared_client.is_closed:
+            cls._shared_client = httpx.AsyncClient(
+                timeout=httpx.Timeout(25.0, connect=10.0),
+                limits=httpx.Limits(max_keepalive_connections=20, max_connections=50),
+            )
+        return cls._shared_client
+
+    @classmethod
+    async def _request_with_retry(
+        cls,
+        method: str,
+        url: str,
+        headers: dict[str, str],
+        params: dict[str, Any] | None = None,
+        json_data: Any | None = None,
+        max_retries: int = 3,
+    ) -> httpx.Response:
+        """Execute HTTP request with connection reuse and exponential backoff for transient errors."""
+        client = cls._get_client()
+        delay = 1.0
+
+        for attempt in range(max_retries):
+            try:
+                resp = await client.request(
+                    method=method,
+                    url=url,
+                    headers=headers,
+                    params=params,
+                    json=json_data,
+                )
+                # Rate limit handling (Google 429 or 403 RATE_LIMIT_EXCEEDED)
+                if resp.status_code == 429 or (
+                    resp.status_code == 403 and "rateLimitExceeded" in resp.text
+                ):
+                    if attempt < max_retries - 1:
+                        logger.warning(
+                            "Gmail API rate limited (status %s). Backing off %.1fs (attempt %d/%d)...",
+                            resp.status_code,
+                            delay,
+                            attempt + 1,
+                            max_retries,
+                        )
+                        await asyncio.sleep(delay)
+                        delay *= 2.0
+                        continue
+                return resp
+            except (httpx.ConnectError, httpx.TimeoutException, httpx.NetworkError) as net_err:
+                if attempt < max_retries - 1:
+                    logger.warning(
+                        "Gmail network transient error (%s): %s. Backing off %.1fs (attempt %d/%d)...",
+                        type(net_err).__name__,
+                        net_err,
+                        delay,
+                        attempt + 1,
+                        max_retries,
+                    )
+                    await asyncio.sleep(delay)
+                    delay *= 2.0
+                    continue
+                raise
 
     @staticmethod
     def get_valid_access_token(db: Session, oauth_account: OAuthAccount) -> str:
@@ -97,11 +166,10 @@ class GmailClient:
     async def get_profile(self, access_token: str) -> dict[str, Any]:
         """Fetch user Gmail profile (emailAddress, historyId, messagesTotal)."""
         headers = {"Authorization": f"Bearer {access_token}"}
-        async with httpx.AsyncClient(timeout=15.0) as client:
-            resp = await client.get(f"{self.BASE_URL}/profile", headers=headers)
-            if resp.status_code != 200:
-                raise GmailAPIError(resp.status_code, resp.text)
-            return resp.json()
+        resp = await self._request_with_retry("GET", f"{self.BASE_URL}/profile", headers=headers)
+        if resp.status_code != 200:
+            raise GmailAPIError(resp.status_code, resp.text)
+        return resp.json()
 
     async def list_messages(
         self,
@@ -118,21 +186,19 @@ class GmailClient:
         if q:
             params["q"] = q
 
-        async with httpx.AsyncClient(timeout=15.0) as client:
-            resp = await client.get(f"{self.BASE_URL}/messages", headers=headers, params=params)
-            if resp.status_code != 200:
-                raise GmailAPIError(resp.status_code, resp.text)
-            return resp.json()
+        resp = await self._request_with_retry("GET", f"{self.BASE_URL}/messages", headers=headers, params=params)
+        if resp.status_code != 200:
+            raise GmailAPIError(resp.status_code, resp.text)
+        return resp.json()
 
     async def get_message(self, access_token: str, message_id: str) -> dict[str, Any]:
         """Get full message payload by message ID."""
         headers = {"Authorization": f"Bearer {access_token}"}
         params = {"format": "full"}
-        async with httpx.AsyncClient(timeout=15.0) as client:
-            resp = await client.get(f"{self.BASE_URL}/messages/{message_id}", headers=headers, params=params)
-            if resp.status_code != 200:
-                raise GmailAPIError(resp.status_code, resp.text)
-            return resp.json()
+        resp = await self._request_with_retry("GET", f"{self.BASE_URL}/messages/{message_id}", headers=headers, params=params)
+        if resp.status_code != 200:
+            raise GmailAPIError(resp.status_code, resp.text)
+        return resp.json()
 
     async def list_history(
         self,
@@ -149,11 +215,10 @@ class GmailClient:
         if page_token:
             params["pageToken"] = page_token
 
-        async with httpx.AsyncClient(timeout=15.0) as client:
-            resp = await client.get(f"{self.BASE_URL}/history", headers=headers, params=params)
-            if resp.status_code != 200:
-                raise GmailAPIError(resp.status_code, resp.text)
-            return resp.json()
+        resp = await self._request_with_retry("GET", f"{self.BASE_URL}/history", headers=headers, params=params)
+        if resp.status_code != 200:
+            raise GmailAPIError(resp.status_code, resp.text)
+        return resp.json()
 
     async def get_attachment(
         self,
@@ -163,20 +228,20 @@ class GmailClient:
     ) -> bytes:
         """Download raw attachment byte content by message ID and attachment ID."""
         headers = {"Authorization": f"Bearer {access_token}"}
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            resp = await client.get(
-                f"{self.BASE_URL}/messages/{message_id}/attachments/{attachment_id}",
-                headers=headers,
-            )
-            if resp.status_code != 200:
-                raise GmailAPIError(resp.status_code, resp.text)
-            data = resp.json()
-            raw_b64 = data.get("data", "")
-            padded = raw_b64.replace("-", "+").replace("_", "/")
-            padding = len(padded) % 4
-            if padding:
-                padded += "=" * (4 - padding)
-            return base64.b64decode(padded)
+        resp = await self._request_with_retry(
+            "GET",
+            f"{self.BASE_URL}/messages/{message_id}/attachments/{attachment_id}",
+            headers=headers,
+        )
+        if resp.status_code != 200:
+            raise GmailAPIError(resp.status_code, resp.text)
+        data = resp.json()
+        raw_b64 = data.get("data", "")
+        padded = raw_b64.replace("-", "+").replace("_", "/")
+        padding = len(padded) % 4
+        if padding:
+            padded += "=" * (4 - padding)
+        return base64.b64decode(padded)
 
     async def create_draft(
         self,
@@ -191,11 +256,10 @@ class GmailClient:
             msg_payload["threadId"] = thread_id
 
         payload = {"message": msg_payload}
-        async with httpx.AsyncClient(timeout=20.0) as client:
-            resp = await client.post(f"{self.BASE_URL}/drafts", headers=headers, json=payload)
-            if resp.status_code not in (200, 201):
-                raise GmailAPIError(resp.status_code, resp.text)
-            return resp.json()
+        resp = await self._request_with_retry("POST", f"{self.BASE_URL}/drafts", headers=headers, json_data=payload)
+        if resp.status_code not in (200, 201):
+            raise GmailAPIError(resp.status_code, resp.text)
+        return resp.json()
 
     async def send_message(
         self,
@@ -209,8 +273,7 @@ class GmailClient:
         if thread_id:
             payload["threadId"] = thread_id
 
-        async with httpx.AsyncClient(timeout=20.0) as client:
-            resp = await client.post(f"{self.BASE_URL}/messages/send", headers=headers, json=payload)
-            if resp.status_code not in (200, 201):
-                raise GmailAPIError(resp.status_code, resp.text)
-            return resp.json()
+        resp = await self._request_with_retry("POST", f"{self.BASE_URL}/messages/send", headers=headers, json_data=payload)
+        if resp.status_code not in (200, 201):
+            raise GmailAPIError(resp.status_code, resp.text)
+        return resp.json()

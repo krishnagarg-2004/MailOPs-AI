@@ -321,6 +321,10 @@ class MockAIProvider:
 def get_ai_provider() -> AIProvider:
     """Factory function returning configured AI provider instance."""
     provider_type = settings.AI_PROVIDER_TYPE.lower()
-    if provider_type == "gemini" and settings.GEMINI_API_KEY:
+    if (
+        provider_type == "gemini"
+        and settings.GEMINI_API_KEY
+        and not settings.GEMINI_API_KEY.startswith("your_")
+    ):
         return GeminiProvider()
     return MockAIProvider()

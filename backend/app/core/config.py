@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     SESSION_EXPIRE_HOURS: int = 24
 
     # Gmail Synchronization Configuration
-    INITIAL_SYNC_LIMIT: int = 500
+    INITIAL_SYNC_LIMIT: int = 50
     ATTACHMENT_MAX_SIZE_BYTES: int = 10 * 1024 * 1024  # 10 MB
 
     # AI Engine & Gemini Configuration

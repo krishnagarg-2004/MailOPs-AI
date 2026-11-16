@@ -108,6 +108,10 @@ class MockEmbeddingProvider:
 
 def get_embedding_provider() -> EmbeddingProvider:
     """Factory creating configured embedding provider."""
-    if settings.AI_PROVIDER_TYPE == "gemini" and settings.GEMINI_API_KEY:
+    if (
+        settings.AI_PROVIDER_TYPE == "gemini"
+        and settings.GEMINI_API_KEY
+        and not settings.GEMINI_API_KEY.startswith("your_")
+    ):
         return GeminiEmbeddingProvider()
     return MockEmbeddingProvider()

@@ -23,7 +23,16 @@ async function fetchJSON<T>(url: string, options: RequestInit = {}): Promise<T> 
     let errorMessage = `HTTP ${response.status} Error`;
     try {
       const parsed = JSON.parse(errorText);
-      errorMessage = parsed.detail || parsed.message || errorMessage;
+      const detail = parsed.detail ?? parsed.message;
+      if (typeof detail === 'string') {
+        errorMessage = detail;
+      } else if (Array.isArray(detail)) {
+        errorMessage = detail.map((d: any) => d.msg || JSON.stringify(d)).join('; ');
+      } else if (detail && typeof detail === 'object') {
+        errorMessage = JSON.stringify(detail);
+      } else {
+        errorMessage = errorText || errorMessage;
+      }
     } catch {
       errorMessage = errorText || errorMessage;
     }
@@ -89,12 +98,15 @@ export const api = {
   // Search & RAG
   searchSemantic: (query: string, mode: 'semantic' | 'hybrid') => {
     const endpoint = mode === 'hybrid' ? '/api/v1/search/hybrid' : '/api/v1/search/semantic';
-    return fetchJSON<SearchResultItem[]>(`${endpoint}?q=${encodeURIComponent(query)}`);
+    return fetchJSON<SearchResultItem[]>(endpoint, {
+      method: 'POST',
+      body: JSON.stringify({ query, top_k: 5 }),
+    });
   },
   queryRAG: (question: string) =>
     fetchJSON<RAGQueryResponse>('/api/v1/search/rag-query', {
       method: 'POST',
-      body: JSON.stringify({ question }),
+      body: JSON.stringify({ query: question, question }),
     }),
   reindexAll: () =>
     fetchJSON<{ indexed_emails: number; indexed_documents: number; total_chunks: number }>(

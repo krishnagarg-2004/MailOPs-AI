@@ -22,8 +22,13 @@ class SearchResultItem(BaseModel):
 
 
 class RAGQueryRequest(BaseModel):
-    query: str = Field(..., min_length=1, description="Question for grounded RAG synthesis")
+    query: str | None = Field(default=None, description="Question for grounded RAG synthesis")
+    question: str | None = Field(default=None, description="Alternative field for user question")
     top_k: int = Field(default=5, ge=1, le=20, description="Max context chunks to retrieve")
+
+    @property
+    def effective_query(self) -> str:
+        return (self.query or self.question or "").strip()
 
 
 class CitationItem(BaseModel):

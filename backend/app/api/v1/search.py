@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from backend.app.api.v1.auth import get_current_user
 from backend.app.db.session import get_db
@@ -18,21 +18,31 @@ from backend.app.services.vector_search_service import VectorSearchService
 router = APIRouter(prefix="/search", tags=["Semantic Search & RAG"])
 
 
-@router.post("/semantic", response_model=list[SearchResultItem])
+@router.api_route("/semantic", methods=["GET", "POST"], response_model=list[SearchResultItem])
 async def semantic_search(
-    req: SemanticSearchRequest,
+    req: SemanticSearchRequest | None = None,
+    q: str | None = Query(default=None, description="Natural language search query via GET"),
+    top_k: int = Query(default=5, ge=1, le=50),
+    source_type: str | None = Query(default=None),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """Execute vector cosine similarity search across user emails and document extractions."""
     service = VectorSearchService()
+    query_text = (req.query if req else None) or q or ""
+    if not query_text:
+        return []
+
+    resolved_top_k = (req.top_k if req else None) or top_k
+    resolved_source = (req.source_type if req else None) or source_type
+
     try:
         results = service.semantic_search(
             db=db,
             user_id=current_user.id,
-            query_text=req.query,
-            top_k=req.top_k,
-            source_type=req.source_type,
+            query_text=query_text,
+            top_k=resolved_top_k,
+            source_type=resolved_source,
         )
         return results
     except Exception as exc:
@@ -42,20 +52,28 @@ async def semantic_search(
         )
 
 
-@router.post("/hybrid", response_model=list[SearchResultItem])
+@router.api_route("/hybrid", methods=["GET", "POST"], response_model=list[SearchResultItem])
 async def hybrid_search(
-    req: SemanticSearchRequest,
+    req: SemanticSearchRequest | None = None,
+    q: str | None = Query(default=None, description="Natural language query via GET"),
+    top_k: int = Query(default=5, ge=1, le=50),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """Execute Hybrid Search combining keyword full-text matching and vector similarity via RRF."""
     service = VectorSearchService()
+    query_text = (req.query if req else None) or q or ""
+    if not query_text:
+        return []
+
+    resolved_top_k = (req.top_k if req else None) or top_k
+
     try:
         results = service.hybrid_search(
             db=db,
             user_id=current_user.id,
-            query_text=req.query,
-            top_k=req.top_k,
+            query_text=query_text,
+            top_k=resolved_top_k,
         )
         return results
     except Exception as exc:
@@ -72,12 +90,19 @@ async def rag_query(
     db: Session = Depends(get_db),
 ):
     """Execute Grounded RAG Query synthesizing AI answer with explicit source and page citations."""
+    query_text = req.effective_query
+    if not query_text:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="A query or question string must be provided for RAG analysis.",
+        )
+
     service = RAGService()
     try:
         res = service.query_rag(
             db=db,
             user_id=current_user.id,
-            query_text=req.query,
+            query_text=query_text,
             top_k=req.top_k,
         )
         return res

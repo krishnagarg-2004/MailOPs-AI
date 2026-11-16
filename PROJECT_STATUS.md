@@ -28,7 +28,7 @@ The current implementation includes:
 
 Current verification status:
 
-- Backend Pytest suite: **103/103 tests passing**.
+- Backend Pytest suite: **145/145 tests passing**.
 - Backend test pass rate: **100%**.
 - PostgreSQL migrations: **001 through 008 verified**.
 - Frontend production build: **Passing with 0 TypeScript or bundling errors**.
@@ -156,3 +156,19 @@ The remaining work is primarily final real-environment verification and release 
 - [x] **Render Cloud Infrastructure Blueprint:** Created `render.yaml` infrastructure-as-code specification for zero-config one-click cloud deployment.
 - [x] **Interactive Demo Showcase:** Instant offline testing environment (`POST /api/v1/auth/demo-login`) with realistic emails, invoices, action graphs, and vector embeddings.
 - [x] **Cache Busting & Seamless Navigation:** Configured `no-store, no-cache` headers and HTML meta tags so updates load seamlessly without manual browser cache clearing.
+
+---
+
+## Milestone 12 — Enterprise UI, RAG Hardening & Action Graph Engine
+
+- [x] **Responsive Layout & Layout Cutoff Fix:** Resolved CSS Grid min-width blowout by enforcing `min-w-0` and `break-words break-all` across conversation reader and inspector columns. Added collapsible left navigation rail (`w-16` icon mode vs `w-60` expanded mode) with 1-click toggle (`☰` / `◀`).
+- [x] **Contextual Executive Summary Generator:** Upgraded analysis engine in `MockAIProvider` with domain-aware heuristics (CI/CD breaks, invoices, contracts, general operations) extracting rich multi-sentence executive summaries, concrete tasks with grounding evidence snippets, and risk mitigations.
+- [x] **Grounded RAG & Semantic Search Hardening:**
+  - Added dual HTTP method support (`GET` and `POST`) across `/api/v1/search/semantic` and `/api/v1/search/hybrid`.
+  - Normalized payload schemas to accept both `query` and `question`.
+  - Implemented automated vector embedding indexing on email ingestion and AI analysis.
+  - Added 1-click **"⚡ Re-Index Mailbox"** trigger and prompt chips in `SearchRAGView.tsx`.
+- [x] **Action Graph BFS Traversal & Generation:**
+  - Automated graph node and edge creation on email analysis.
+  - Added prominent **"⚡ Auto-Generate Graph"** header control and interactive empty-state onboarding guide.
+- [x] **Gmail Ingestion Resiliency:** Implemented HTTP connection pooling with `httpx.AsyncClient`, exponential backoff for rate limits (`429` / `403`), and synchronized pacing.

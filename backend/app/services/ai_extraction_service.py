@@ -156,6 +156,19 @@ class AIExtractionService:
             status="COMPLETED",
         )
 
+        # 7. Automatically sync into Action Graph and Vector Search Store
+        try:
+            from backend.app.services.action_graph_service import ActionGraphService
+            from backend.app.services.vector_search_service import VectorSearchService
+
+            ActionGraphService.sync_message_nodes(db, user_id, message_id)
+            for item in analysis.extracted_items:
+                ActionGraphService.sync_action_nodes(db, user_id, item.id)
+
+            VectorSearchService().index_email_message(db, user_id, message_id)
+        except Exception as sync_err:
+            logger.warning("Post-analysis graph/vector sync error (non-fatal): %s", sync_err)
+
         return analysis
 
     async def analyze_thread(

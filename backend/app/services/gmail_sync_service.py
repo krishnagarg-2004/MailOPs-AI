@@ -365,6 +365,13 @@ class GmailSyncService:
             history_id=history_id,
         )
 
+        # Index message into pgvector for immediate semantic search and RAG
+        try:
+            from backend.app.services.vector_search_service import VectorSearchService
+            VectorSearchService().index_email_message(db, user.id, email_msg.id)
+        except Exception as idx_err:
+            logger.debug("Automatic vector indexing skipped for message %s: %s", gmail_msg_id, idx_err)
+
         # 3. Process Attachment Metadata & Selective Download
         for att in attachments_list:
             filename = att["filename"]

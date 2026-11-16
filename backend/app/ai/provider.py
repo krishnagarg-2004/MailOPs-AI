@@ -206,111 +206,199 @@ class MockAIProvider:
         sentiment = SentimentEnum.NEUTRAL
         rationale = "The message provides operational communication."
 
-        # Scenario 1: Invoice / Billing
-        if "invoice" in clean_subject or "payment" in clean_body_lower or "invoice" in clean_body_lower:
+        # Clean sender and subject
+        clean_sender = sender.split("<")[0].strip() if sender else "External Contact"
+        if not clean_sender:
+            clean_sender = sender or "External Contact"
+
+        # Extract informative body lines (ignoring greetings, footers, signatures)
+        raw_lines = [line.strip() for line in clean_body.splitlines() if line.strip()]
+        meaningful_lines = [
+            line for line in raw_lines
+            if not any(line.lower().startswith(prefix) for prefix in [
+                "hi", "hello", "dear", "thanks", "thank you", "best", "regards", "cheers",
+                "sent from", "view on github", "subscribed to", "unsubscribe"
+            ])
+            and len(line) > 15
+        ]
+
+        # Scenario 1: CI/CD / GitHub / DevOps Pipeline Failure
+        if "fail" in clean_subject or "ci/cd" in clean_subject or "pipeline" in clean_subject or "github" in clean_body_lower:
+            intent = IntentEnum.URGENT_ACTION
+            priority = PriorityEnum.HIGH
+            sentiment = SentimentEnum.NEGATIVE
+            rationale = "Automated pipeline alert flags build or test suite failures requiring immediate engineering triage."
+
+            failure_detail = meaningful_lines[0] if meaningful_lines else "Workflow run failed during execution."
+            summary = (
+                f"Automated alert regarding '{subject or 'CI/CD Pipeline'}'. "
+                f"{failure_detail} "
+                "Engineering intervention is required to inspect execution logs, address breaking test failures, and restore build stability."
+            )
+
+            # Find evidence snippet
+            evidence_snippet = raw_lines[0] if raw_lines else "CI/CD Pipeline workflow run failed"
+            for line in raw_lines:
+                if any(w in line.lower() for w in ["fail", "error", "failed", "broken"]):
+                    evidence_snippet = line
+                    break
+
+            actions.append(
+                ExtractedActionSchema(
+                    description=f"Triage and resolve CI/CD pipeline failure for {subject or 'project'}",
+                    assignee=clean_sender,
+                    due_date=None,
+                    priority=PriorityEnum.HIGH,
+                    confidence=0.95,
+                    evidence_snippet=evidence_snippet,
+                )
+            )
+
+            risks.append(
+                ExtractedRiskSchema(
+                    description="Continuous deployment blocked by failing tests or lint checks on branch",
+                    severity=PriorityEnum.HIGH,
+                    mitigation_suggestion="Check recent commits and local test suite logs to isolate broken dependencies.",
+                    confidence=0.92,
+                    evidence_snippet=evidence_snippet,
+                )
+            )
+
+        # Scenario 2: Invoice / Billing
+        elif "invoice" in clean_subject or "payment" in clean_body_lower or "invoice" in clean_body_lower:
             intent = IntentEnum.FINANCIAL_INVOICE
             priority = PriorityEnum.HIGH
             sentiment = SentimentEnum.NEUTRAL
-            rationale = "The message requests invoice processing and payment."
-            
-            # Find verbatim snippet for evidence
-            for line in clean_body.splitlines():
-                if "pay" in line.lower() or "due" in line.lower() or "invoice" in line.lower():
-                    snippet = line.strip()
-                    if snippet:
-                        actions.append(
-                            ExtractedActionSchema(
-                                description="Process invoice payment",
-                                assignee=sender,
-                                due_date="2026-08-30",
-                                priority=PriorityEnum.HIGH,
-                                confidence=0.95,
-                                evidence_snippet=snippet,
-                            )
-                        )
-                        break
+            rationale = "The message requests invoice processing, vendor account verification, and payment settlement."
 
-        # Scenario 2: Contract / Legal
+            key_detail = meaningful_lines[0] if meaningful_lines else "Vendor requested invoice settlement."
+            summary = (
+                f"Financial billing request from {clean_sender} regarding '{subject or 'Invoice'}'. "
+                f"{key_detail} "
+                "Review document line items against procurement purchase orders and submit for accounting approval."
+            )
+
+            evidence_snippet = "Invoice payment due"
+            for line in clean_body.splitlines():
+                if any(k in line.lower() for k in ["pay", "due", "invoice", "total", "$"]):
+                    evidence_snippet = line.strip()
+                    break
+
+            actions.append(
+                ExtractedActionSchema(
+                    description="Verify line items and authorize invoice payment",
+                    assignee=clean_sender,
+                    due_date="2026-08-30",
+                    priority=PriorityEnum.HIGH,
+                    confidence=0.95,
+                    evidence_snippet=evidence_snippet,
+                )
+            )
+
+        # Scenario 3: Contract / Legal
         elif "contract" in clean_subject or "agreement" in clean_body_lower or "clause" in clean_body_lower:
             intent = IntentEnum.CONTRACT_LEGAL
             priority = PriorityEnum.HIGH
             sentiment = SentimentEnum.NEUTRAL
-            rationale = "The message involves contract and legal agreement review."
+            rationale = "The communication involves legal agreements, liability clauses, or contractual compliance terms."
 
+            key_detail = meaningful_lines[0] if meaningful_lines else "Agreement terms submitted for review."
+            summary = (
+                f"Legal communication from {clean_sender} concerning '{subject or 'Contract Agreement'}'. "
+                f"{key_detail} "
+                "Requires legal counsel and executive review before signing."
+            )
+
+            evidence_snippet = "Contract terms review requested"
             for line in clean_body.splitlines():
-                if "contract" in line.lower() or "agreement" in line.lower() or "sign" in line.lower() or "review" in line.lower():
-                    snippet = line.strip()
-                    if snippet:
-                        actions.append(
-                            ExtractedActionSchema(
-                                description="Review and process contract clauses",
-                                assignee=sender,
-                                due_date="2026-09-01",
-                                priority=PriorityEnum.HIGH,
-                                confidence=0.92,
-                                evidence_snippet=snippet,
-                            )
-                        )
-                        break
+                if any(k in line.lower() for k in ["contract", "agreement", "sign", "clause", "review"]):
+                    evidence_snippet = line.strip()
+                    break
 
-        # Scenario 3: Urgent Work Request / Action Item
-        elif "urgent" in clean_subject or "please review" in clean_body_lower or "submit" in clean_body_lower:
+            actions.append(
+                ExtractedActionSchema(
+                    description="Review contract clauses and verify indemnity terms",
+                    assignee=clean_sender,
+                    due_date="2026-09-01",
+                    priority=PriorityEnum.HIGH,
+                    confidence=0.92,
+                    evidence_snippet=evidence_snippet,
+                )
+            )
+
+        # Scenario 4: Urgent Work Request / Action Item
+        elif "urgent" in clean_subject or "please review" in clean_body_lower or "submit" in clean_body_lower or "action" in clean_subject:
             intent = IntentEnum.URGENT_ACTION
             priority = PriorityEnum.HIGH
             sentiment = SentimentEnum.NEGATIVE if "delay" in clean_body_lower else SentimentEnum.NEUTRAL
-            rationale = "The message requests immediate review and action."
+            rationale = "The message requests immediate deliverable review, issue resolution, or executive feedback."
 
+            key_detail = meaningful_lines[0] if meaningful_lines else "Immediate response and deliverables requested."
+            summary = (
+                f"Urgent operational request from {clean_sender} regarding '{subject or 'Action Required'}'. "
+                f"{key_detail} "
+                "Team action is requested to meet the stated timeline."
+            )
+
+            evidence_snippet = "Deliverable review requested"
             for line in clean_body.splitlines():
-                if "please" in line.lower() or "submit" in line.lower() or "review" in line.lower() or "due" in line.lower():
-                    snippet = line.strip()
-                    if snippet:
-                        actions.append(
-                            ExtractedActionSchema(
-                                description="Review and submit requested deliverables",
-                                assignee="Team Lead",
-                                due_date="2026-08-25",
-                                priority=PriorityEnum.HIGH,
-                                confidence=0.9,
-                                evidence_snippet=snippet,
-                            )
-                        )
-                        break
+                if any(k in line.lower() for k in ["please", "submit", "review", "due", "urgent", "asap"]):
+                    evidence_snippet = line.strip()
+                    break
 
-        # Scenario 4: Status Update / Retrospective
-        elif "status" in clean_subject or "retrospective" in clean_body_lower or "notes" in clean_body_lower:
-            intent = IntentEnum.STATUS_UPDATE
-            priority = PriorityEnum.LOW
-            sentiment = SentimentEnum.POSITIVE if "great" in clean_body_lower else SentimentEnum.NEUTRAL
-            rationale = "The message presents project status updates and retrospective notes."
+            actions.append(
+                ExtractedActionSchema(
+                    description="Review and complete requested deliverables",
+                    assignee=clean_sender,
+                    due_date="2026-08-25",
+                    priority=PriorityEnum.HIGH,
+                    confidence=0.90,
+                    evidence_snippet=evidence_snippet,
+                )
+            )
 
+        # Scenario 5: General Correspondence / Informational
+        else:
+            intent = IntentEnum.INFORMATIONAL
+            priority = PriorityEnum.MEDIUM
+            sentiment = SentimentEnum.POSITIVE if any(w in clean_body_lower for w in ["great", "good", "thank", "pleasure"]) else SentimentEnum.NEUTRAL
+            rationale = "The message provides routine project communication, status updates, or notifications."
 
+            if meaningful_lines:
+                body_excerpt = " ".join(meaningful_lines[:2])
+                if len(body_excerpt) > 220:
+                    body_excerpt = body_excerpt[:217] + "..."
+                summary = (
+                    f"Message from {clean_sender} regarding '{subject or 'Correspondence'}'. "
+                    f"{body_excerpt} "
+                    "Follow up as appropriate to acknowledge or address the points raised."
+                )
+            else:
+                summary = (
+                    f"Routine correspondence from {clean_sender} regarding '{subject or 'No Subject'}'. "
+                    "Message contains operational details for reference and logging."
+                )
 
         # Default fallback extraction if no actions were dynamically added
         if not actions and clean_body.strip():
-            # Pick first non-empty line as evidence
-            first_line = ""
-            for line in clean_body.splitlines():
-                if line.strip():
-                    first_line = line.strip()
-                    break
-            if first_line:
-                actions.append(
-                    ExtractedActionSchema(
-                        description="Follow up on email communication",
-                        assignee=sender,
-                        due_date=None,
-                        priority=PriorityEnum.MEDIUM,
-                        confidence=0.85,
-                        evidence_snippet=first_line,
-                    )
+            first_line = meaningful_lines[0] if meaningful_lines else (raw_lines[0] if raw_lines else "Follow up on email")
+            actions.append(
+                ExtractedActionSchema(
+                    description=f"Follow up on '{subject or 'communication'}'",
+                    assignee=clean_sender,
+                    due_date=None,
+                    priority=PriorityEnum.MEDIUM,
+                    confidence=0.88,
+                    evidence_snippet=first_line,
                 )
+            )
 
         return EmailExtractionResult(
-            summary=f"Analysis of email from {sender or 'unknown'} regarding '{subject or 'No Subject'}'",
+            summary=summary,
             intent=intent,
             priority=priority,
             sentiment=sentiment,
-            confidence_score=0.92,
+            confidence_score=0.94,
             rationale=rationale,
             actions=actions,
             decisions=decisions,

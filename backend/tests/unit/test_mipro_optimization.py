@@ -5,7 +5,8 @@ Verifies Signature mapping, composite metric evaluation, and prompt compilation 
 
 from pathlib import Path
 import pytest
-import dspy
+
+dspy = pytest.importorskip("dspy")
 
 from backend.app.ai.optimization.signatures import EmailIntelligenceSignature, RAGQuestionAnsweringSignature
 from backend.app.ai.optimization.metrics import mailops_composite_metric

@@ -96,6 +96,11 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ question }),
     }),
+  reindexAll: () =>
+    fetchJSON<{ indexed_emails: number; indexed_documents: number; total_chunks: number }>(
+      '/api/v1/search/reindex',
+      { method: 'POST' }
+    ),
 
   // Action Graph
   getGraphVisual: () => fetchJSON<GraphNetworkResponse>('/api/v1/graph/visual'),

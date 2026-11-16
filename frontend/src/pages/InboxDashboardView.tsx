@@ -315,7 +315,7 @@ export const InboxDashboardView: React.FC = () => {
       {/* 3-Pane Split Layout Grid */}
       <div className="flex-1 grid grid-cols-12 gap-4 min-h-0 overflow-hidden">
         {/* Pane 1: Left Thread Navigator (3 cols) */}
-        <div className="col-span-12 md:col-span-4 lg:col-span-3 flex flex-col bg-slate-900 border border-slate-800 rounded-xl overflow-hidden min-h-0">
+        <div className="col-span-12 md:col-span-4 lg:col-span-3 flex flex-col bg-slate-900 border border-slate-800 rounded-xl overflow-hidden min-h-0 min-w-0">
           {/* Search & Filter Header */}
           <div className="p-3 border-b border-slate-800 space-y-2 bg-slate-950/40">
             <input
@@ -406,7 +406,7 @@ export const InboxDashboardView: React.FC = () => {
         <div
           className={`${
             isInspectorOpen ? 'col-span-12 md:col-span-8 lg:col-span-5' : 'col-span-12 md:col-span-8 lg:col-span-9'
-          } flex flex-col bg-slate-900 border border-slate-800 rounded-xl overflow-hidden min-h-0`}
+          } flex flex-col bg-slate-900 border border-slate-800 rounded-xl overflow-hidden min-h-0 min-w-0`}
         >
           {selectedMessage ? (
             <div className="flex flex-col h-full min-h-0">
@@ -481,7 +481,7 @@ export const InboxDashboardView: React.FC = () => {
                   </div>
                 )}
 
-                <div className="bg-slate-950 p-4 rounded-lg border border-slate-800 text-xs text-slate-200 leading-relaxed font-sans whitespace-pre-wrap">
+                <div className="bg-slate-950 p-4 rounded-lg border border-slate-800 text-xs text-slate-200 leading-relaxed font-sans whitespace-pre-wrap break-words break-all overflow-x-hidden">
                   {selectedMessage.body_plain || 'No body text.'}
                 </div>
               </div>
@@ -506,7 +506,7 @@ export const InboxDashboardView: React.FC = () => {
 
         {/* Pane 3: Right Collapsible AI Work Intelligence Inspector & Copilot (4 cols) */}
         {isInspectorOpen && (
-          <div className="col-span-12 lg:col-span-4 flex flex-col bg-slate-900 border border-slate-800 rounded-xl overflow-hidden min-h-0">
+          <div className="col-span-12 lg:col-span-4 flex flex-col bg-slate-900 border border-slate-800 rounded-xl overflow-hidden min-h-0 min-w-0">
             {/* Inspector Tab Selector */}
             <div className="p-2 border-b border-slate-800 flex items-center justify-between bg-slate-950/40 shrink-0">
               <div className="flex items-center gap-1">

@@ -82,33 +82,62 @@ export const ActionGraphView: React.FC = () => {
     <div className="space-y-6 font-sans">
       <div className="flex flex-wrap items-center justify-between border-b border-slate-800 pb-4 gap-3">
         <div>
-          <h2 className="text-lg font-bold text-slate-100">Action Graph & Relationship Workspace</h2>
-          <p className="text-xs text-slate-400">
-            Inspect relational dependencies across emails, actions, invoices, contracts, and people with BFS traversal.
+          <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
+            <span>🕸️ Action Graph & Relationship Workspace</span>
+            <span className="text-xs font-normal px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+              BFS Dependency Engine
+            </span>
+          </h2>
+          <p className="text-xs text-slate-400 mt-0.5">
+            Visualize relational dependencies across email threads, action items, documents, and risks with BFS traversal.
           </p>
         </div>
 
-        <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 p-1 rounded-lg text-xs">
+        <div className="flex items-center gap-2">
           <button
-            onClick={() => setViewMode('canvas')}
-            className={`px-3 py-1 rounded-md font-medium transition ${
-              viewMode === 'canvas'
-                ? 'bg-sky-500/20 text-sky-300 border border-sky-500/30'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
+            onClick={handleRebuildGraph}
+            disabled={isLoading}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-indigo-600 hover:bg-indigo-500 text-white shadow transition disabled:opacity-50"
+            title="Scan all synced emails and actions to construct the dependency graph"
           >
-            🎨 Interactive Canvas
+            {isLoading ? (
+              <>
+                <svg className="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                </svg>
+                <span>Syncing Graph...</span>
+              </>
+            ) : (
+              <>
+                <span>⚡</span>
+                <span>Auto-Generate Graph</span>
+              </>
+            )}
           </button>
-          <button
-            onClick={() => setViewMode('grid')}
-            className={`px-3 py-1 rounded-md font-medium transition ${
-              viewMode === 'grid'
-                ? 'bg-sky-500/20 text-sky-300 border border-sky-500/30'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            📋 Grid Cards
-          </button>
+
+          <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 p-1 rounded-lg text-xs">
+            <button
+              onClick={() => setViewMode('canvas')}
+              className={`px-3 py-1 rounded-md font-medium transition ${
+                viewMode === 'canvas'
+                  ? 'bg-sky-500/20 text-sky-300 border border-sky-500/30'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              🎨 Interactive Canvas
+            </button>
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`px-3 py-1 rounded-md font-medium transition ${
+                viewMode === 'grid'
+                  ? 'bg-sky-500/20 text-sky-300 border border-sky-500/30'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              📋 Grid Cards
+            </button>
+          </div>
         </div>
       </div>
 
@@ -152,8 +181,55 @@ export const ActionGraphView: React.FC = () => {
         </div>
       </div>
 
-      {/* Visual Canvas Mode */}
-      {viewMode === 'canvas' ? (
+      {/* Visual Canvas or Empty State Explainer */}
+      {nodes.length === 0 && !isLoading ? (
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-8 text-center space-y-6">
+          <div className="mx-auto w-16 h-16 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-3xl">
+            🕸️
+          </div>
+          <div className="max-w-xl mx-auto space-y-2">
+            <h3 className="text-base font-bold text-slate-100">Action Graph is Not Yet Generated</h3>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Action Graph automatically maps relationships between your emails, extracted action items, stakeholders, decisions, and risks into a navigable knowledge and dependency graph.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 max-w-3xl mx-auto text-left">
+            <div className="bg-slate-950 p-4 rounded-lg border border-slate-800">
+              <span className="text-lg">⚡</span>
+              <h4 className="text-xs font-semibold text-amber-300 mt-2">Action Dependencies</h4>
+              <p className="text-[11px] text-slate-400 mt-1">
+                Identifies which tasks depend on other prerequisites (e.g. review PR before merge, countersign NDA before payment).
+              </p>
+            </div>
+            <div className="bg-slate-950 p-4 rounded-lg border border-slate-800">
+              <span className="text-lg">🔍</span>
+              <h4 className="text-xs font-semibold text-sky-300 mt-2">BFS Path Traversal</h4>
+              <p className="text-[11px] text-slate-400 mt-1">
+                Walks multi-hop dependency chains to find root-cause blockers holding up critical business workflows.
+              </p>
+            </div>
+            <div className="bg-slate-950 p-4 rounded-lg border border-slate-800">
+              <span className="text-lg">👥</span>
+              <h4 className="text-xs font-semibold text-indigo-300 mt-2">Stakeholder Mapping</h4>
+              <p className="text-[11px] text-slate-400 mt-1">
+                Links senders, recipients, and assignees directly to their corresponding action items and decisions.
+              </p>
+            </div>
+          </div>
+
+          <div className="pt-2">
+            <button
+              onClick={handleRebuildGraph}
+              disabled={isLoading}
+              className="px-6 py-2.5 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg transition inline-flex items-center gap-2"
+            >
+              <span>⚡</span>
+              <span>Auto-Generate Action Graph from Mailbox</span>
+            </button>
+          </div>
+        </div>
+      ) : viewMode === 'canvas' ? (
         <InteractiveActionGraph
           nodes={filteredNodes}
           edges={filteredEdges}

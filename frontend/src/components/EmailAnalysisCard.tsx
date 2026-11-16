@@ -67,38 +67,38 @@ export const EmailAnalysisCard: React.FC<EmailAnalysisCardProps> = ({
   const conf = getConfidenceLevel(analysis.confidence_score);
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg space-y-4 font-sans text-slate-100">
+    <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-lg space-y-3 font-sans text-slate-100 overflow-hidden break-words">
       {/* Header Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">AI Intelligence</span>
-          <span className={`text-xs px-2.5 py-0.5 rounded-full border ${getIntentBadge(analysis.intent)} font-medium`}>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mr-1">AI Intelligence</span>
+          <span className={`text-[11px] px-2 py-0.5 rounded-full border ${getIntentBadge(analysis.intent)} font-medium`}>
             {analysis.intent.replace('_', ' ')}
           </span>
-          <span className={`text-xs px-2 py-0.5 rounded border ${getPriorityBadge(analysis.priority)} font-medium`}>
+          <span className={`text-[11px] px-2 py-0.5 rounded border ${getPriorityBadge(analysis.priority)} font-medium`}>
             {analysis.priority}
           </span>
           {analysis.sentiment && (
-            <span className="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 font-mono">
+            <span className="text-[11px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 font-mono">
               {analysis.sentiment === 'NEGATIVE' ? '⚠️ Negative' : analysis.sentiment === 'POSITIVE' ? '✅ Positive' : '⚖️ Neutral'}
             </span>
           )}
         </div>
 
         {/* Visual Confidence Gauge Pill */}
-        <div className="flex items-center gap-2 text-xs">
-          <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border ${conf.bg}`}>
-            <span className={`w-2 h-2 rounded-full ${analysis.confidence_score >= 0.9 ? 'bg-emerald-400' : analysis.confidence_score >= 0.75 ? 'bg-amber-400' : 'bg-rose-400'} animate-pulse`} />
-            <span className={`font-semibold ${conf.color}`}>
+        <div className="flex items-center gap-2 text-xs shrink-0">
+          <div className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border ${conf.bg}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${analysis.confidence_score >= 0.9 ? 'bg-emerald-400' : analysis.confidence_score >= 0.75 ? 'bg-amber-400' : 'bg-rose-400'} animate-pulse`} />
+            <span className={`font-semibold text-xs ${conf.color}`}>
               {(analysis.confidence_score * 100).toFixed(0)}%
             </span>
             <span className="text-slate-400 text-[10px]">({conf.label})</span>
           </div>
           <button
             onClick={() => setShowExplainability(!showExplainability)}
-            className="text-[11px] text-indigo-400 hover:text-indigo-300 underline transition ml-1"
+            className="text-[11px] text-indigo-400 hover:text-indigo-300 underline transition"
           >
-            {showExplainability ? 'Hide Explainability' : 'Explainability'}
+            {showExplainability ? 'Hide Details' : 'Details'}
           </button>
         </div>
       </div>

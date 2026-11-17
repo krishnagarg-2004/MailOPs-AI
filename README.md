@@ -24,7 +24,18 @@ Modern enterprise communication is fragmented across emails, threads, invoices, 
 
 ---
 
-## 🚀 Quickstart with Docker (One Command)
+## 🌐 Live Cloud Deployment
+
+| Service | Live URL | Platform | Status |
+|---|---|---|---|
+| **Frontend Application** | [https://mailops-frontend.onrender.com](https://mailops-frontend.onrender.com) | Render (Static Site) | 🟢 Active |
+| **Backend REST API** | [https://mailops-backend-67g3.onrender.com](https://mailops-backend-67g3.onrender.com) | Render (Web Service) | 🟢 Active |
+| **System Health Check** | [https://mailops-backend-67g3.onrender.com/health](https://mailops-backend-67g3.onrender.com/health) | Render | 🟢 Healthy |
+| **Production Database** | Supabase Managed PostgreSQL + `pgvector` | Supabase Cloud | 🟢 Connected |
+
+---
+
+## 🚀 Quickstart with Docker (Local)
 
 Launch the full production stack (PostgreSQL 16 + pgvector, FastAPI backend, and Nginx React frontend) with a single command:
 

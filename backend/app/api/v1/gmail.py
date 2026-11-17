@@ -190,7 +190,7 @@ def trigger_gmail_sync(
         )
 
     # Update sync state to SYNCING (acts as an optimistic lock against second concurrent trigger)
-    GmailRepository.update_sync_state(db, current_user.id, sync_status="SYNCING")
+    GmailRepository.update_sync_state(db, current_user.id, sync_status="SYNCING", error_message=None)
 
     # Queue background sync task
     background_tasks.add_task(_run_async_sync, current_user.id)
@@ -229,7 +229,7 @@ def trigger_gmail_sync_older(
             detail="A Gmail sync is already in progress. Please wait for it to complete.",
         )
 
-    GmailRepository.update_sync_state(db, current_user.id, sync_status="SYNCING")
+    GmailRepository.update_sync_state(db, current_user.id, sync_status="SYNCING", error_message=None)
     background_tasks.add_task(_run_async_sync_older, current_user.id, count)
 
     return SyncTriggerResponse(

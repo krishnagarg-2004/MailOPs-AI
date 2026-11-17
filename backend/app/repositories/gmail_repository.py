@@ -48,6 +48,8 @@ class GmailRepository:
 
         if sync_status is not None:
             state.sync_status = sync_status
+            if sync_status == "SYNCING" and error_message is None:
+                state.error_message = None
         if last_history_id is not None:
             state.last_history_id = last_history_id
         if synced_message_count is not None:

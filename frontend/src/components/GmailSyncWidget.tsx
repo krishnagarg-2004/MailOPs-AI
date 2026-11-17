@@ -308,7 +308,7 @@ export const GmailSyncWidget: React.FC = () => {
       </div>
 
       {/* Error */}
-      {syncState?.error_message && (
+      {syncState?.error_message && syncState?.sync_status === 'FAILED' && (
         <div className="mt-2 rounded-lg border border-red-900/50 bg-red-950/40 p-2 text-[10px] leading-relaxed text-red-300">
           {syncState.error_message}
         </div>

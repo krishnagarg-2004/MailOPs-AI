@@ -79,7 +79,11 @@ export const InboxDashboardView: React.FC = () => {
         setIsLoadingOlder(false);
       }, 4500);
     } catch (err: any) {
-      alert(`Could not load older emails: ${err?.message || err}`);
+      if (err?.status === 404 || err?.message === 'Not Found') {
+        alert('Backend is finishing deployment on Render. Please wait 15 seconds and try again.');
+      } else {
+        alert(`Could not load older emails: ${err?.message || err}`);
+      }
       setIsLoadingOlder(false);
     }
   };

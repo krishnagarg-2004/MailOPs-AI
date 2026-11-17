@@ -154,11 +154,15 @@ export const GmailSyncWidget: React.FC = () => {
       });
 
       if (!resp.ok) {
-        let msg = `Request rejected (HTTP ${resp.status}).`;
-        try {
-          const detail = await resp.json();
-          msg = detail.detail || detail.message || msg;
-        } catch { /* ignore */ }
+        let msg = `Request failed (HTTP ${resp.status}).`;
+        if (resp.status === 404) {
+          msg = 'Backend is finishing deployment on Render. Please try again in 10-20 seconds.';
+        } else {
+          try {
+            const detail = await resp.json();
+            msg = detail.detail || detail.message || msg;
+          } catch { /* ignore */ }
+        }
         alert(msg);
         return;
       }

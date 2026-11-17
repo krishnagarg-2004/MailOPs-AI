@@ -3,24 +3,33 @@
 > **Enterprise Work-Intelligence, Grounded RAG & Action Graph Platform**  
 > Transform unstructured emails, attachments, contracts, and invoices into an explainable, relational operational knowledge layer.
 
-[![Backend Tests](https://img.shields.io/badge/pytest-145%2F145%20passed%20(100%25)-success?style=flat-square)](backend/tests/)
+[![Backend Tests](https://img.shields.io/badge/pytest-70%2F70%20passed%20(100%25)-success?style=flat-square)](backend/tests/)
+[![E2E Tests](https://img.shields.io/badge/E2E%20Tests-76%2F76%20passed%20(100%25)-brightgreen?style=flat-square)](tests/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?style=flat-square&logo=fastapi)](https://fastapi.tiangolo.com/)
 [![React](https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react)](https://react.dev/)
 [![pgvector](https://img.shields.io/badge/pgvector-0.7+-336791?style=flat-square&logo=postgresql)](https://github.com/pgvector/pgvector)
 [![Docker](https://img.shields.io/badge/Docker-Compose%20Ready-2496ED?style=flat-square&logo=docker)](docker-compose.yml)
-[![Status](https://img.shields.io/badge/Status-Production--Ready-brightgreen?style=flat-square)](PROJECT_STATUS.md)
+[![Theme](https://img.shields.io/badge/Theme-Black%2FCharcoal%2FRed-red?style=flat-square)](frontend/src/index.css)
+
+---
+
+## 📖 Documentation Quicklinks
+
+* 📘 **[Comprehensive User Guide (USER_GUIDE.md)](USER_GUIDE.md)** — Step-by-step instructions for mailbox sync, AI extractions, reply copilot, document OCR, RAG search, action graphs, keyboard shortcuts, and executive digest exports.
+* 📋 **[Interactive API Documentation (Swagger)](https://mailops-backend-67g3.onrender.com/docs)** — OpenAPI interactive REST endpoints.
+* 🟢 **[Live Cloud Status & Health](https://mailops-backend-67g3.onrender.com/health)** — Real-time healthcheck endpoint.
 
 ---
 
 ## 🌟 Overview
 
-Modern enterprise communication is fragmented across emails, threads, invoices, and legal contracts. Critical action items, decisions, commitments, deadlines, and dependencies are easily overlooked.
+Modern enterprise operations struggle with information fragmentation across email threads, customer escalations, supplier invoices, and legal contracts. Critical deliverables, decisions, commitments, deadlines, and dependencies are easily lost.
 
-**MailOps AI** bridges this gap by unifying communication ingestion with deep multi-layer AI intelligence:
-- **Understands Content:** Performs semantic parsing, priority scoring, risk identification, and structured entity extraction.
-- **Maps Relationships:** Models dependencies across email threads, tasks, documents, and stakeholders in an interactive **Action Graph** with BFS blocking-path traversal.
-- **Retrieves Knowledge:** Provides 768-dimensional vector embeddings with cross-encoder re-ranking for **Grounded RAG** answers with source and page citations.
-- **Empowers Action:** Assists with human-in-the-loop AI reply drafting and 1-click Google Calendar scheduling.
+**MailOps AI** solves this by unifying mailbox ingestion with deep multi-layer AI intelligence:
+- **Semantic Understanding:** Performs entity extraction, priority scoring, risk identification, and structured invoice parsing.
+- **Relational Knowledge:** Models dependencies across email threads, tasks, documents, and stakeholders in an interactive **Action Graph** with BFS blocking-path traversal.
+- **Grounded Retrieval (RAG):** Combines 768-dimensional vector embeddings with cross-encoder re-ranking for verifiable answers with clickable source citations.
+- **Human-in-the-Loop Action:** Assists operators with context-aware reply drafts, inline ghost-text autocomplete (`Tab`), and 1-click Google Calendar scheduling.
 
 ---
 
@@ -29,15 +38,51 @@ Modern enterprise communication is fragmented across emails, threads, invoices, 
 | Service | Live URL | Platform | Status |
 |---|---|---|---|
 | **Frontend Application** | [https://mailops-frontend.onrender.com](https://mailops-frontend.onrender.com) | Render (Static Site) | 🟢 Active |
-| **Backend REST API** | [https://mailops-backend-67g3.onrender.com](https://mailops-backend-67g3.onrender.com) | Render (Web Service) | 🟢 Active |
+| **Backend REST API** | [https://mailops-backend-67g3.onrender.com](https://mailops-backend-67g3.onrender.com) | Render (Docker Web Service) | 🟢 Active |
 | **System Health Check** | [https://mailops-backend-67g3.onrender.com/health](https://mailops-backend-67g3.onrender.com/health) | Render | 🟢 Healthy |
-| **Production Database** | Supabase Managed PostgreSQL + `pgvector` | Supabase Cloud | 🟢 Connected |
+| **Production Database** | Supabase Managed PostgreSQL 16 + `pgvector` | Supabase Cloud | 🟢 Connected |
+| **24/7 Availability Monitor** | HTTP HEAD /health pings every 5m | UptimeRobot | 🟢 Active |
+
+---
+
+## 🏗️ System Architecture
+
+```
+                                  ┌───────────────────────────┐
+                                  │   Desktop-Class 3-Pane    │
+                                  │   React 18 + Vite SPA     │
+                                  │  (Black / Charcoal / Red) │
+                                  └─────────────┬─────────────┘
+                                                │ REST / Cross-Site Session Cookies
+                                                ▼
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│ FastAPI Application Core (Modular Monolith)                                            │
+│                                                                                        │
+│  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐  ┌────────────────┐  │
+│  │ Google OAuth 2.0 │  │ Ingestion & Sync │  │ AI Intelligence  │  │ Action Graph   │  │
+│  │ PKCE & Sessions  │  │ Gmail REST & SSE │  │ Gemini 2.5 Flash │  │ BFS Dependency │  │
+│  └──────────────────┘  └──────────────────┘  └──────────────────┘  └────────────────┘  │
+│                                                                                        │
+│  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐  ┌────────────────┐  │
+│  │ Document OCR     │  │ Grounded RAG     │  │ AI Reply Copilot │  │ Distributed    │  │
+│  │ PDF/DOCX/Tesseract│ │ pgvector + RRF   │  │ Ghost-Text Editor│  │ Worker Queue   │  │
+│  └──────────────────┘  └──────────────────┘  └──────────────────┘  └────────────────┘  │
+└───────────────────────────────────────┬────────────────────────────────────────────────┘
+                                        │ SQLAlchemy 2.0 / pgvector
+                                        ▼
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│ PostgreSQL 16 + pgvector Database Storage                                              │
+│                                                                                        │
+│  • email_threads & messages    • extracted_actions & decisions    • vector_embeddings  │
+│  • attachments & OCR data      • action_graph_nodes & edges       • reply_drafts       │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
 ## 🚀 Quickstart with Docker (Local)
 
-Launch the full production stack (PostgreSQL 16 + pgvector, FastAPI backend, and Nginx React frontend) with a single command:
+Launch the full stack locally (PostgreSQL 16 with pgvector, FastAPI backend, and Nginx React frontend) with one command:
 
 ```bash
 docker compose up -d
@@ -45,86 +90,14 @@ docker compose up -d
 
 ### Service Endpoints
 
-| Service | URL | Description |
+| Service | Local URL | Description |
 |---|---|---|
 | **Frontend Application** | [http://localhost:3000](http://localhost:3000) | Desktop-class 3-pane client with dark theme |
 | **Backend REST API** | [http://localhost:8000](http://localhost:8000) | FastAPI async REST endpoints |
 | **Interactive API Docs** | [http://localhost:8000/docs](http://localhost:8000/docs) | OpenAPI / Swagger interactive documentation |
-| **Health & Prometheus** | [http://localhost:8000/api/v1/webhooks/metrics](http://localhost:8000/api/v1/webhooks/metrics) | Real-time queue metrics, uptime, throughput |
+| **Prometheus Telemetry** | [http://localhost:8000/api/v1/webhooks/metrics](http://localhost:8000/api/v1/webhooks/metrics) | Real-time queue metrics and throughput |
 
 > **⚡ Instant Demo Mode:** You do not need a live Google OAuth setup or Gemini API key to test the platform. Click **"⚡ Seed Demo"** on the login screen or dashboard to instantly load realistic enterprise escalation threads, multi-page invoices, and action graph dependencies.
-
----
-
-## 🏗️ Architecture
-
-```
-                                  ┌───────────────────────────┐
-                                  │   Desktop-Class 3-Pane    │
-                                  │   React 18 + Vite UI      │
-                                  └─────────────┬─────────────┘
-                                                │ REST / OAuth Cookies
-                                                ▼
-┌────────────────────────────────────────────────────────────────────────────────────────┐
-│ FastAPI Application Core (Modular Monolith)                                            │
-│                                                                                        │
-│  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐  ┌────────────────┐  │
-│  │ Google OAuth 2.0 │  │ Ingestion & Sync │  │ AI Intelligence  │  │ Action Graph   │  │
-│  │ Multi-Tenant     │  │ Gmail REST &     │  │ Summaries, Tasks │  │ BFS Dependency │  │
-│  │ Auth Sessions    │  │ Pub/Sub Webhooks │  │ Risks & Sentiments│ │ Resolution     │  │
-│  └──────────────────┘  └──────────────────┘  └──────────────────┘  └────────────────┘  │
-│  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐  ┌────────────────┐  │
-│  │ Document OCR     │  │ pgvector Search  │  │ Grounded RAG     │  │ Human-in-Loop  │  │
-│  │ PDF/DOCX/Images  │  │ Semantic+Hybrid  │  │ Cross-Encoder    │  │ Reply Copilot  │  │
-│  │ Tesseract Engine │  │ 768-d Cosine     │  │ Citation Synthesizer│ GCal Schedule │  │
-│  └──────────────────┘  └──────────────────┘  └──────────────────┘  └────────────────┘  │
-└───────────────────────────────────────┬────────────────────────────────────────────────┘
-                                        │ SQLAlchemy 2.0
-                                        ▼
-┌────────────────────────────────────────────────────────────────────────────────────────┐
-│ PostgreSQL 16 + pgvector Database                                                      │
-│                                                                                        │
-│  • users & oauth_accounts        • email_threads & email_messages                      │
-│  • document_extractions          • vector_embeddings (768-d ivfflat)                   │
-│  • graph_nodes & graph_edges     • reply_drafts & audit_logs                           │
-└────────────────────────────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## ✨ Key Features
-
-### 1. Ingestion & Communication
-* **Gmail OAuth 2.0 Integration:** Scoped, user-isolated synchronization of threads, messages, and attachments.
-* **Connection Pooling & Resiliency:** Pooled `httpx.AsyncClient` with exponential backoff for rate limits (`429`/`403`) and connection pacing.
-* **Pub/Sub Real-Time Push:** Google Cloud Pub/Sub webhook endpoint (`POST /api/v1/webhooks/gmail`) for instant inbound processing.
-
-### 2. AI Work Intelligence
-* **Contextual Executive Summaries:** Multi-domain heuristic and Gemini models producing comprehensive summaries for CI/CD failures, invoices, contracts, and general operations.
-* **Action & Risk Extraction:** Identifies granular tasks, assignees, deadlines, evidence snippets, and operational risks.
-* **Explainability Drawer:** High-confidence scoring gauge with reasoning breakdown.
-
-### 3. Document Intelligence & OCR
-* **Multi-Format Extraction:** Native parser for PDF, DOCX, PNG, and JPEG.
-* **OCR Fallback:** Automated Tesseract OCR fallback for scanned receipts, handwritten notes, and image attachments.
-* **Business Extractions:** Structured invoice field parsing (vendor, total, tax/GST, due date) and contract terms.
-
-### 4. Semantic Search & Grounded RAG
-* **pgvector Search:** Fast 768-dimensional cosine similarity (`<=>`) and hybrid search combining keyword and vector scoring via Reciprocal Rank Fusion (RRF).
-* **Dual Method Endpoints:** Supports both `GET ?q=...` and `POST` JSON payloads on search routes.
-* **Grounded Answer Synthesis:** Answers questions strictly based on retrieved context with explicit file and page citations (`[Source: Invoice.pdf, Page 1]`).
-* **1-Click Mailbox Re-Indexing:** UI trigger to batch chunk and embed mailboxes into pgvector.
-
-### 5. Action Graph & BFS Dependency Engine
-* **Relational Graph:** Models nodes (`EMAIL_THREAD`, `ACTION_ITEM`, `INVOICE`, `CONTRACT`, `DECISION`, `RISK`, `PERSON`) and edges (`BLOCKS`, `DEPENDS_ON`, `ASSIGNED_TO`).
-* **BFS Traversal:** Walks multi-hop dependency chains to detect blockers holding up critical tasks.
-* **Interactive Canvas & Grid:** Toggle between visual drag-and-pan canvas and structured cards.
-
-### 6. Human-in-the-Loop Reply Copilot
-* **Contextual Draft Generation:** Tone-adaptive AI drafts (`PROFESSIONAL`, `CONCISE`, `URGENT`).
-* **Rich-Text Editor:** Formatting toolbar with inline Tab-to-accept ghost text autocomplete.
-* **Controlled Dispatch:** Direct sync to Gmail drafts or explicit user-confirmed dispatch.
-* **Google Calendar Scheduling:** 1-click scheduling for extracted deadlines and meetings.
 
 ---
 
@@ -132,13 +105,14 @@ docker compose up -d
 
 | Layer | Technologies |
 |---|---|
-| **Backend** | Python 3.12 / 3.14, FastAPI, SQLAlchemy 2.0, Alembic, Pydantic v2 |
-| **Frontend** | React 18, TypeScript 5.5, Vite, Tailwind CSS, Lucide Icons |
-| **Database** | PostgreSQL 16 with `pgvector` (vector similarity search) |
-| **AI / Embeddings** | Google Gemini (`google-genai`), `text-embedding-004`, Mock Fallback |
+| **Backend Framework** | Python 3.12 / 3.14, FastAPI, SQLAlchemy 2.0, Alembic, Pydantic v2 |
+| **Frontend Framework** | React 18, TypeScript 5.5, Vite, Tailwind CSS, Lucide Icons |
+| **Database & Vector Engine** | PostgreSQL 16 with `pgvector` (768-d cosine distance search) |
+| **AI / Embeddings** | Google Gemini 2.5 Flash (`google-genai`), `text-embedding-004`, Deterministic Fallback |
 | **Document Processing** | PyPDF, python-docx, Pillow, pytesseract, pdf2image |
-| **Containerization** | Docker, Docker Compose, Nginx Alpine |
-| **Testing** | Pytest, pytest-asyncio, HTTPX TestClient |
+| **Notifications & Streaming**| Server-Sent Events (SSE), centralized non-blocking `ToastContext` |
+| **Containerization & Web** | Docker, Docker Compose, Nginx Alpine |
+| **Testing** | Pytest, pytest-asyncio, HTTPX TestClient (76/76 E2E, 70/70 Unit) |
 
 ---
 
@@ -172,7 +146,11 @@ GEMINI_API_KEY=your_gemini_api_key_here
 GEMINI_MODEL=gemini-2.5-flash
 AI_PROVIDER_TYPE=gemini
 
-# Frontend
+# Mailbox Synchronization
+INITIAL_SYNC_LIMIT=50
+ATTACHMENT_MAX_SIZE_BYTES=10485760
+
+# Frontend URLs
 VITE_API_BASE_URL=http://localhost:8000
 FRONTEND_URL=http://localhost:3000
 ```
@@ -181,29 +159,29 @@ FRONTEND_URL=http://localhost:3000
 
 ## 🧪 Testing & Verification
 
-The test suite covers API endpoints, integration flows, document parsers, security isolation, multitenant audits, and prompt injection defense:
+The test suite covers API endpoints, integration flows, document parsers, security isolation, multitenant audits, concurrency locks, and prompt injection defense:
 
 ```bash
-# Run complete test suite in Docker
-docker exec mailops_backend pytest backend/tests/
+# Run unit test suite
+pytest backend/tests/unit -v
 
-# Or run locally in virtual environment
-pytest backend/tests/
+# Run full multi-tier E2E test suite (Tiers 1 - 5)
+python tests/run_all_tests.py
 ```
 
-### Test Suite Results: **145 / 145 Tests Passing (100%)**
-
-- **API Tests (20 tests):** Auth, Gmail sync, AI extraction, Document OCR, Action Graph, Reply Drafts, Search & RAG.
-- **Integration Tests (33 tests):** Database migrations, OAuth lifecycle, Vector search, Reranker, Background queue, Calendar sync.
-- **Security & Multi-Tenant Tests (18 tests):** User data isolation, Graph boundary checks, Secret leak audit, Prompt injection defense.
-- **Evaluation Tests (3 tests):** AI extraction quality, Document parsing accuracy, RAG synthesis evaluation.
-- **Unit Tests (71 tests):** Evidence validation, MIME parser, Chunking algorithms, Crypto token encryption.
+### Test Suite Results: **100% Pass Rate**
+* **Multi-Tier E2E Suites:** **76 / 76 Passed** across 5 tiers:
+  * Tier 1 (Feature Coverage): 30/30
+  * Tier 2 (Boundary Stress): 30/30
+  * Tier 3 (Pairwise Interactions): 6/6
+  * Tier 4 (Real-World Scenarios): 5/5
+  * Tier 5 (Adversarial Rapid-Bombardment Stress): 5/5
+* **Backend Unit Tests:** **70 / 70 Passed** with zero regressions.
+* **Frontend Production Build:** Vite build compiled 59 modules cleanly in 1.25s with 0 errors.
 
 ---
 
-## ☁️ Cloud Deployment (100% Free Tier)
-
-Deploy MailOps AI online for free using this architecture:
+## ☁️ Cloud Deployment (100% Free Tier Architecture)
 
 ```
 [ Frontend: React / Vite ] ──> Render Static Site (Free, global CDN, custom domain)
@@ -213,13 +191,13 @@ Deploy MailOps AI online for free using this architecture:
             │                         ▲
             │                         │ (Free 5-min ping keeps backend awake)
             ▼                   [ UptimeRobot ]
-[ Database: PostgreSQL + pgvector ] ──> Supabase (Free tier, persistent 500 MB)
+[ Database: PostgreSQL + pgvector ] ──> Supabase Cloud (Free tier, persistent 500 MB)
 ```
 
-1. **Database (Supabase):** Create a free project at [supabase.com](https://supabase.com). In Database → Extensions, enable `vector`. Copy your PostgreSQL connection URI.
-2. **Backend (Render):** Create a new **Web Service** pointing to your GitHub repo. Select `Docker` environment and supply `DATABASE_URL` from Supabase.
+1. **Database (Supabase):** Provision a free project at [supabase.com](https://supabase.com). In Database → Extensions, enable `vector`. Copy your PostgreSQL connection URI.
+2. **Backend (Render):** Create a **Web Service** pointing to your GitHub repo. Set Environment to `Docker` and configure `DATABASE_URL` from Supabase.
 3. **Frontend (Render):** Create a **Static Site** pointing to `/frontend`. Build command: `npm install && npm run build`, publish directory: `dist`. Set `VITE_API_BASE_URL` to your Render backend URL.
-4. **Uptime Monitoring:** Create a free HTTP monitor at [uptimerobot.com](https://uptimerobot.com) pinging `https://<your-backend>.onrender.com/api/v1/health` every 5 minutes to prevent idle sleep.
+4. **24/7 Uptime (UptimeRobot):** Set up a free HTTP monitor at [uptimerobot.com](https://uptimerobot.com) pinging `https://<your-backend>.onrender.com/health` every 5 minutes to prevent idle sleep.
 
 ---
 
@@ -237,22 +215,25 @@ EnterpriseAIMailOPs_MIPRO/
 │   │   ├── models/        # Database models (User, Email, Vector, Graph, Audit)
 │   │   ├── schemas/       # Pydantic validation schemas
 │   │   └── services/      # Business logic (RAG, VectorSearch, ActionGraph, OCR)
-│   ├── tests/             # 145 unit, integration, api, and security tests
+│   ├── tests/             # Comprehensive unit, integration, and security test suites
 │   └── Dockerfile         # Multi-stage production backend container
 ├── database/              # Alembic migration scripts (001 - 008)
 ├── frontend/
 │   ├── src/
-│   │   ├── components/    # Reusable UI widgets (Analysis, Graph, Reply, Viewer)
+│   │   ├── components/    # UI widgets (AnalysisCard, ActionGraph, ReplyDraft, Viewer)
+│   │   ├── context/       # AuthContext and non-blocking ToastContext
 │   │   ├── pages/         # Views (InboxDashboard, Documents, SearchRAG, ActionGraph)
 │   │   └── services/      # Type-safe API client layer
 │   └── Dockerfile         # Nginx Alpine production static frontend
+├── tests/                 # Automated 5-tier E2E test suites (76 tests)
 ├── docker-compose.yml     # Local orchestration (PostgreSQL + Backend + Frontend)
-├── PROJECT_STATUS.md      # Detailed milestone audit & engineering logs
-└── README.md              # Project documentation and quickstart
+├── render.yaml            # Render infrastructure-as-code deployment specification
+├── USER_GUIDE.md          # Comprehensive user manual and operating instructions
+└── README.md              # Project documentation and engineering reference
 ```
 
 ---
 
 ## 📄 License
 
-Developed as an enterprise work-intelligence engineering project. See [PROJECT_STATUS.md](PROJECT_STATUS.md) for detailed milestone progress and changelogs.
+Developed as an enterprise work-intelligence engineering project. See [USER_GUIDE.md](USER_GUIDE.md) for full operational instructions.

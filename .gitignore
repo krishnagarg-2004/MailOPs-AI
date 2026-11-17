@@ -39,6 +39,7 @@ yarn-error.log*
 # IDE & OS Metadata
 .vscode/
 .idea/
+.claude/
 *.swp
 *.swo
 .DS_Store

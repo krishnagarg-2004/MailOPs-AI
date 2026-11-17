@@ -35,5 +35,5 @@ RUN pip install --upgrade pip \
 EXPOSE 8000
 
 # Auto-run Alembic migrations happen inside app/main.py lifespan.
-# Start uvicorn with reload for local development.
-CMD ["uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+# Use $PORT environment variable assigned by cloud host (Render, Railway, Fly.io) or default to 8000.
+CMD ["sh", "-c", "uvicorn backend.app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]

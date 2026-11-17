@@ -81,14 +81,14 @@ export const InteractiveActionGraph: React.FC<InteractiveActionGraphProps> = ({
         ctx.beginPath();
         ctx.moveTo(src.x, src.y);
         ctx.lineTo(tgt.x, tgt.y);
-        ctx.strokeStyle = '#475569'; // slate-600
+        ctx.strokeStyle = '#27272a'; // zinc-800
         ctx.lineWidth = 1.5;
         ctx.stroke();
 
         // Edge label (relationship type)
         const midX = (src.x + tgt.x) / 2;
         const midY = (src.y + tgt.y) / 2;
-        ctx.fillStyle = '#94a3b8'; // slate-400
+        ctx.fillStyle = '#a1a1aa'; // zinc-400
         ctx.font = '9px sans-serif';
         ctx.fillText(edge.relationship_type, midX, midY - 4);
       });
@@ -99,20 +99,20 @@ export const InteractiveActionGraph: React.FC<InteractiveActionGraphProps> = ({
         const radius = isSelected ? 22 : 18;
 
         // Node fill color by type
-        let fillColor = '#1e293b'; // slate-800
-        let strokeColor = '#64748b'; // slate-500
+        let fillColor = '#18181b'; // zinc-900
+        let strokeColor = '#71717a'; // zinc-500
         if (n.node_type === 'ACTION_ITEM') {
-          fillColor = '#78350f'; // amber-900
-          strokeColor = '#f59e0b'; // amber-500
+          fillColor = '#991b1b'; // red-800
+          strokeColor = '#dc2626'; // red-600
         } else if (n.node_type === 'EMAIL_MESSAGE' || n.node_type === 'EMAIL_THREAD') {
-          fillColor = '#1e3a8a'; // blue-900
-          strokeColor = '#3b82f6'; // blue-500
+          fillColor = '#27272a'; // zinc-800
+          strokeColor = '#a1a1aa'; // zinc-400
         } else if (n.node_type === 'INVOICE') {
-          fillColor = '#581c87'; // purple-900
-          strokeColor = '#a855f7'; // purple-500
+          fillColor = '#18181b'; // zinc-900
+          strokeColor = '#dc2626'; // red-600
         } else if (n.node_type === 'CONTRACT') {
-          fillColor = '#064e3b'; // emerald-900
-          strokeColor = '#10b981'; // emerald-500
+          fillColor = '#27272a'; // zinc-800
+          strokeColor = '#991b1b'; // red-800
         }
 
         ctx.beginPath();
@@ -120,7 +120,7 @@ export const InteractiveActionGraph: React.FC<InteractiveActionGraphProps> = ({
         ctx.fillStyle = fillColor;
         ctx.fill();
         ctx.lineWidth = isSelected ? 3 : 1.5;
-        ctx.strokeStyle = isSelected ? '#38bdf8' : strokeColor; // sky-400 if selected
+        ctx.strokeStyle = isSelected ? '#dc2626' : strokeColor; // red-600 if selected
         ctx.stroke();
 
         // Label
@@ -201,23 +201,23 @@ export const InteractiveActionGraph: React.FC<InteractiveActionGraphProps> = ({
   };
 
   return (
-    <div className="relative w-full rounded-xl bg-slate-950 border border-slate-800 overflow-hidden select-none">
-      <div className="absolute top-3 left-3 z-10 flex items-center gap-2 bg-slate-900/80 backdrop-blur-sm border border-slate-800 px-3 py-1.5 rounded-lg text-xs text-slate-300">
-        <span className="font-semibold text-sky-400">Interactive Canvas:</span>
+    <div className="relative w-full rounded-xl bg-black border border-zinc-800 overflow-hidden select-none">
+      <div className="absolute top-3 left-3 z-10 flex items-center gap-2 bg-zinc-900/80 backdrop-blur-sm border border-zinc-800 px-3 py-1.5 rounded-lg text-xs text-zinc-300">
+        <span className="font-semibold text-red-400">Interactive Canvas:</span>
         <span>Drag nodes • Pan canvas • Scroll to zoom</span>
       </div>
 
-      <div className="absolute top-3 right-3 z-10 flex items-center gap-1 bg-slate-900/80 backdrop-blur-sm border border-slate-800 p-1 rounded-lg">
+      <div className="absolute top-3 right-3 z-10 flex items-center gap-1 bg-zinc-900/80 backdrop-blur-sm border border-zinc-800 p-1 rounded-lg">
         <button
           onClick={() => setZoom((z) => Math.min(z * 1.2, 2.5))}
-          className="px-2 py-1 text-xs hover:bg-slate-800 rounded text-slate-300"
+          className="px-2 py-1 text-xs hover:bg-zinc-800 rounded text-zinc-300"
           title="Zoom In"
         >
           ➕
         </button>
         <button
           onClick={() => setZoom((z) => Math.max(z / 1.2, 0.5))}
-          className="px-2 py-1 text-xs hover:bg-slate-800 rounded text-slate-300"
+          className="px-2 py-1 text-xs hover:bg-zinc-800 rounded text-zinc-300"
           title="Zoom Out"
         >
           ➖
@@ -227,7 +227,7 @@ export const InteractiveActionGraph: React.FC<InteractiveActionGraphProps> = ({
             setZoom(1);
             setPan({ x: 0, y: 0 });
           }}
-          className="px-2 py-1 text-xs hover:bg-slate-800 rounded text-slate-300 font-mono"
+          className="px-2 py-1 text-xs hover:bg-zinc-800 rounded text-zinc-300 font-mono"
           title="Reset View"
         >
           Reset

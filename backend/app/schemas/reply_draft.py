@@ -1,7 +1,9 @@
 from datetime import datetime
 from enum import Enum
+import json
+from typing import Any, Union
 import uuid
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class ToneEnum(str, Enum):
@@ -59,8 +61,40 @@ class ReplyDraftRead(BaseModel):
     intent: str
     tone: ToneEnum
     status: StatusEnum
-    rationale_and_provenance: list[dict]
+    rationale_and_provenance: list[Union[dict[str, Any], str]] = Field(default_factory=list)
     created_at: datetime
     updated_at: datetime
+
+    @field_validator("rationale_and_provenance", mode="before")
+    @classmethod
+    def normalize_provenance(cls, v: Any) -> list[dict[str, Any]]:
+        if not v:
+            return []
+        if isinstance(v, str):
+            try:
+                v = json.loads(v)
+            except Exception:
+                v = [{"source_type": "EMAIL_THREAD", "source_id": "seed", "description": v}]
+        if not isinstance(v, list):
+            v = [v]
+        normalized: list[dict[str, Any]] = []
+        for item in v:
+            if isinstance(item, str):
+                normalized.append({
+                    "source_type": "EMAIL_THREAD",
+                    "source_id": "seed",
+                    "description": item,
+                })
+            elif isinstance(item, dict):
+                normalized.append(item)
+            elif hasattr(item, "model_dump"):
+                normalized.append(item.model_dump())
+            else:
+                normalized.append({
+                    "source_type": "GENERAL",
+                    "source_id": "auto",
+                    "description": str(item),
+                })
+        return normalized
 
     model_config = ConfigDict(from_attributes=True)

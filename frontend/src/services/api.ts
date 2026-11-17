@@ -69,7 +69,22 @@ export const api = {
   // Gmail & Threads
   getGmailStatus: () => fetchJSON<{ connected: boolean; email: string | null; sync_state: any }>('/api/v1/gmail/status'),
   triggerGmailSync: () => fetchJSON<{ status: string; message: string }>('/api/v1/gmail/sync', { method: 'POST' }),
-  getGmailThreads: (limit: number = 100) => fetchJSON<EmailThreadSummary[]>(`/api/v1/gmail/threads?limit=${limit}`),
+  getGmailThreads: (params: number | { limit?: number; page?: number } = 100) => {
+    let limit = 100;
+    let page: number | undefined;
+    if (typeof params === 'number') {
+      limit = params;
+    } else if (params && typeof params === 'object') {
+      if (params.limit !== undefined) limit = params.limit;
+      if (params.page !== undefined) page = params.page;
+    }
+    const query = new URLSearchParams();
+    query.set('limit', String(limit));
+    if (page !== undefined) {
+      query.set('page', String(page));
+    }
+    return fetchJSON<EmailThreadSummary[]>(`/api/v1/gmail/threads?${query.toString()}`);
+  },
   getGmailThread: (id: string) => fetchJSON<EmailThreadSummary>(`/api/v1/gmail/threads/${id}`),
   getGmailMessage: (id: string) => fetchJSON<EmailMessageSummary>(`/api/v1/gmail/messages/${id}`),
   syncOlderEmails: (count: number = 50) =>

@@ -1,10 +1,14 @@
 from datetime import datetime
+import logging
 import uuid
 from typing import Sequence
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 from backend.app.models.ai_analysis import AIAnalysis
 from backend.app.models.extracted_action import ExtractedAction
+
+logger = logging.getLogger(__name__)
 
 
 class AIRepository:
@@ -94,7 +98,7 @@ class AIRepository:
             existing.extracted_items.clear()
             analysis_obj = existing
         else:
-            # Create new record
+            # Create new record with race condition resilience
             analysis_obj = AIAnalysis(
                 user_id=user_id,
                 email_message_id=email_message_id,
@@ -111,7 +115,32 @@ class AIRepository:
                 error_message=error_message,
             )
             db.add(analysis_obj)
-            db.flush()
+            try:
+                db.flush()
+            except IntegrityError:
+                db.rollback()
+                logger.info(
+                    "Concurrent AI extraction detected for message %s, version %s. Re-fetching existing record.",
+                    email_message_id,
+                    prompt_version,
+                )
+                existing = AIRepository.get_analysis_by_message_and_version(
+                    db, user_id, email_message_id, model_name, prompt_version
+                )
+                if existing:
+                    existing.summary = summary
+                    existing.intent = intent
+                    existing.priority = priority
+                    existing.sentiment = sentiment
+                    existing.confidence_score = confidence_score
+                    existing.rationale = rationale
+                    existing.status = status
+                    existing.error_message = error_message
+                    existing.updated_at = datetime.now()
+                    existing.extracted_items.clear()
+                    analysis_obj = existing
+                else:
+                    raise
 
         # Add extracted items
         for item in extracted_items:
@@ -132,7 +161,50 @@ class AIRepository:
             )
             db.add(action_obj)
 
-        db.commit()
+        try:
+            db.commit()
+        except IntegrityError:
+            db.rollback()
+            logger.info(
+                "IntegrityError on commit for message %s. Fetching and syncing existing analysis.",
+                email_message_id,
+            )
+            existing = AIRepository.get_analysis_by_message_and_version(
+                db, user_id, email_message_id, model_name, prompt_version
+            )
+            if existing:
+                existing.summary = summary
+                existing.intent = intent
+                existing.priority = priority
+                existing.sentiment = sentiment
+                existing.confidence_score = confidence_score
+                existing.rationale = rationale
+                existing.status = status
+                existing.error_message = error_message
+                existing.updated_at = datetime.now()
+                existing.extracted_items.clear()
+                for item in extracted_items:
+                    action_obj = ExtractedAction(
+                        user_id=user_id,
+                        ai_analysis_id=existing.id,
+                        email_message_id=email_message_id,
+                        email_thread_id=email_thread_id,
+                        item_type=item.get("item_type", "ACTION"),
+                        description=item["description"],
+                        assignee=item.get("assignee"),
+                        due_date=item.get("due_date"),
+                        severity_or_priority=item.get("priority", "MEDIUM"),
+                        confidence_score=item.get("confidence", 1.0),
+                        evidence_snippet=item.get("evidence_snippet", ""),
+                        is_evidence_valid=item.get("is_evidence_valid", True),
+                        status=item.get("status", "PENDING"),
+                    )
+                    db.add(action_obj)
+                db.commit()
+                db.refresh(existing)
+                return existing
+            raise
+
         db.refresh(analysis_obj)
         return analysis_obj
 

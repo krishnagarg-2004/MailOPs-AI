@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { ActionGraphWidget } from '../components/ActionGraphWidget';
 import { InteractiveActionGraph } from '../components/InteractiveActionGraph';
+import { useToast } from '../context/ToastContext';
 import { api } from '../services/api';
 import { DependencyChainResponse, GraphEdgeResult, GraphNodeResult } from '../types/graph';
 
 export const ActionGraphView: React.FC = () => {
+  const { toast } = useToast();
   const [nodes, setNodes] = useState<GraphNodeResult[]>([]);
   const [edges, setEdges] = useState<GraphEdgeResult[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -38,8 +40,9 @@ export const ActionGraphView: React.FC = () => {
       setIsLoading(true);
       await api.rebuildGraph();
       await fetchGraphData();
+      toast.success('Action graph successfully rebuilt!');
     } catch (err: any) {
-      alert(`Graph Rebuild Error: ${err.message}`);
+      toast.error(`Graph Rebuild Error: ${err.message}`);
       setIsLoading(false);
     }
   };
@@ -198,21 +201,21 @@ export const ActionGraphView: React.FC = () => {
             <div className="bg-zinc-900 p-4 rounded-lg border border-zinc-800">
               <span className="text-lg">⚡</span>
               <h4 className="text-xs font-semibold text-red-400 mt-2">Action Dependencies</h4>
-              <p className="text-[11px] text-slate-400 mt-1">
+              <p className="text-[11px] text-zinc-400 mt-1">
                 Identifies which tasks depend on other prerequisites (e.g. review PR before merge, countersign NDA before payment).
               </p>
             </div>
-            <div className="bg-slate-950 p-4 rounded-lg border border-slate-800">
+            <div className="bg-zinc-950 p-4 rounded-lg border border-zinc-800">
               <span className="text-lg">🔍</span>
-              <h4 className="text-xs font-semibold text-sky-300 mt-2">BFS Path Traversal</h4>
-              <p className="text-[11px] text-slate-400 mt-1">
+              <h4 className="text-xs font-semibold text-zinc-200 mt-2">BFS Path Traversal</h4>
+              <p className="text-[11px] text-zinc-400 mt-1">
                 Walks multi-hop dependency chains to find root-cause blockers holding up critical business workflows.
               </p>
             </div>
-            <div className="bg-slate-950 p-4 rounded-lg border border-slate-800">
+            <div className="bg-zinc-950 p-4 rounded-lg border border-zinc-800">
               <span className="text-lg">👥</span>
-              <h4 className="text-xs font-semibold text-indigo-300 mt-2">Stakeholder Mapping</h4>
-              <p className="text-[11px] text-slate-400 mt-1">
+              <h4 className="text-xs font-semibold text-red-400 mt-2">Stakeholder Mapping</h4>
+              <p className="text-[11px] text-zinc-400 mt-1">
                 Links senders, recipients, and assignees directly to their corresponding action items and decisions.
               </p>
             </div>
@@ -222,7 +225,7 @@ export const ActionGraphView: React.FC = () => {
             <button
               onClick={handleRebuildGraph}
               disabled={isLoading}
-              className="px-6 py-2.5 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg transition inline-flex items-center gap-2"
+              className="px-6 py-2.5 rounded-lg text-xs font-semibold bg-red-600 hover:bg-red-500 text-white shadow-lg transition inline-flex items-center gap-2"
             >
               <span>⚡</span>
               <span>Auto-Generate Action Graph from Mailbox</span>
@@ -248,31 +251,31 @@ export const ActionGraphView: React.FC = () => {
 
       {/* BFS Dependency Chain Resolution Drawer */}
       {dependencyChain && (
-        <div className="bg-slate-900 border border-amber-500/30 rounded-xl p-5 shadow-lg space-y-3">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-            <h3 className="text-sm font-semibold text-amber-400">
+        <div className="bg-zinc-950 border border-red-800/60 rounded-xl p-5 shadow-lg space-y-3">
+          <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
+            <h3 className="text-sm font-semibold text-red-400">
               BFS Dependency Chain Resolution
             </h3>
-            <span className="text-xs bg-amber-500/20 text-amber-300 font-mono px-2 py-0.5 rounded">
+            <span className="text-xs bg-red-950/60 text-red-300 font-mono px-2 py-0.5 rounded">
               Action: {dependencyChain.action_label}
             </span>
           </div>
 
           <div className="space-y-2 text-xs">
-            <span className="text-slate-400 font-medium block">
+            <span className="text-zinc-400 font-medium block">
               Blocking Prerequisite Nodes ({dependencyChain.blocking_nodes.length}):
             </span>
 
             {dependencyChain.blocking_nodes.length === 0 ? (
-              <p className="text-slate-500 italic">No prerequisite blocking nodes identified for this action item.</p>
+              <p className="text-zinc-500 italic">No prerequisite blocking nodes identified for this action item.</p>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 {dependencyChain.blocking_nodes.map((node) => (
-                  <div key={node.id} className="bg-slate-950 p-3 rounded-lg border border-slate-800 space-y-1">
-                    <span className="text-[10px] font-semibold text-indigo-400 uppercase tracking-wider block">
+                  <div key={node.id} className="bg-zinc-900 p-3 rounded-lg border border-zinc-800 space-y-1">
+                    <span className="text-[10px] font-semibold text-red-400 uppercase tracking-wider block">
                       {node.node_type}
                     </span>
-                    <p className="font-semibold text-slate-200">{node.label}</p>
+                    <p className="font-semibold text-zinc-200">{node.label}</p>
                   </div>
                 ))}
               </div>

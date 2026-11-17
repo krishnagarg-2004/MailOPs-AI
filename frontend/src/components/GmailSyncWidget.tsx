@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useToast } from '../context/ToastContext';
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? '';
@@ -17,6 +18,7 @@ interface GmailStatus {
 }
 
 export const GmailSyncWidget: React.FC = () => {
+  const { toast } = useToast();
   const [statusData, setStatusData] = useState<GmailStatus | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
@@ -128,7 +130,7 @@ export const GmailSyncWidget: React.FC = () => {
             msg = await resp.text();
           } catch { /* keep default */ }
         }
-        alert(msg);
+        toast.error(msg);
         return;
       }
 
@@ -140,7 +142,7 @@ export const GmailSyncWidget: React.FC = () => {
         // A newer sync superseded this one — ignore silently.
         return;
       }
-      alert(`Sync attempt failed: ${err?.message || 'Network error'}`);
+      toast.error(`Sync attempt failed: ${err?.message || 'Network error'}`);
     } finally {
       // Only unset isSyncing if this is still the latest controller.
       if (syncAbortControllerRef.current === controller) {
@@ -171,12 +173,12 @@ export const GmailSyncWidget: React.FC = () => {
             msg = detail.detail || detail.message || msg;
           } catch { /* ignore */ }
         }
-        alert(msg);
+        toast.error(msg);
         return;
       }
       fetchStatus();
     } catch (err: any) {
-      alert(`Failed to load older emails: ${err?.message || 'Network error'}`);
+      toast.error(`Failed to load older emails: ${err?.message || 'Network error'}`);
     } finally {
       setIsLoadingOlder(false);
     }
@@ -184,7 +186,7 @@ export const GmailSyncWidget: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="text-xs text-slate-400">
+      <div className="text-xs text-zinc-400">
         Loading Gmail status...
       </div>
     );

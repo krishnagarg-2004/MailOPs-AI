@@ -508,7 +508,11 @@ def seed_demo_environment(
                             tone=rdata["tone"],
                             status="DRAFTED",
                             rationale_and_provenance=[
-                                "Drafted to de-escalate payment cluster rate limits and confirm threshold stabilization."
+                                {
+                                    "source_type": "EMAIL_THREAD",
+                                    "source_id": str(thread.id),
+                                    "description": "Drafted to de-escalate payment cluster rate limits and confirm threshold stabilization.",
+                                }
                             ],
                         )
                     )

@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 import logging
 import uuid
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
@@ -18,6 +19,7 @@ from backend.app.schemas.gmail import (
     GmailSyncStateResponse,
     SyncTriggerResponse,
 )
+from backend.app.core.events import event_bus
 from backend.app.services.gmail_sync_service import GmailSyncService
 
 router = APIRouter(prefix="/gmail", tags=["gmail"])
@@ -25,117 +27,144 @@ router = APIRouter(prefix="/gmail", tags=["gmail"])
 logger = logging.getLogger(__name__)
 
 
-def _run_async_sync(user_id: uuid.UUID):
-    """Background task runner executing sync in a new database session."""
-    import asyncio
+async def _run_async_sync(user_id: uuid.UUID):
+    """Background task runner executing sync in a new database session on the main asyncio loop."""
     from backend.app.db.session import SessionLocal
 
-    async def _async_worker():
-        db = SessionLocal()
-        try:
-            user = db.execute(select(User).where(User.id == user_id)).scalar_one_or_none()
-            if user:
-                sync_service = GmailSyncService()
-                await sync_service.execute_sync(db, user)
-            else:
-                # FIX-SYNC-2: User deleted between sync trigger and background execution.
-                # Mark FAILED so the state is not permanently stuck at SYNCING.
-                logger.warning(
-                    "Background sync: user_id=%s not found. Marking sync FAILED.",
-                    user_id,
-                )
-                GmailRepository.update_sync_state(
-                    db,
-                    user_id,
-                    sync_status="FAILED",
-                    error_message="User account not found during background sync.",
-                )
-        except Exception as exc:
-            # ANY failure (not just execute_sync) must flip the state to FAILED
-            # so users are never permanently blocked at SYNCING. The outer handler
-            # below is intentionally broad; inner paths inside execute_sync already
-            # have their own FAILED-flipping logic but this guard covers any
-            # exception introduced by the worker itself (DB drop, session close, etc.).
-            logger.error(
-                "Background sync unhandled exception: user_id=%s error=%s",
+    db = SessionLocal()
+    try:
+        user = db.execute(select(User).where(User.id == user_id)).scalar_one_or_none()
+        if user:
+            sync_service = GmailSyncService()
+            await sync_service.execute_sync(db, user)
+        else:
+            logger.warning(
+                "Background sync: user_id=%s not found. Marking sync FAILED.",
                 user_id,
-                type(exc).__name__,
             )
-            try:
-                from backend.app.models.email_message import EmailMessage
-                msg_count = db.query(EmailMessage).filter(EmailMessage.user_id == user_id).count()
-                if msg_count > 0:
-                    GmailRepository.update_sync_state(
-                        db,
-                        user_id,
-                        sync_status="COMPLETED",
-                        synced_message_count=msg_count,
-                        error_message=f"Synced {msg_count} messages (interrupted: {type(exc).__name__})",
-                    )
-                else:
-                    GmailRepository.update_sync_state(
-                        db,
-                        user_id,
-                        sync_status="FAILED",
-                        error_message=f"Background sync terminated unexpectedly: {type(exc).__name__}",
-                    )
-            except Exception as db_exc:  # pragma: no cover - best-effort state reset
-                logger.critical(
-                    "Could not reset SYNCING state to FAILED after background sync failure: %s",
-                    db_exc,
-                )
-        finally:
-            db.close()
-
-    asyncio.run(_async_worker())
-
-
-def _run_async_sync_older(user_id: uuid.UUID, count: int = 50):
-    """Background task runner executing older historical emails sync."""
-    import asyncio
-    from backend.app.db.session import SessionLocal
-
-    async def _async_worker():
-        db = SessionLocal()
-        try:
-            user = db.execute(select(User).where(User.id == user_id)).scalar_one_or_none()
-            if user:
-                sync_service = GmailSyncService()
-                await sync_service.sync_older_messages(db, user, count=count)
-            else:
-                logger.warning(
-                    "Background older sync: user_id=%s not found. Marking sync FAILED.",
-                    user_id,
-                )
-                GmailRepository.update_sync_state(
-                    db,
-                    user_id,
-                    sync_status="FAILED",
-                    error_message="User account not found during background older sync.",
-                )
-        except Exception as exc:
-            logger.error(
-                "Background older sync error: user_id=%s error=%s",
+            GmailRepository.update_sync_state(
+                db,
                 user_id,
-                type(exc).__name__,
-                exc_info=True,
+                sync_status="FAILED",
+                error_message="User account not found during background sync.",
             )
-            try:
-                from backend.app.models.email_message import EmailMessage
-                msg_count = db.query(EmailMessage).filter(EmailMessage.user_id == user_id).count()
+            await event_bus.publish(
+                user_id,
+                "sync_completed",
+                {
+                    "status": "FAILED",
+                    "error": "User account not found during background sync.",
+                },
+            )
+    except Exception as exc:
+        logger.error(
+            "Background sync unhandled exception: user_id=%s error=%s",
+            user_id,
+            type(exc).__name__,
+        )
+        msg_count = 0
+        try:
+            from backend.app.models.email_message import EmailMessage
+            msg_count = db.query(EmailMessage).filter(EmailMessage.user_id == user_id).count()
+            if msg_count > 0:
                 GmailRepository.update_sync_state(
                     db,
                     user_id,
-                    sync_status="COMPLETED" if msg_count > 0 else "FAILED",
+                    sync_status="COMPLETED",
                     synced_message_count=msg_count,
-                    error_message=f"Sync interrupted: {str(exc)}",
+                    error_message=f"Synced {msg_count} messages (interrupted: {type(exc).__name__})",
                 )
-            except Exception as db_exc:
-                logger.critical("Could not reset SYNCING state: %s", db_exc)
-        finally:
-            db.close()
+            else:
+                GmailRepository.update_sync_state(
+                    db,
+                    user_id,
+                    sync_status="FAILED",
+                    error_message=f"Background sync terminated unexpectedly: {type(exc).__name__}",
+                )
+        except Exception as db_exc:
+            logger.critical(
+                "Could not reset SYNCING state to FAILED after background sync failure: %s",
+                db_exc,
+            )
+        try:
+            await event_bus.publish(
+                user_id,
+                "sync_completed",
+                {
+                    "status": "COMPLETED" if msg_count > 0 else "FAILED",
+                    "synced_count": msg_count,
+                    "error": str(exc),
+                },
+            )
+        except Exception as pub_exc:
+            logger.critical("Could not publish sync_completed event on error: %s", pub_exc)
+    finally:
+        db.close()
 
-    asyncio.run(_async_worker())
+
+async def _run_async_sync_older(user_id: uuid.UUID, count: int = 50):
+    """Background task runner executing older historical emails sync."""
+    from backend.app.db.session import SessionLocal
+
+    db = SessionLocal()
+    try:
+        user = db.execute(select(User).where(User.id == user_id)).scalar_one_or_none()
+        if user:
+            sync_service = GmailSyncService()
+            await sync_service.sync_older_messages(db, user, count=count)
+        else:
+            logger.warning(
+                "Background older sync: user_id=%s not found. Marking sync FAILED.",
+                user_id,
+            )
+            GmailRepository.update_sync_state(
+                db,
+                user_id,
+                sync_status="FAILED",
+                error_message="User account not found during background older sync.",
+            )
+            await event_bus.publish(
+                user_id,
+                "sync_completed",
+                {
+                    "status": "FAILED",
+                    "error": "User account not found during background older sync.",
+                },
+            )
+    except Exception as exc:
+        logger.error(
+            "Background older sync error: user_id=%s error=%s",
+            user_id,
+            type(exc).__name__,
+            exc_info=True,
+        )
+        msg_count = 0
+        try:
+            from backend.app.models.email_message import EmailMessage
+            msg_count = db.query(EmailMessage).filter(EmailMessage.user_id == user_id).count()
+            GmailRepository.update_sync_state(
+                db,
+                user_id,
+                sync_status="COMPLETED" if msg_count > 0 else "FAILED",
+                synced_message_count=msg_count,
+                error_message=f"Sync interrupted: {str(exc)}",
+            )
+        except Exception as db_exc:
+            logger.critical("Could not reset SYNCING state: %s", db_exc)
+        try:
+            await event_bus.publish(
+                user_id,
+                "sync_completed",
+                {
+                    "status": "COMPLETED" if msg_count > 0 else "FAILED",
+                    "synced_count": msg_count,
+                    "error": str(exc),
+                },
+            )
+        except Exception as pub_exc:
+            logger.critical("Could not publish sync_completed on older error: %s", pub_exc)
+    finally:
+        db.close()
 
 
 @router.get("/status", response_model=dict)

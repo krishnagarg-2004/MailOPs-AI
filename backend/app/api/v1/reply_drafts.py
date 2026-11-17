@@ -56,6 +56,7 @@ async def list_message_reply_drafts(
             ReplyDraft.email_message_id == message_id,
             ReplyDraft.user_id == current_user.id,
         )
+        .order_by(ReplyDraft.updated_at.desc())
         .all()
     )
 

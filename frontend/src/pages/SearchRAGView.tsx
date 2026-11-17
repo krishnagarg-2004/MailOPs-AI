@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { RAGChatWidget } from '../components/RAGChatWidget';
 import { SemanticSearchWidget } from '../components/SemanticSearchWidget';
+import { useToast } from '../context/ToastContext';
 import { api } from '../services/api';
 import { RAGQueryResponse, SearchResultItem } from '../types/search';
 
 export const SearchRAGView: React.FC = () => {
+  const { toast } = useToast();
   const [searchResults, setSearchResults] = useState<SearchResultItem[]>([]);
   const [isSearching, setIsSearching] = useState<boolean>(false);
 
@@ -19,7 +21,7 @@ export const SearchRAGView: React.FC = () => {
       const results = await api.searchSemantic(query, mode);
       setSearchResults(results);
     } catch (err: any) {
-      alert(`Search Error: ${err.message}`);
+      toast.error(`Search Error: ${err.message}`);
     } finally {
       setIsSearching(false);
     }
@@ -33,7 +35,7 @@ export const SearchRAGView: React.FC = () => {
       const res = await api.queryRAG(question);
       setRagResponse(res);
     } catch (err: any) {
-      alert(`RAG Synthesis Error: ${err.message}`);
+      toast.error(`RAG Synthesis Error: ${err.message}`);
     } finally {
       setIsRAGLoading(false);
     }
@@ -44,9 +46,11 @@ export const SearchRAGView: React.FC = () => {
       setIsIndexing(true);
       setIndexMessage(null);
       const res = await api.reindexAll();
-      setIndexMessage(`Indexed ${res.indexed_emails} emails & ${res.indexed_documents} documents (${res.total_chunks} vector chunks).`);
+      const successMsg = `Indexed ${res.indexed_emails} emails & ${res.indexed_documents} documents (${res.total_chunks} vector chunks).`;
+      setIndexMessage(successMsg);
+      toast.success(successMsg);
     } catch (err: any) {
-      alert(`Indexing Error: ${err.message}`);
+      toast.error(`Indexing Error: ${err.message}`);
     } finally {
       setIsIndexing(false);
     }

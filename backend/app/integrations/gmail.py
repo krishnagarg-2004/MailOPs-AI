@@ -3,6 +3,7 @@ from datetime import datetime, timezone, timedelta
 import logging
 from typing import Any
 import base64
+import uuid
 import httpx
 from sqlalchemy.orm import Session
 
@@ -110,6 +111,12 @@ class GmailClient:
         """
         now_utc = datetime.now(timezone.utc)
 
+        # 0. Check for demo persona mock token first
+        if oauth_account.encrypted_access_token:
+            decrypted = decrypt_token(oauth_account.encrypted_access_token)
+            if decrypted and (decrypted == "mock_access_token_demo" or oauth_account.email == "alex.morgan@enterprise-mailops.io"):
+                return decrypted
+
         # 1. If access token is valid (expires in > 5 minutes), decrypt and return
         token_expires = oauth_account.token_expires_at
         if token_expires and token_expires.tzinfo is None:
@@ -176,6 +183,13 @@ class GmailClient:
 
     async def get_profile(self, access_token: str) -> dict[str, Any]:
         """Fetch user Gmail profile (emailAddress, historyId, messagesTotal)."""
+        if access_token == "mock_access_token_demo":
+            return {
+                "emailAddress": "alex.morgan@enterprise-mailops.io",
+                "messagesTotal": 54,
+                "threadsTotal": 54,
+                "historyId": "1000500",
+            }
         headers = {"Authorization": f"Bearer {access_token}"}
         resp = await self._request_with_retry("GET", f"{self.BASE_URL}/profile", headers=headers)
         if resp.status_code != 200:
@@ -190,6 +204,8 @@ class GmailClient:
         max_results: int = 100,
     ) -> dict[str, Any]:
         """List messages in user's mailbox with pagination."""
+        if access_token == "mock_access_token_demo":
+            return {"messages": [], "resultSizeEstimate": 0}
         headers = {"Authorization": f"Bearer {access_token}"}
         params: dict[str, Any] = {"maxResults": min(max_results, 100), "includeSpamTrash": "false"}
         if page_token:
@@ -261,6 +277,15 @@ class GmailClient:
         thread_id: str | None = None,
     ) -> dict[str, Any]:
         """Create a draft in user's Gmail mailbox via POST /users/me/drafts."""
+        if access_token == "mock_access_token_demo":
+            draft_id = f"mock_draft_{uuid.uuid4().hex[:12]}"
+            return {
+                "id": draft_id,
+                "message": {
+                    "id": f"mock_msg_{uuid.uuid4().hex[:12]}",
+                    "threadId": thread_id or f"mock_th_{uuid.uuid4().hex[:12]}",
+                },
+            }
         headers = {"Authorization": f"Bearer {access_token}", "Content-Type": "application/json"}
         msg_payload: dict[str, Any] = {"raw": raw_mime}
         if thread_id:
@@ -279,6 +304,12 @@ class GmailClient:
         thread_id: str | None = None,
     ) -> dict[str, Any]:
         """Send an email message via POST /users/me/messages/send."""
+        if access_token == "mock_access_token_demo":
+            return {
+                "id": f"mock_sent_{uuid.uuid4().hex[:12]}",
+                "threadId": thread_id or f"mock_th_{uuid.uuid4().hex[:12]}",
+                "labelIds": ["SENT"],
+            }
         headers = {"Authorization": f"Bearer {access_token}", "Content-Type": "application/json"}
         payload: dict[str, Any] = {"raw": raw_mime}
         if thread_id:

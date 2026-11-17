@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { DocumentViewerWidget } from '../components/DocumentViewerWidget';
+import { useToast } from '../context/ToastContext';
 import { api } from '../services/api';
 import { BusinessDocumentExtractionResult, DocumentExtractionResult } from '../types/document';
 
@@ -11,6 +12,7 @@ interface AttachmentItem {
 }
 
 export const DocumentsView: React.FC = () => {
+  const { toast } = useToast();
   const [attachments, setAttachments] = useState<AttachmentItem[]>([]);
   const [selectedAttachment, setSelectedAttachment] = useState<AttachmentItem | null>(null);
   const [extraction, setExtraction] = useState<DocumentExtractionResult | undefined>(undefined);
@@ -73,8 +75,9 @@ export const DocumentsView: React.FC = () => {
     try {
       const result = await api.processDocument(selectedAttachment.id);
       setExtraction(result);
+      toast.success('OCR & text extraction completed!');
     } catch (err: any) {
-      alert(`OCR Extraction Error: ${err.message}`);
+      toast.error(`OCR Extraction Error: ${err.message}`);
     }
   };
 
@@ -83,8 +86,9 @@ export const DocumentsView: React.FC = () => {
     try {
       const result = await api.analyzeBusinessDocument(selectedAttachment.id);
       setBusinessExtraction(result);
+      toast.success('Business document analysis completed!');
     } catch (err: any) {
-      alert(`Business Document AI Analysis Error: ${err.message}`);
+      toast.error(`Business Document AI Analysis Error: ${err.message}`);
     }
   };
 
@@ -226,7 +230,7 @@ export const DocumentsView: React.FC = () => {
               onTriggerBusinessAnalysis={handleAnalyzeBusinessDoc}
             />
           ) : (
-            <div className="bg-slate-900 border border-slate-800 rounded-xl p-12 text-center text-xs text-slate-500">
+            <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-12 text-center text-xs text-zinc-500">
               Select an attachment to view extracted OCR page text or run business metadata extraction.
             </div>
           )}

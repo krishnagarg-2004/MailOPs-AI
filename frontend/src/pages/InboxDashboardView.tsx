@@ -1,13 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { EmailAnalysisCard } from '../components/EmailAnalysisCard';
 import { ReplyDraftWidget } from '../components/ReplyDraftWidget';
+import { useToast } from '../context/ToastContext';
 import { EmailMessageSummary, EmailThreadSummary, api } from '../services/api';
 import { AIAnalysisResult, ActionStatusEnum } from '../types/ai';
 import { ReplyDraftResult, ToneEnum } from '../types/reply_draft';
 
 export const InboxDashboardView: React.FC = () => {
+  const { toast, requestConfirmation } = useToast();
   const [threads, setThreads] = useState<EmailThreadSummary[]>([]);
   const [selectedThread, setSelectedThread] = useState<EmailThreadSummary | null>(null);
+  const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
   const [selectedMessage, setSelectedMessage] = useState<EmailMessageSummary | null>(null);
   const [analysis, setAnalysis] = useState<AIAnalysisResult | null>(null);
   const [draft, setDraft] = useState<ReplyDraftResult | null>(null);
@@ -19,6 +22,30 @@ export const InboxDashboardView: React.FC = () => {
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
   const [isDrafting, setIsDrafting] = useState<boolean>(false);
   const [requiresComposeConsent, setRequiresComposeConsent] = useState<boolean>(false);
+  const [threadLimit, setThreadLimit] = useState<number>(100);
+
+  const threadLimitRef = useRef<number>(threadLimit);
+  threadLimitRef.current = threadLimit;
+
+  const selectedThreadIdRef = useRef<string | null>(null);
+  const selectedMessageIdRef = useRef<string | null>(null);
+  const draftRef = useRef<ReplyDraftResult | null>(null);
+
+  useEffect(() => {
+    threadLimitRef.current = threadLimit;
+  }, [threadLimit]);
+
+  useEffect(() => {
+    selectedThreadIdRef.current = selectedThreadId;
+  }, [selectedThreadId]);
+
+  useEffect(() => {
+    selectedMessageIdRef.current = selectedMessage?.id ?? null;
+  }, [selectedMessage]);
+
+  useEffect(() => {
+    draftRef.current = draft;
+  }, [draft]);
 
   // 3-Pane Filter & View States
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -30,16 +57,54 @@ export const InboxDashboardView: React.FC = () => {
   const [showDigestModal, setShowDigestModal] = useState<boolean>(false);
   const [showShortcutsModal, setShowShortcutsModal] = useState<boolean>(false);
 
-  const fetchThreads = async () => {
+  const fetchThreads = async (customLimit?: number) => {
     try {
       setIsLoadingThreads(true);
-      const data = await api.getGmailThreads();
+      const limit = customLimit ?? threadLimitRef.current;
+      const data = await api.getGmailThreads({ limit });
       setThreads(data);
-      if (data.length > 0) {
+
+      const targetThreadId = selectedThreadIdRef.current || selectedThreadId || selectedThread?.id;
+      const targetMsgId = selectedMessageIdRef.current || selectedMessage?.id;
+
+      if (targetThreadId) {
+        const existingThread = data.find((t) => t.id === targetThreadId);
+        if (existingThread) {
+          setSelectedThread(existingThread);
+          setSelectedThreadId(existingThread.id);
+          selectedThreadIdRef.current = existingThread.id;
+          if (targetMsgId) {
+            const existingMsg = existingThread.messages.find((m) => m.id === targetMsgId);
+            if (existingMsg) {
+              setSelectedMessage(existingMsg);
+              selectedMessageIdRef.current = existingMsg.id;
+              // Preserve active analysis and draft without clobbering!
+              return;
+            }
+          }
+          if (existingThread.messages.length > 0) {
+            handleSelectMessage(existingThread.messages[0], true);
+          }
+          return;
+        } else if (selectedThreadIdRef.current) {
+          // Preserve existing thread selection if it was already selected
+          return;
+        }
+      }
+
+      if (data.length > 0 && !selectedThreadIdRef.current) {
         setSelectedThread(data[0]);
+        setSelectedThreadId(data[0].id);
+        selectedThreadIdRef.current = data[0].id;
         if (data[0].messages.length > 0) {
           handleSelectMessage(data[0].messages[0]);
         }
+      } else if (!selectedThreadIdRef.current) {
+        setSelectedThread(null);
+        setSelectedThreadId(null);
+        selectedThreadIdRef.current = null;
+        setSelectedMessage(null);
+        selectedMessageIdRef.current = null;
       }
     } catch {
       // Ignore background errors
@@ -48,8 +113,14 @@ export const InboxDashboardView: React.FC = () => {
     }
   };
 
+  const fetchThreadsRef = useRef(fetchThreads);
+  fetchThreadsRef.current = fetchThreads;
   useEffect(() => {
-    fetchThreads();
+    fetchThreadsRef.current = fetchThreads;
+  });
+
+  useEffect(() => {
+    fetchThreads(threadLimitRef.current);
 
     // Check initial Gmail sync status
     api.getGmailStatus().then((status) => {
@@ -57,6 +128,18 @@ export const InboxDashboardView: React.FC = () => {
         setIsSyncing(true);
       }
     }).catch(() => {});
+
+    // Periodic safety polling so UI never stays stuck
+    const pollInterval = setInterval(async () => {
+      try {
+        const status = await api.getGmailStatus();
+        if (status?.sync_state?.sync_status === 'COMPLETED' || status?.sync_state?.sync_status === 'FAILED') {
+          setIsSyncing(false);
+          setIsLoadingOlder(false);
+          setSyncProgressMsg(null);
+        }
+      } catch {}
+    }, 10000);
 
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '';
     let eventSource: EventSource | null = null;
@@ -82,13 +165,19 @@ export const InboxDashboardView: React.FC = () => {
         setIsSyncing(false);
         setIsLoadingOlder(false);
         setSyncProgressMsg(null);
-        fetchThreads();
+        fetchThreadsRef.current(threadLimitRef.current);
       });
+
+      eventSource.onerror = () => {
+        setIsSyncing(false);
+        setIsLoadingOlder(false);
+      };
     } catch {
       // ignore
     }
 
     return () => {
+      clearInterval(pollInterval);
       if (eventSource) eventSource.close();
     };
   }, []);
@@ -96,26 +185,41 @@ export const InboxDashboardView: React.FC = () => {
   const handleLoadOlderEmails = async () => {
     if (isSyncing || isLoadingOlder) return;
 
+    const newLimit = (threadLimitRef.current || threadLimit) + 50;
+    setThreadLimit(newLimit);
+    threadLimitRef.current = newLimit;
+
+    setIsLoadingOlder(true);
+    setIsSyncing(true);
+    setSyncProgressMsg('Loading older emails...');
+
+    // Safety watchdog timer (7 seconds) so it never stays stuck spinning
+    const safetyTimer = setTimeout(() => {
+      setIsLoadingOlder(false);
+      setIsSyncing(false);
+      setSyncProgressMsg(null);
+      fetchThreadsRef.current(threadLimitRef.current);
+    }, 7000);
+
     try {
-      setIsLoadingOlder(true);
-      setIsSyncing(true);
-      setSyncProgressMsg('Loading older emails...');
       const res = await api.syncOlderEmails(50);
+      await fetchThreadsRef.current(threadLimitRef.current);
       if (res?.status === 'IN_PROGRESS') {
         // Sync is already in flight, wait for SSE completion
         return;
       }
     } catch (err: any) {
+      clearTimeout(safetyTimer);
       if (err?.status === 409 || err?.message?.includes('already in progress')) {
         // Silently mark as syncing, no ugly alert popup
         setIsSyncing(true);
       } else if (err?.status === 404 || err?.message === 'Not Found') {
-        alert('Backend is finishing deployment on Render. Please wait a moment and try again.');
+        toast.warning('Backend is finishing deployment on Render. Please wait a moment and try again.');
         setIsLoadingOlder(false);
         setIsSyncing(false);
         setSyncProgressMsg(null);
       } else {
-        alert(`Could not load older emails: ${err?.message || err}`);
+        toast.error(`Could not load older emails: ${err?.message || err}`);
         setIsLoadingOlder(false);
         setIsSyncing(false);
         setSyncProgressMsg(null);
@@ -123,10 +227,14 @@ export const InboxDashboardView: React.FC = () => {
     }
   };
 
-  const handleSelectMessage = async (msg: EmailMessageSummary) => {
+  const handleSelectMessage = async (msg: EmailMessageSummary, preserveDraftState: boolean = false) => {
     setSelectedMessage(msg);
-    setAnalysis(null);
-    setDraft(null);
+    selectedMessageIdRef.current = msg.id;
+    if (!preserveDraftState) {
+      setAnalysis(null);
+      setDraft(null);
+      draftRef.current = null;
+    }
 
     // Try fetching existing analysis and reply draft
     try {
@@ -136,13 +244,16 @@ export const InboxDashboardView: React.FC = () => {
       // Not analyzed yet
     }
 
-    try {
-      const drafts = await api.getReplyDraftsForMessage(msg.id);
-      if (drafts.length > 0) {
-        setDraft(drafts[0]);
+    if (!preserveDraftState) {
+      try {
+        const drafts = await api.getReplyDraftsForMessage(msg.id);
+        if (drafts.length > 0) {
+          setDraft(drafts[0]);
+          draftRef.current = drafts[0];
+        }
+      } catch {
+        // No draft yet
       }
-    } catch {
-      // No draft yet
     }
   };
 
@@ -154,8 +265,9 @@ export const InboxDashboardView: React.FC = () => {
       setAnalysis(result);
       setActiveInspectorTab('INTELLIGENCE');
       if (!isInspectorOpen) setIsInspectorOpen(true);
+      toast.success('AI extractions completed!');
     } catch (err: any) {
-      alert(`AI Extraction Error: ${err.message}`);
+      toast.error(`AI Extraction Error: ${err.message}`);
     } finally {
       setIsAnalyzing(false);
     }
@@ -168,8 +280,9 @@ export const InboxDashboardView: React.FC = () => {
         const updatedAnalysis = await api.getMessageAnalysis(selectedMessage.id);
         setAnalysis(updatedAnalysis);
       }
+      toast.success(`Action status updated to ${newStatus}`);
     } catch (err: any) {
-      alert(`Action Status Update Failed: ${err.message}`);
+      toast.error(`Action Status Update Failed: ${err.message}`);
     }
   };
 
@@ -179,10 +292,12 @@ export const InboxDashboardView: React.FC = () => {
       setIsDrafting(true);
       const result = await api.generateReplyDraft(selectedMessage.id, tone);
       setDraft(result);
+      draftRef.current = result;
       setActiveInspectorTab('COPILOT');
       if (!isInspectorOpen) setIsInspectorOpen(true);
+      toast.success('AI reply draft generated!');
     } catch (err: any) {
-      alert(`Reply Generation Error: ${err.message}`);
+      toast.error(`Reply Generation Error: ${err.message}`);
     } finally {
       setIsDrafting(false);
     }
@@ -193,8 +308,10 @@ export const InboxDashboardView: React.FC = () => {
     try {
       const updated = await api.updateReplyDraft(draft.id, { subject, body_text: bodyText, tone });
       setDraft(updated);
+      draftRef.current = updated;
+      toast.success('Draft changes saved!');
     } catch (err: any) {
-      alert(`Draft Save Error: ${err.message}`);
+      toast.error(`Draft Save Error: ${err.message}`);
     }
   };
 
@@ -204,31 +321,43 @@ export const InboxDashboardView: React.FC = () => {
       setRequiresComposeConsent(false);
       const synced = await api.syncGmailDraft(draft.id);
       setDraft(synced);
-      alert('Successfully synced draft to Gmail!');
+      draftRef.current = synced;
+      toast.success('Successfully synced draft to Gmail!');
     } catch (err: any) {
       if (err.status === 403) {
         setRequiresComposeConsent(true);
       } else {
-        alert(`Gmail Sync Error: ${err.message}`);
+        toast.error(`Gmail Sync Error: ${err.message}`);
+      }
+    }
+  };
+
+  const executeSendReplyEmail = async () => {
+    if (!draft) return;
+    try {
+      setRequiresComposeConsent(false);
+      const sent = await api.sendReplyEmail(draft.id);
+      setDraft(sent);
+      draftRef.current = sent;
+      toast.success('Email successfully sent!');
+    } catch (err: any) {
+      if (err.status === 403) {
+        setRequiresComposeConsent(true);
+      } else {
+        toast.error(`Email Send Error: ${err.message}`);
       }
     }
   };
 
   const handleSendReplyEmail = async () => {
     if (!draft) return;
-    if (!confirm('Are you sure you want to approve and send this email via Gmail?')) return;
-    try {
-      setRequiresComposeConsent(false);
-      const sent = await api.sendReplyEmail(draft.id);
-      setDraft(sent);
-      alert('Email successfully sent!');
-    } catch (err: any) {
-      if (err.status === 403) {
-        setRequiresComposeConsent(true);
-      } else {
-        alert(`Email Send Error: ${err.message}`);
-      }
-    }
+    requestConfirmation({
+      title: 'Approve & Send Email',
+      message: 'Are you sure you want to approve and send this email via Gmail?',
+      confirmLabel: 'Send Email',
+      isDanger: true,
+      onConfirm: executeSendReplyEmail,
+    });
   };
 
   const handleDiscardDraft = async () => {
@@ -236,8 +365,10 @@ export const InboxDashboardView: React.FC = () => {
     try {
       await api.discardReplyDraft(draft.id);
       setDraft(null);
+      draftRef.current = null;
+      toast.info('Draft discarded.');
     } catch (err: any) {
-      alert(`Discard Error: ${err.message}`);
+      toast.error(`Discard Error: ${err.message}`);
     }
   };
 
@@ -248,7 +379,7 @@ export const InboxDashboardView: React.FC = () => {
       setDigestSummary(summary);
       setShowDigestModal(true);
     } catch (err: any) {
-      alert(`Executive Digest Error: ${err.message}`);
+      toast.error(`Executive Digest Error: ${err.message}`);
     } finally {
       setIsExporting(false);
     }
@@ -257,8 +388,9 @@ export const InboxDashboardView: React.FC = () => {
   const handleDownloadExport = async (format: 'csv' | 'markdown' | 'json') => {
     try {
       await api.downloadDigestExport(format);
+      toast.success(`Executive digest ${format.toUpperCase()} downloaded successfully!`);
     } catch (err: any) {
-      alert(`Export failed: ${err.message}`);
+      toast.error(`Export failed: ${err.message}`);
     }
   };
 
@@ -306,6 +438,8 @@ export const InboxDashboardView: React.FC = () => {
         const nextIndex = currentIndex < filteredThreads.length - 1 ? currentIndex + 1 : 0;
         const nextThread = filteredThreads[nextIndex];
         setSelectedThread(nextThread);
+        setSelectedThreadId(nextThread.id);
+        selectedThreadIdRef.current = nextThread.id;
         if (nextThread.messages.length > 0) handleSelectMessage(nextThread.messages[0]);
       } else if (e.key === 'k' || e.key === 'ArrowUp') {
         e.preventDefault();
@@ -314,6 +448,8 @@ export const InboxDashboardView: React.FC = () => {
         const prevIndex = currentIndex > 0 ? currentIndex - 1 : filteredThreads.length - 1;
         const prevThread = filteredThreads[prevIndex];
         setSelectedThread(prevThread);
+        setSelectedThreadId(prevThread.id);
+        selectedThreadIdRef.current = prevThread.id;
         if (prevThread.messages.length > 0) handleSelectMessage(prevThread.messages[0]);
       } else if (e.key.toLowerCase() === 'a') {
         e.preventDefault();
@@ -430,7 +566,7 @@ export const InboxDashboardView: React.FC = () => {
                   onClick={async () => {
                     try {
                       await api.seedDemoData();
-                      fetchThreads();
+                      fetchThreads(threadLimitRef.current);
                     } catch {}
                   }}
                   className="text-[11px] text-red-400 underline hover:text-red-300"
@@ -447,6 +583,8 @@ export const InboxDashboardView: React.FC = () => {
                     key={t.id}
                     onClick={() => {
                       setSelectedThread(t);
+                      setSelectedThreadId(t.id);
+                      selectedThreadIdRef.current = t.id;
                       if (t.messages.length > 0) handleSelectMessage(t.messages[0]);
                     }}
                     className={`p-3 rounded-lg cursor-pointer transition text-left ${
@@ -594,7 +732,7 @@ export const InboxDashboardView: React.FC = () => {
                 onClick={async () => {
                   try {
                     await api.seedDemoData();
-                    fetchThreads();
+                    fetchThreads(threadLimitRef.current);
                   } catch {}
                 }}
                 className="text-xs bg-red-950/40 hover:bg-red-900/60 text-red-400 border border-red-800/60 px-3 py-1.5 rounded-lg transition"

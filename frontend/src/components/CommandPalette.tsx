@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '../context/ToastContext';
 import { api } from '../services/api';
 
 interface CommandItem {
@@ -17,6 +18,7 @@ interface CommandPaletteProps {
 }
 
 export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
+  const { toast, requestConfirmation } = useToast();
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const navigate = useNavigate();
@@ -88,17 +90,22 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
       description: 'Populate mailbox with simulated customer escalations, invoices, and graph dependencies',
       category: 'Actions',
       icon: '🚀',
-      action: async () => {
+      action: () => {
         onClose();
-        if (confirm('Load realistic enterprise demo threads, invoices, and graph relationships?')) {
-          try {
-            const res = await api.seedDemoData();
-            alert(res.message || 'Demo data loaded successfully!');
-            window.location.reload();
-          } catch (e: any) {
-            alert(`Demo seed failed: ${e.message}`);
-          }
-        }
+        requestConfirmation({
+          title: 'Seed Enterprise Demo Data',
+          message: 'Load realistic enterprise demo threads, invoices, and graph relationships?',
+          confirmLabel: 'Load Demo Data',
+          onConfirm: async () => {
+            try {
+              const res = await api.seedDemoData();
+              toast.success(res.message || 'Demo data loaded successfully!');
+              setTimeout(() => window.location.reload(), 600);
+            } catch (e: any) {
+              toast.error(`Demo seed failed: ${e.message}`);
+            }
+          },
+        });
       },
     },
     {
@@ -111,8 +118,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
         onClose();
         try {
           await api.downloadDigestExport('csv');
+          toast.success('Executive digest CSV downloaded successfully!');
         } catch (e: any) {
-          alert(`Export failed: ${e.message}`);
+          toast.error(`Export failed: ${e.message}`);
         }
       },
     },
@@ -126,8 +134,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
         onClose();
         try {
           await api.downloadDigestExport('markdown');
+          toast.success('Executive digest Markdown downloaded successfully!');
         } catch (e: any) {
-          alert(`Export failed: ${e.message}`);
+          toast.error(`Export failed: ${e.message}`);
         }
       },
     },

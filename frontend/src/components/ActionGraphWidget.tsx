@@ -35,17 +35,17 @@ export const ActionGraphWidget: React.FC<ActionGraphWidgetProps> = ({
   const getNodeColor = (type: string) => {
     switch (type) {
       case 'ACTION_ITEM':
-        return 'bg-amber-500/20 text-amber-300 border-amber-500/40';
+        return 'bg-red-950/60 text-red-300 border-red-800/60';
       case 'EMAIL_MESSAGE':
-        return 'bg-blue-500/20 text-blue-300 border-blue-500/40';
+        return 'bg-zinc-900 text-zinc-200 border-zinc-700';
       case 'INVOICE':
-        return 'bg-purple-500/20 text-purple-300 border-purple-500/40';
+        return 'bg-red-950/40 text-red-200 border-red-800/40';
       case 'CONTRACT':
-        return 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40';
+        return 'bg-zinc-800 text-zinc-300 border-zinc-600';
       case 'PERSON':
-        return 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40';
+        return 'bg-zinc-900 text-zinc-300 border-zinc-700';
       default:
-        return 'bg-slate-800 text-slate-300 border-slate-700';
+        return 'bg-zinc-900 text-zinc-300 border-zinc-800';
     }
   };
 
@@ -57,13 +57,13 @@ export const ActionGraphWidget: React.FC<ActionGraphWidgetProps> = ({
   };
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg space-y-4 text-slate-100 font-sans">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
+    <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-5 shadow-lg space-y-4 text-zinc-100 font-sans">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-800 pb-3">
         <div>
-          <h3 className="text-sm font-semibold uppercase tracking-wider text-amber-400">
+          <h3 className="text-sm font-semibold uppercase tracking-wider text-red-400">
             Action Graph & Relationship Layer
           </h3>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-zinc-400 mt-0.5">
             Relational dependency map ({nodes.length} nodes, {edges.length} edges)
           </p>
         </div>
@@ -72,7 +72,7 @@ export const ActionGraphWidget: React.FC<ActionGraphWidgetProps> = ({
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
-            className="bg-slate-950 border border-slate-800 rounded text-xs px-2.5 py-1 text-slate-200 focus:outline-none"
+            className="bg-black border border-zinc-800 rounded text-xs px-2.5 py-1 text-zinc-200 focus:outline-none"
           >
             <option value="ALL">All Node Types</option>
             <option value="ACTION_ITEM">Action Tasks</option>
@@ -85,7 +85,7 @@ export const ActionGraphWidget: React.FC<ActionGraphWidgetProps> = ({
           <button
             onClick={onRebuildGraph}
             disabled={isLoading}
-            className="text-xs bg-amber-600/20 text-amber-300 border border-amber-500/40 px-3 py-1 rounded hover:bg-amber-600/30 transition font-medium disabled:opacity-50"
+            className="text-xs bg-red-950/60 text-red-300 border border-red-800/60 px-3 py-1 rounded hover:bg-red-900/50 transition font-medium disabled:opacity-50"
           >
             {isLoading ? 'Rebuilding...' : 'Rebuild Graph'}
           </button>
@@ -94,7 +94,7 @@ export const ActionGraphWidget: React.FC<ActionGraphWidgetProps> = ({
 
       {/* Node Grid Layout Representation */}
       {filteredNodes.length === 0 ? (
-        <div className="text-center py-8 text-xs text-slate-500">
+        <div className="text-center py-8 text-xs text-zinc-500">
           No nodes found for this filter.
         </div>
       ) : (
@@ -103,13 +103,13 @@ export const ActionGraphWidget: React.FC<ActionGraphWidgetProps> = ({
             <div
               key={node.id}
               onClick={() => handleNodeSelect(node)}
-              className={`border rounded-lg p-3 cursor-pointer transition hover:scale-[1.01] ${getNodeColor(node.node_type)} ${selectedNode?.id === node.id ? 'ring-2 ring-amber-400' : ''
+              className={`border rounded-lg p-3 cursor-pointer transition hover:scale-[1.01] ${getNodeColor(node.node_type)} ${selectedNode?.id === node.id ? 'ring-2 ring-red-500' : ''
                 }`}
             >
               <div className="flex items-center justify-between text-[10px] font-semibold tracking-wider uppercase mb-1">
                 <span>{node.node_type}</span>
               </div>
-              <div className="font-semibold text-xs text-slate-100 truncate">{node.label}</div>
+              <div className="font-semibold text-xs text-zinc-100 truncate">{node.label}</div>
             </div>
           ))}
         </div>
@@ -117,18 +117,18 @@ export const ActionGraphWidget: React.FC<ActionGraphWidgetProps> = ({
 
       {/* Selected Node Drawer */}
       {selectedNode && (
-        <div className="bg-slate-950 p-4 rounded-xl border border-amber-500/30 space-y-2 text-xs">
+        <div className="bg-black p-4 rounded-xl border border-red-800/60 space-y-2 text-xs">
           <div className="flex items-center justify-between">
-            <span className="font-semibold text-amber-400">Node Properties ({selectedNode.node_type})</span>
+            <span className="font-semibold text-red-400">Node Properties ({selectedNode.node_type})</span>
             <button
               onClick={() => setSelectedNode(null)}
-              className="text-slate-400 hover:text-slate-200 text-xs"
+              className="text-zinc-400 hover:text-zinc-200 text-xs"
             >
               ✕ Close
             </button>
           </div>
-          <p className="font-semibold text-slate-100">{selectedNode.label}</p>
-          <pre className="bg-slate-900 p-2.5 rounded font-mono text-[11px] text-slate-300 overflow-x-auto">
+          <p className="font-semibold text-zinc-100">{selectedNode.label}</p>
+          <pre className="bg-zinc-900 p-2.5 rounded font-mono text-[11px] text-zinc-300 overflow-x-auto">
             {JSON.stringify(selectedNode.properties, null, 2)}
           </pre>
         </div>

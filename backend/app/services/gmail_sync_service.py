@@ -1,5 +1,5 @@
 import asyncio
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Any
 import uuid
@@ -33,38 +33,35 @@ class GmailSyncService:
         Routes to incremental History API sync when a valid last_history_id
         exists, otherwise performs a baseline initial synchronization.
         """
-        # 1. Fetch user's Google OAuth Account
-        oauth_account = (
-            db.query(OAuthAccount)
-            .filter(OAuthAccount.user_id == user.id, OAuthAccount.provider == "google")
-            .first()
-        )
-        if not oauth_account:
-            GmailRepository.update_sync_state(
-                db, user.id, sync_status="FAILED", error_message="No Google OAuth account connected."
-            )
-            raise ValueError("No Google OAuth account connected.")
-
-        # 2. Get valid access token (refreshes if expired)
         try:
+            # 1. Fetch user's Google OAuth Account
+            oauth_account = (
+                db.query(OAuthAccount)
+                .filter(OAuthAccount.user_id == user.id, OAuthAccount.provider == "google")
+                .first()
+            )
+            if not oauth_account:
+                GmailRepository.update_sync_state(
+                    db, user.id, sync_status="FAILED", error_message="No Google OAuth account connected."
+                )
+                raise ValueError("No Google OAuth account connected.")
+
+            # 2. Get valid access token (refreshes if expired)
             access_token = self.client.get_valid_access_token(db, oauth_account)
-        except ValueError as e:
-            GmailRepository.update_sync_state(
-                db, user.id, sync_status="FAILED", error_message=str(e)
+            sync_state = GmailRepository.get_or_create_sync_state(db, user.id)
+
+            # 3. Mark sync_status = SYNCING
+            GmailRepository.update_sync_state(db, user.id, sync_status="SYNCING")
+            await event_bus.publish(
+                user.id,
+                "sync_started",
+                {"status": "SYNCING", "message": "Mailbox synchronization started."},
             )
-            raise
 
-        sync_state = GmailRepository.get_or_create_sync_state(db, user.id)
+            # Check for demo persona bypass - avoid unauthorized calls to Google REST API
+            if self._is_demo_account(user, access_token):
+                return await self._sync_demo_messages(db, user)
 
-        # 3. Mark sync_status = SYNCING
-        GmailRepository.update_sync_state(db, user.id, sync_status="SYNCING")
-        await event_bus.publish(
-            user.id,
-            "sync_started",
-            {"status": "SYNCING", "message": "Mailbox synchronization started."},
-        )
-
-        try:
             if sync_state.last_history_id:
                 # Attempt incremental History API sync
                 try:
@@ -86,6 +83,11 @@ class GmailSyncService:
             GmailRepository.update_sync_state(
                 db, user.id, sync_status="FAILED", error_message=str(e)
             )
+            await event_bus.publish(
+                user.id,
+                "sync_completed",
+                {"status": "FAILED", "error": str(e)},
+            )
             raise
 
     async def sync_older_messages(
@@ -95,31 +97,35 @@ class GmailSyncService:
         count: int = 50,
     ) -> dict[str, Any]:
         """Fetch and persist older historical messages prior to the earliest stored message."""
-        # 1. Fetch user's Google OAuth Account
-        oauth_account = (
-            db.query(OAuthAccount)
-            .filter(OAuthAccount.user_id == user.id, OAuthAccount.provider == "google")
-            .first()
-        )
-        if not oauth_account:
-            GmailRepository.update_sync_state(
-                db, user.id, sync_status="FAILED", error_message="No Google OAuth account connected."
-            )
-            raise ValueError("No Google OAuth account connected.")
-
-        # 2. Get valid access token
-        access_token = self.client.get_valid_access_token(db, oauth_account)
-        sync_state = GmailRepository.get_or_create_sync_state(db, user.id)
-
-        # 3. Mark sync_status = SYNCING
-        GmailRepository.update_sync_state(db, user.id, sync_status="SYNCING")
-        await event_bus.publish(
-            user.id,
-            "sync_started",
-            {"status": "SYNCING", "message": f"Fetching up to {count} older emails..."},
-        )
-
         try:
+            # 1. Fetch user's Google OAuth Account
+            oauth_account = (
+                db.query(OAuthAccount)
+                .filter(OAuthAccount.user_id == user.id, OAuthAccount.provider == "google")
+                .first()
+            )
+            if not oauth_account:
+                GmailRepository.update_sync_state(
+                    db, user.id, sync_status="FAILED", error_message="No Google OAuth account connected."
+                )
+                raise ValueError("No Google OAuth account connected.")
+
+            # 2. Get valid access token
+            access_token = self.client.get_valid_access_token(db, oauth_account)
+            sync_state = GmailRepository.get_or_create_sync_state(db, user.id)
+
+            # 3. Mark sync_status = SYNCING
+            GmailRepository.update_sync_state(db, user.id, sync_status="SYNCING")
+            await event_bus.publish(
+                user.id,
+                "sync_started",
+                {"status": "SYNCING", "message": f"Fetching up to {count} older emails..."},
+            )
+
+            # Check for demo persona bypass - synthesize older emails without Google API calls
+            if self._is_demo_account(user, access_token):
+                return await self._sync_older_demo_messages(db, user, count=count)
+
             # 4. Find the oldest message currently stored in DB for this user
             oldest_msg = (
                 db.query(EmailMessage)
@@ -254,7 +260,274 @@ class GmailSyncService:
             GmailRepository.update_sync_state(
                 db, user.id, sync_status="FAILED", error_message=str(e)
             )
+            await event_bus.publish(
+                user.id,
+                "sync_completed",
+                {"status": "FAILED", "error": str(e)},
+            )
             raise
+
+    @staticmethod
+    def _is_demo_account(user: User, access_token: str | None) -> bool:
+        """Determine whether the user belongs to the demo persona requiring mock synthesis."""
+        if user.email and (
+            user.email == "alex.morgan@enterprise-mailops.io"
+            or user.email.endswith("@enterprise-mailops.io")
+        ):
+            return True
+        if access_token == "mock_access_token_demo":
+            return True
+        return False
+
+    async def _sync_demo_messages(self, db: Session, user: User) -> dict[str, Any]:
+        """Perform simulated synchronization for demo persona accounts without calling Google API."""
+        existing_count = (
+            db.query(EmailMessage).filter(EmailMessage.user_id == user.id).count()
+        )
+        if existing_count == 0:
+            from backend.app.scripts.seed_demo_data import seed_demo_environment
+            seed_demo_environment(db, target_user=user, include_embeddings=False)
+
+        total_synced = (
+            db.query(EmailMessage).filter(EmailMessage.user_id == user.id).count()
+        )
+
+        await event_bus.publish(
+            user.id,
+            "sync_progress",
+            {"processed": total_synced, "limit": total_synced, "message_id": "demo_baseline"},
+        )
+        await asyncio.sleep(0.01)
+
+        GmailRepository.update_sync_state(
+            db,
+            user.id,
+            sync_status="COMPLETED",
+            synced_message_count=total_synced,
+            error_message=None,
+        )
+
+        await event_bus.publish(
+            user.id,
+            "sync_completed",
+            {
+                "status": "COMPLETED",
+                "synced_count": total_synced,
+                "total_messages": total_synced,
+                "failed_count": 0,
+            },
+        )
+
+        return {
+            "status": "COMPLETED",
+            "type": "DEMO_BASELINE",
+            "messages_synced": total_synced,
+            "total_messages": total_synced,
+            "failed_count": 0,
+        }
+
+    async def _sync_older_demo_messages(
+        self, db: Session, user: User, count: int = 50
+    ) -> dict[str, Any]:
+        """Synthesize batches of realistic older emails for demo persona pagination without calling Google API."""
+        oldest_msg = (
+            db.query(EmailMessage)
+            .filter(EmailMessage.user_id == user.id)
+            .filter(EmailMessage.received_at.isnot(None))
+            .order_by(EmailMessage.received_at.asc())
+            .first()
+        )
+
+        if oldest_msg and oldest_msg.received_at:
+            base_time = oldest_msg.received_at - timedelta(hours=1)
+        else:
+            base_time = datetime.now(timezone.utc) - timedelta(days=7)
+
+        # Enterprise topics catalog for realistic synthetic emails
+        catalog = [
+            (
+                "Alert: Kubernetes node pool memory pressure in prod-us-east-1",
+                "DevOps Monitoring <alerts@infra-mailops.internal>",
+                "Kubernetes cluster prod-us-east-1 node pool 04 has exceeded 88% memory utilization threshold. Automated pod eviction initiated to safeguard core services.",
+            ),
+            (
+                "Action Required: Quarterly IAM privilege audit for Q3",
+                "Security & Compliance <infosec@enterprise-mailops.io>",
+                "All team leads must verify principle of least privilege across production databases and cloud console roles before Friday. Report non-compliant accounts to sec-ops.",
+            ),
+            (
+                "PostgreSQL read replica replication lag warning",
+                "DBA Oncall <dba@infra-mailops.internal>",
+                "Primary database to read replica pg-repl-02 replication lag exceeded 45 seconds during batch ETL processing. Failover standby remained synchronized.",
+            ),
+            (
+                "Sprint 41 retrospective notes and action item matrix",
+                "Marcus Vance <marcus.vance@enterprise-mailops.io>",
+                "Attached is the sprint retrospective summary. Key priorities include resolving SSE reconnection stability, improving draft latency, and refining test coverage.",
+            ),
+            (
+                "Vendor invoice reconciliation: Cloudflare Enterprise agreement",
+                "Procurement Operations <procurement@enterprise-mailops.io>",
+                "Please review the updated bandwidth overage tiering for Cloudflare Enterprise CDN contract renewal scheduled for end of month.",
+            ),
+            (
+                "RFC: Deprecation schedule for Legacy REST API v1 endpoints",
+                "Architecture Guild <arch-review@enterprise-mailops.io>",
+                "The Architecture Guild proposes sunsetting v1 legacy endpoints by Q1 2027. Review the migration guide and submit comments on the RFC draft.",
+            ),
+            (
+                "Customer escalation: Webhook delivery failure on partner checkout",
+                "Support Escalations <support-tier3@enterprise-mailops.io>",
+                "High-priority ticket #8942: Acme Corp reported intermittent 504 timeouts on webhook endpoints during peak transaction volume. Engineering investigation requested.",
+            ),
+            (
+                "SOC 2 Type II audit readiness review: Evidence checklist",
+                "GRC Lead <compliance@enterprise-mailops.io>",
+                "External auditors from EY will begin sampling change management tickets next week. Ensure all production PRs have approved code reviews and CI status checks.",
+            ),
+            (
+                "Frontend Core Web Vitals optimization report (LCP < 1.2s achieved)",
+                "Sarah Chen <sarah.chen@enterprise-mailops.io>",
+                "Bundle size optimizations and font preloading have reduced Largest Contentful Paint to 1.14s on desktop and 1.8s on mobile. Full metrics breakdown in dashboard.",
+            ),
+            (
+                "Disaster Recovery tabletop simulation findings and next steps",
+                "BCP Working Group <bcp-team@enterprise-mailops.io>",
+                "Summary of regional failover drill executed yesterday: RTO was 14 minutes (target: < 30m), RPO was 0 transactions lost. Runbook updates committed.",
+            ),
+            (
+                "TLS wildcard certificate auto-renewal succeeded (*.enterprise-mailops.io)",
+                "CertBot Automation <sec-ops@enterprise-mailops.io>",
+                "Let's Encrypt automated ACME renewal succeeded for primary domain certificates. New cert valid through 2027-02-15.",
+            ),
+            (
+                "Release v2.8.0 deployment checklist and verification protocol",
+                "Release Engineering <releases@enterprise-mailops.io>",
+                "Version 2.8.0 release candidate has passed integration testing. Canary deployment to 10% traffic starts at 14:00 UTC. Monitor error budgets during rollout.",
+            ),
+            (
+                "Customer satisfaction report: Enterprise Pilot Q3 feedback",
+                "VP Customer Success <cs-leadership@enterprise-mailops.io>",
+                "Net Promoter Score increased to +68 following the introduction of AI-assisted drafting and automated action graphs. Detailed customer quotes attached.",
+            ),
+            (
+                "Cloud infrastructure monthly cost optimization analysis",
+                "FinOps Team <finops@enterprise-mailops.io>",
+                "Reserved instance utilization reached 92%, resulting in $14,200 monthly savings. Recommended downsizing idle staging RDS instances.",
+            ),
+            (
+                "Security Advisory: Dependabot updates for critical dependencies",
+                "SecOps Automation <sec-ops@enterprise-mailops.io>",
+                "Automated PRs opened for high-severity CVEs in underlying cryptographic and network libraries. Merge required before staging deployment.",
+            ),
+        ]
+
+        # Preload known message IDs
+        known_ids = set(
+            m[0]
+            for m in db.query(EmailMessage.gmail_message_id)
+            .filter(EmailMessage.user_id == user.id)
+            .all()
+        )
+
+        messages_created = 0
+        cat_len = len(catalog)
+
+        for i in range(count):
+            subject_base, sender, body = catalog[i % cat_len]
+            batch_num = (i // cat_len) + 1
+            subject = f"{subject_base} (Batch #{batch_num})" if batch_num > 1 else subject_base
+
+            # Decrement timestamp so each message is older than the previous
+            msg_time = base_time - timedelta(hours=2 * (i + 1), minutes=(i * 13) % 60)
+
+            unique_thread_token = f"demo_th_older_{user.id.hex[:6]}_{i + 1}_{int(msg_time.timestamp())}"
+            unique_msg_token = f"demo_msg_older_{user.id.hex[:6]}_{i + 1}_{int(msg_time.timestamp())}"
+
+            if unique_msg_token in known_ids:
+                continue
+
+            snippet = body[:120] + "..." if len(body) > 120 else body
+
+            thread = GmailRepository.upsert_thread(
+                db,
+                user_id=user.id,
+                gmail_thread_id=unique_thread_token,
+                snippet=snippet,
+                history_id=1000000 - i,
+                last_message_at=msg_time,
+            )
+
+            GmailRepository.upsert_message(
+                db,
+                user_id=user.id,
+                thread_id=thread.id,
+                gmail_message_id=unique_msg_token,
+                gmail_thread_id=unique_thread_token,
+                sender=sender,
+                recipients=user.email or "alex.morgan@enterprise-mailops.io",
+                subject=subject,
+                snippet=snippet,
+                body_plain=body,
+                body_html=f"<p>{body}</p>",
+                sent_at=msg_time,
+                received_at=msg_time,
+                labels=["INBOX", "DEMO_OLDER"],
+                has_attachments=False,
+                history_id=1000000 - i,
+            )
+
+            known_ids.add(unique_msg_token)
+            messages_created += 1
+
+            if messages_created % 5 == 0 or messages_created == count:
+                GmailRepository.update_sync_state(
+                    db,
+                    user.id,
+                    sync_status="SYNCING",
+                    synced_message_count=len(known_ids),
+                )
+                await event_bus.publish(
+                    user.id,
+                    "sync_progress",
+                    {
+                        "processed": messages_created,
+                        "limit": count,
+                        "message_id": unique_msg_token,
+                    },
+                )
+                await asyncio.sleep(0.01)
+
+        total_synced = (
+            db.query(EmailMessage).filter(EmailMessage.user_id == user.id).count()
+        )
+
+        GmailRepository.update_sync_state(
+            db,
+            user.id,
+            sync_status="COMPLETED",
+            synced_message_count=total_synced,
+            error_message=None,
+        )
+
+        await event_bus.publish(
+            user.id,
+            "sync_completed",
+            {
+                "status": "COMPLETED",
+                "synced_count": messages_created,
+                "total_messages": total_synced,
+                "failed_count": 0,
+            },
+        )
+
+        return {
+            "status": "COMPLETED",
+            "type": "OLDER_MESSAGES",
+            "messages_synced": messages_created,
+            "total_messages": total_synced,
+            "failed_count": 0,
+        }
 
     async def _sync_initial_baseline(
         self,

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useToast } from '../context/ToastContext';
 import { AIAnalysisResult, ActionStatusEnum, ExtractedActionItem } from '../types/ai';
 import { api } from '../services/api';
 
@@ -11,6 +12,7 @@ export const EmailAnalysisCard: React.FC<EmailAnalysisCardProps> = ({
   analysis,
   onActionStatusChange,
 }) => {
+  const { toast } = useToast();
   const [showEvidence, setShowEvidence] = useState(false);
   const [showExplainability, setShowExplainability] = useState(false);
   const [schedulingId, setSchedulingId] = useState<string | null>(null);
@@ -24,8 +26,9 @@ export const EmailAnalysisCard: React.FC<EmailAnalysisCardProps> = ({
       if (onActionStatusChange) {
         onActionStatusChange(item.id, 'CONFIRMED');
       }
+      toast.success('Action item successfully scheduled on Google Calendar!');
     } catch (err: any) {
-      alert(`Scheduling error: ${err.message}`);
+      toast.error(`Scheduling error: ${err.message}`);
     } finally {
       setSchedulingId(null);
     }

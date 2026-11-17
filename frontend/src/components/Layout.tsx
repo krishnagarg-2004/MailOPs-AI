@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import { api } from '../services/api';
 import { GmailSyncWidget } from './GmailSyncWidget';
 import { CommandPalette } from './CommandPalette';
 
 export const Layout: React.FC = () => {
   const { user, logout } = useAuth();
+  const { toast, requestConfirmation } = useToast();
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
@@ -63,16 +65,21 @@ export const Layout: React.FC = () => {
         {/* User Controls */}
         <div className="flex items-center gap-2 md:gap-3">
           <button
-            onClick={async () => {
-              if (confirm('Load realistic enterprise demo threads, invoices, and graph dependencies?')) {
-                try {
-                  const res = await api.seedDemoData();
-                  alert(res.message || 'Demo data successfully loaded!');
-                  window.location.reload();
-                } catch (e: any) {
-                  alert(`Demo seed failed: ${e.message}`);
-                }
-              }
+            onClick={() => {
+              requestConfirmation({
+                title: 'Seed Enterprise Demo Data',
+                message: 'Load realistic enterprise demo threads, invoices, and graph dependencies?',
+                confirmLabel: 'Load Demo Data',
+                onConfirm: async () => {
+                  try {
+                    const res = await api.seedDemoData();
+                    toast.success(res.message || 'Demo data successfully loaded!');
+                    setTimeout(() => window.location.reload(), 600);
+                  } catch (e: any) {
+                    toast.error(`Demo seed failed: ${e.message}`);
+                  }
+                },
+              });
             }}
             className="flex items-center gap-1.5 bg-red-950/40 hover:bg-red-900/60 text-red-300 border border-red-800/60 hover:border-red-600 text-xs px-2.5 py-1.5 rounded-lg transition font-medium shadow-sm"
             title="Populate account with sample enterprise data"

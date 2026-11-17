@@ -23,20 +23,20 @@ export const DocumentViewerWidget: React.FC<DocumentViewerWidgetProps> = ({
   }, [filename]);
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg space-y-4 text-slate-100 font-sans">
+    <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-5 shadow-lg space-y-4 text-zinc-100 font-sans">
       {/* Header Info */}
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-800 pb-3">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Document Intelligence</span>
-          <span className="text-xs font-mono font-semibold bg-slate-800 px-2.5 py-0.5 rounded text-slate-200">
+          <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Document Intelligence</span>
+          <span className="text-xs font-mono font-semibold bg-zinc-900 px-2.5 py-0.5 rounded text-zinc-200">
             {filename}
           </span>
           {extraction?.is_ocr_applied ? (
-            <span className="text-[10px] bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded font-medium">
+            <span className="text-[10px] bg-red-950/60 text-red-400 border border-red-800/60 px-2 py-0.5 rounded font-medium">
               OCR (Tesseract)
             </span>
           ) : extraction ? (
-            <span className="text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded font-medium">
+            <span className="text-[10px] bg-zinc-900 text-zinc-300 border border-zinc-700 px-2 py-0.5 rounded font-medium">
               Native Text
             </span>
           ) : null}
@@ -46,7 +46,7 @@ export const DocumentViewerWidget: React.FC<DocumentViewerWidgetProps> = ({
           {(!extraction || extraction.status === 'FAILED') && (
             <button
               onClick={onTriggerProcess}
-              className="text-xs bg-purple-600/20 text-purple-300 border border-purple-500/40 px-3 py-1 rounded hover:bg-purple-600/30 transition font-medium"
+              className="text-xs bg-red-950/60 text-red-300 border border-red-800/60 px-3 py-1 rounded hover:bg-red-900/60 transition font-medium"
             >
               {extraction?.status === 'FAILED' ? 'Retry Text Extraction' : 'Extract Text & OCR'}
             </button>
@@ -54,7 +54,7 @@ export const DocumentViewerWidget: React.FC<DocumentViewerWidgetProps> = ({
           {extraction && !businessExtraction && (
             <button
               onClick={onTriggerBusinessAnalysis}
-              className="text-xs bg-indigo-600/20 text-indigo-300 border border-indigo-500/40 px-3 py-1 rounded hover:bg-indigo-600/30 transition font-medium"
+              className="text-xs bg-zinc-900 text-zinc-200 border border-zinc-700 px-3 py-1 rounded hover:bg-zinc-800 transition font-medium"
             >
               Analyze Business Metadata
             </button>
@@ -72,12 +72,12 @@ export const DocumentViewerWidget: React.FC<DocumentViewerWidgetProps> = ({
       {/* Tabs */}
       {extraction && (
         <>
-          <div className="flex items-center gap-4 text-xs border-b border-slate-800">
+          <div className="flex items-center gap-4 text-xs border-b border-zinc-800">
             <button
               onClick={() => setActiveTab('text')}
               className={`pb-2 border-b-2 font-medium transition ${activeTab === 'text'
-                ? 'border-purple-500 text-purple-400'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
+                ? 'border-red-500 text-red-400'
+                : 'border-transparent text-zinc-400 hover:text-zinc-200'
                 }`}
             >
               Extracted Text ({extraction.char_count} chars
@@ -88,8 +88,8 @@ export const DocumentViewerWidget: React.FC<DocumentViewerWidgetProps> = ({
               <button
                 onClick={() => setActiveTab('business')}
                 className={`pb-2 border-b-2 font-medium transition ${activeTab === 'business'
-                  ? 'border-purple-500 text-purple-400'
-                  : 'border-transparent text-slate-400 hover:text-slate-200'
+                  ? 'border-red-500 text-red-400'
+                  : 'border-transparent text-zinc-400 hover:text-zinc-200'
                   }`}
               >
                 Structured Business Metadata ({businessExtraction.document_category})
@@ -99,30 +99,30 @@ export const DocumentViewerWidget: React.FC<DocumentViewerWidgetProps> = ({
 
           {/* Tab Content: Extracted Text */}
           {activeTab === 'text' && (
-            <div className="bg-slate-950 p-4 rounded-lg border border-slate-800 max-h-72 overflow-y-auto font-mono text-xs text-slate-300 leading-relaxed whitespace-pre-wrap">
+            <div className="bg-black p-4 rounded-lg border border-zinc-800 max-h-72 overflow-y-auto font-mono text-xs text-zinc-300 leading-relaxed whitespace-pre-wrap">
               {extraction.extracted_text || 'No text extracted.'}
             </div>
           )}
 
           {/* Tab Content: Business Metadata */}
           {activeTab === 'business' && businessExtraction && (
-            <div className="bg-slate-950 p-4 rounded-lg border border-slate-800 space-y-3 text-xs">
-              <div className="grid grid-cols-2 gap-3 pb-3 border-b border-slate-900">
+            <div className="bg-black p-4 rounded-lg border border-zinc-800 space-y-3 text-xs">
+              <div className="grid grid-cols-2 gap-3 pb-3 border-b border-zinc-900">
                 <div>
-                  <span className="text-slate-400 block text-[11px]">Vendor / Contracting Party</span>
-                  <strong className="text-slate-200 text-sm">
+                  <span className="text-zinc-400 block text-[11px]">Vendor / Contracting Party</span>
+                  <strong className="text-zinc-200 text-sm">
                     {businessExtraction.vendor_or_party || 'N/A'}
                   </strong>
                 </div>
                 <div>
-                  <span className="text-slate-400 block text-[11px]">Reference / Invoice #</span>
-                  <strong className="text-slate-200 text-sm">
+                  <span className="text-zinc-400 block text-[11px]">Reference / Invoice #</span>
+                  <strong className="text-zinc-200 text-sm">
                     {businessExtraction.document_reference_number || 'N/A'}
                   </strong>
                 </div>
                 <div>
-                  <span className="text-slate-400 block text-[11px]">Financial Total</span>
-                  <strong className="text-emerald-400 text-sm">
+                  <span className="text-zinc-400 block text-[11px]">Financial Total</span>
+                  <strong className="text-red-400 text-sm">
                     {businessExtraction.financial_total !== undefined &&
                       businessExtraction.financial_total !== null
                       ? businessExtraction.financial_total.toLocaleString()
@@ -130,8 +130,8 @@ export const DocumentViewerWidget: React.FC<DocumentViewerWidgetProps> = ({
                   </strong>
                 </div>
                 <div>
-                  <span className="text-slate-400 block text-[11px]">Due / Expiration Date</span>
-                  <strong className="text-amber-400 text-sm">
+                  <span className="text-zinc-400 block text-[11px]">Due / Expiration Date</span>
+                  <strong className="text-zinc-200 text-sm">
                     {businessExtraction.due_or_expiration_date
                       ? new Date(businessExtraction.due_or_expiration_date).toLocaleDateString()
                       : 'N/A'}
@@ -141,10 +141,10 @@ export const DocumentViewerWidget: React.FC<DocumentViewerWidgetProps> = ({
 
               {/* Raw JSON Details */}
               <div>
-                <span className="text-slate-400 text-[11px] font-semibold uppercase tracking-wider block mb-1">
+                <span className="text-zinc-400 text-[11px] font-semibold uppercase tracking-wider block mb-1">
                   Extracted Payload Attributes
                 </span>
-                <pre className="bg-slate-900 p-3 rounded font-mono text-[11px] text-slate-300 overflow-x-auto">
+                <pre className="bg-zinc-900 p-3 rounded font-mono text-[11px] text-zinc-300 overflow-x-auto">
                   {JSON.stringify(businessExtraction.extracted_data, null, 2)}
                 </pre>
               </div>

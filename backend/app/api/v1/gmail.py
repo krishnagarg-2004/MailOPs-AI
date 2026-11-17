@@ -90,6 +90,54 @@ def _run_async_sync(user_id: uuid.UUID):
     asyncio.run(_async_worker())
 
 
+def _run_async_sync_older(user_id: uuid.UUID, count: int = 50):
+    """Background task runner executing older historical emails sync."""
+    import asyncio
+    from backend.app.db.session import SessionLocal
+
+    async def _async_worker():
+        db = SessionLocal()
+        try:
+            user = db.execute(select(User).where(User.id == user_id)).scalar_one_or_none()
+            if user:
+                sync_service = GmailSyncService()
+                await sync_service.sync_older_messages(db, user, count=count)
+            else:
+                logger.warning(
+                    "Background older sync: user_id=%s not found. Marking sync FAILED.",
+                    user_id,
+                )
+                GmailRepository.update_sync_state(
+                    db,
+                    user_id,
+                    sync_status="FAILED",
+                    error_message="User account not found during background older sync.",
+                )
+        except Exception as exc:
+            logger.error(
+                "Background older sync error: user_id=%s error=%s",
+                user_id,
+                type(exc).__name__,
+                exc_info=True,
+            )
+            try:
+                from backend.app.models.email_message import EmailMessage
+                msg_count = db.query(EmailMessage).filter(EmailMessage.user_id == user_id).count()
+                GmailRepository.update_sync_state(
+                    db,
+                    user_id,
+                    sync_status="COMPLETED" if msg_count > 0 else "FAILED",
+                    synced_message_count=msg_count,
+                    error_message=f"Sync interrupted: {str(exc)}",
+                )
+            except Exception as db_exc:
+                logger.critical("Could not reset SYNCING state: %s", db_exc)
+        finally:
+            db.close()
+
+    asyncio.run(_async_worker())
+
+
 @router.get("/status", response_model=dict)
 def get_gmail_sync_status(
     current_user: User = Depends(get_current_user),
@@ -153,10 +201,47 @@ def trigger_gmail_sync(
     )
 
 
+@router.post("/sync-older", status_code=status.HTTP_202_ACCEPTED, response_model=SyncTriggerResponse)
+def trigger_gmail_sync_older(
+    background_tasks: BackgroundTasks,
+    count: int = Query(50, ge=10, le=100),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Trigger background synchronization of older historical emails."""
+    oauth_acc = db.execute(
+        select(OAuthAccount).where(
+            OAuthAccount.user_id == current_user.id,
+            OAuthAccount.provider == "google",
+        )
+    ).scalar_one_or_none()
+
+    if not oauth_acc or not oauth_acc.encrypted_access_token:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No connected Google OAuth account found. Please login with Google first.",
+        )
+
+    sync_state = GmailRepository.get_or_create_sync_state(db, current_user.id)
+    if sync_state.sync_status == "SYNCING":
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="A Gmail sync is already in progress. Please wait for it to complete.",
+        )
+
+    GmailRepository.update_sync_state(db, current_user.id, sync_status="SYNCING")
+    background_tasks.add_task(_run_async_sync_older, current_user.id, count)
+
+    return SyncTriggerResponse(
+        status="ACCEPTED",
+        message=f"Retrieval of up to {count} older emails started in background.",
+    )
+
+
 @router.get("/threads", response_model=list[EmailThreadResponse])
 def list_email_threads(
     page: int = Query(1, ge=1),
-    limit: int = Query(20, ge=1, le=100),
+    limit: int = Query(50, ge=1, le=200),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):

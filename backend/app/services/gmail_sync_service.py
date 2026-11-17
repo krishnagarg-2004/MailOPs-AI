@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from backend.app.core.config import settings
 from backend.app.core.events import event_bus
 from backend.app.integrations.gmail import GmailAPIError, GmailClient
+from backend.app.models.email_message import EmailMessage
 from backend.app.models.oauth import OAuthAccount
 from backend.app.models.user import User
 from backend.app.repositories.gmail_repository import GmailRepository
@@ -81,6 +82,165 @@ class GmailSyncService:
             else:
                 # Perform baseline initial sync
                 return await self._sync_initial_baseline(db, user, oauth_account, access_token)
+        except Exception as e:
+            GmailRepository.update_sync_state(
+                db, user.id, sync_status="FAILED", error_message=str(e)
+            )
+            raise
+
+    async def sync_older_messages(
+        self,
+        db: Session,
+        user: User,
+        count: int = 50,
+    ) -> dict[str, Any]:
+        """Fetch and persist older historical messages prior to the earliest stored message."""
+        # 1. Fetch user's Google OAuth Account
+        oauth_account = (
+            db.query(OAuthAccount)
+            .filter(OAuthAccount.user_id == user.id, OAuthAccount.provider == "google")
+            .first()
+        )
+        if not oauth_account:
+            GmailRepository.update_sync_state(
+                db, user.id, sync_status="FAILED", error_message="No Google OAuth account connected."
+            )
+            raise ValueError("No Google OAuth account connected.")
+
+        # 2. Get valid access token
+        access_token = self.client.get_valid_access_token(db, oauth_account)
+        sync_state = GmailRepository.get_or_create_sync_state(db, user.id)
+
+        # 3. Mark sync_status = SYNCING
+        GmailRepository.update_sync_state(db, user.id, sync_status="SYNCING")
+        await event_bus.publish(
+            user.id,
+            "sync_started",
+            {"status": "SYNCING", "message": f"Fetching up to {count} older emails..."},
+        )
+
+        try:
+            # 4. Find the oldest message currently stored in DB for this user
+            oldest_msg = (
+                db.query(EmailMessage)
+                .filter(EmailMessage.user_id == user.id)
+                .filter(EmailMessage.received_at.isnot(None))
+                .order_by(EmailMessage.received_at.asc())
+                .first()
+            )
+
+            q_param = None
+            if oldest_msg and oldest_msg.received_at:
+                epoch_sec = int(oldest_msg.received_at.timestamp())
+                # Add 1s margin to capture boundary and filter duplicates via ID check
+                q_param = f"before:{epoch_sec + 1}"
+
+            # Preload known message IDs for fast deduplication check
+            known_ids = set(
+                m[0]
+                for m in db.query(EmailMessage.gmail_message_id)
+                .filter(EmailMessage.user_id == user.id)
+                .all()
+            )
+
+            messages_processed = 0
+            failed_count = 0
+            page_token = None
+
+            while messages_processed < count:
+                batch_size = min(50, count - messages_processed)
+                try:
+                    list_resp = await self.client.list_messages(
+                        access_token,
+                        page_token=page_token,
+                        q=q_param,
+                        max_results=batch_size,
+                    )
+                except Exception as batch_exc:
+                    logger.error("Sync older: list_messages failed: %s", batch_exc)
+                    if messages_processed > 0:
+                        break
+                    raise
+
+                msg_summaries = list_resp.get("messages", [])
+                if not msg_summaries:
+                    break
+
+                for summary in msg_summaries:
+                    msg_id = summary["id"]
+                    if msg_id in known_ids:
+                        continue
+
+                    try:
+                        await self._fetch_and_persist_message(db, user, access_token, msg_id)
+                        known_ids.add(msg_id)
+                        messages_processed += 1
+                        await event_bus.publish(
+                            user.id,
+                            "sync_progress",
+                            {
+                                "processed": messages_processed,
+                                "limit": count,
+                                "message_id": msg_id,
+                            },
+                        )
+                        await asyncio.sleep(0.02)
+                    except Exception as exc:
+                        logger.warning(
+                            "Sync older: skipping message_id=%s user_id=%s reason=%s",
+                            msg_id,
+                            user.id,
+                            type(exc).__name__,
+                        )
+                        failed_count += 1
+
+                    if messages_processed >= count:
+                        break
+
+                page_token = list_resp.get("nextPageToken")
+                if not page_token:
+                    break
+
+            total_synced = (
+                db.query(EmailMessage)
+                .filter(EmailMessage.user_id == user.id)
+                .count()
+            )
+
+            partial_error = (
+                f"Skipped {failed_count} older message(s) due to fetch errors."
+                if failed_count
+                else None
+            )
+
+            GmailRepository.update_sync_state(
+                db,
+                user.id,
+                sync_status="COMPLETED",
+                last_history_id=sync_state.last_history_id,
+                synced_message_count=total_synced,
+                error_message=partial_error,
+            )
+
+            await event_bus.publish(
+                user.id,
+                "sync_completed",
+                {
+                    "status": "COMPLETED",
+                    "synced_count": messages_processed,
+                    "total_messages": total_synced,
+                    "failed_count": failed_count,
+                },
+            )
+
+            return {
+                "status": "COMPLETED",
+                "type": "OLDER_MESSAGES",
+                "messages_synced": messages_processed,
+                "total_messages": total_synced,
+                "failed_count": failed_count,
+            }
+
         except Exception as e:
             GmailRepository.update_sync_state(
                 db, user.id, sync_status="FAILED", error_message=str(e)

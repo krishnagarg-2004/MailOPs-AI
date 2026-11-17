@@ -13,6 +13,7 @@ export const InboxDashboardView: React.FC = () => {
   const [draft, setDraft] = useState<ReplyDraftResult | null>(null);
 
   const [isLoadingThreads, setIsLoadingThreads] = useState<boolean>(true);
+  const [isLoadingOlder, setIsLoadingOlder] = useState<boolean>(false);
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
   const [isDrafting, setIsDrafting] = useState<boolean>(false);
   const [requiresComposeConsent, setRequiresComposeConsent] = useState<boolean>(false);
@@ -47,7 +48,41 @@ export const InboxDashboardView: React.FC = () => {
 
   useEffect(() => {
     fetchThreads();
+
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '';
+    let eventSource: EventSource | null = null;
+    try {
+      eventSource = new EventSource(`${API_BASE_URL}/api/v1/events/stream`, {
+        withCredentials: true,
+      });
+
+      eventSource.addEventListener('sync_completed', () => {
+        fetchThreads();
+        setIsLoadingOlder(false);
+      });
+    } catch {
+      // ignore
+    }
+
+    return () => {
+      if (eventSource) eventSource.close();
+    };
   }, []);
+
+  const handleLoadOlderEmails = async () => {
+    try {
+      setIsLoadingOlder(true);
+      await api.syncOlderEmails(50);
+      // Fallback reload after 4.5s in case SSE is disconnected
+      setTimeout(() => {
+        fetchThreads();
+        setIsLoadingOlder(false);
+      }, 4500);
+    } catch (err: any) {
+      alert(`Could not load older emails: ${err?.message || err}`);
+      setIsLoadingOlder(false);
+    }
+  };
 
   const handleSelectMessage = async (msg: EmailMessageSummary) => {
     setSelectedMessage(msg);
@@ -398,6 +433,29 @@ export const InboxDashboardView: React.FC = () => {
                   </div>
                 );
               })
+            )}
+
+            {/* Load Older Emails Button */}
+            {filteredThreads.length > 0 && (
+              <div className="pt-2 pb-1 text-center">
+                <button
+                  onClick={handleLoadOlderEmails}
+                  disabled={isLoadingOlder}
+                  className="w-full py-2 px-3 text-xs font-semibold rounded-lg border border-zinc-800 bg-zinc-900/90 hover:bg-zinc-800 text-zinc-300 hover:text-white transition flex items-center justify-center gap-1.5 shadow-sm active:scale-[0.98] disabled:opacity-50"
+                  title="Fetch older emails from your Gmail archive"
+                >
+                  {isLoadingOlder ? (
+                    <>
+                      <span className="w-3 h-3 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></span>
+                      <span>Loading Older Emails...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>↓ Load Older Emails (+50)</span>
+                    </>
+                  )}
+                </button>
+              </div>
             )}
           </div>
         </div>

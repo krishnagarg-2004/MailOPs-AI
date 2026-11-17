@@ -67,9 +67,13 @@ export interface EmailThreadSummary {
 
 export const api = {
   // Gmail & Threads
-  getGmailThreads: () => fetchJSON<EmailThreadSummary[]>('/api/v1/gmail/threads'),
+  getGmailThreads: (limit: number = 100) => fetchJSON<EmailThreadSummary[]>(`/api/v1/gmail/threads?limit=${limit}`),
   getGmailThread: (id: string) => fetchJSON<EmailThreadSummary>(`/api/v1/gmail/threads/${id}`),
   getGmailMessage: (id: string) => fetchJSON<EmailMessageSummary>(`/api/v1/gmail/messages/${id}`),
+  syncOlderEmails: (count: number = 50) =>
+    fetchJSON<{ status: string; message: string }>(`/api/v1/gmail/sync-older?count=${count}`, {
+      method: 'POST',
+    }),
 
   // AI Intelligence
   analyzeMessage: (messageId: string) =>

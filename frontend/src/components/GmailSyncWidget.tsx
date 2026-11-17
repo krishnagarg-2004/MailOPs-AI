@@ -20,6 +20,7 @@ export const GmailSyncWidget: React.FC = () => {
   const [statusData, setStatusData] = useState<GmailStatus | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  const [isLoadingOlder, setIsLoadingOlder] = useState<boolean>(false);
   const [liveEventMessage, setLiveEventMessage] = useState<string | null>(null);
   // AbortController so two rapid clicks don't both fire the background sync.
   const syncAbortControllerRef = useRef<AbortController | null>(null);
@@ -144,6 +145,31 @@ export const GmailSyncWidget: React.FC = () => {
     }
   };
 
+  const triggerSyncOlder = async () => {
+    try {
+      setIsLoadingOlder(true);
+      const resp = await fetch(`${API_BASE_URL}/api/v1/gmail/sync-older?count=50`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+
+      if (!resp.ok) {
+        let msg = `Request rejected (HTTP ${resp.status}).`;
+        try {
+          const detail = await resp.json();
+          msg = detail.detail || detail.message || msg;
+        } catch { /* ignore */ }
+        alert(msg);
+        return;
+      }
+      fetchStatus();
+    } catch (err: any) {
+      alert(`Failed to load older emails: ${err?.message || 'Network error'}`);
+    } finally {
+      setIsLoadingOlder(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="text-xs text-slate-400">
@@ -242,17 +268,40 @@ export const GmailSyncWidget: React.FC = () => {
         </div>
       </div>
 
-      {/* Sync Button */}
-      <button
-        onClick={triggerSync}
-        disabled={isSyncing}
-        className={`mt-3 w-full rounded-lg px-3 py-2 text-xs font-semibold text-white transition ${isSyncing
-            ? 'cursor-not-allowed bg-zinc-800 text-zinc-500'
-            : 'bg-red-600 hover:bg-red-500 shadow-md shadow-red-950/50 active:scale-[0.98]'
+      {/* Action Buttons */}
+      <div className="mt-3 flex flex-col gap-1.5">
+        <button
+          onClick={triggerSync}
+          disabled={isSyncing || isLoadingOlder}
+          className={`w-full rounded-lg px-3 py-2 text-xs font-semibold text-white transition ${
+            isSyncing
+              ? 'cursor-not-allowed bg-zinc-800 text-zinc-500'
+              : 'bg-red-600 hover:bg-red-500 shadow-md shadow-red-950/50 active:scale-[0.98]'
           }`}
-      >
-        {isSyncing ? 'Syncing...' : 'Sync Inbox'}
-      </button>
+        >
+          {isSyncing ? 'Syncing Inbox...' : 'Sync Inbox'}
+        </button>
+
+        <button
+          onClick={triggerSyncOlder}
+          disabled={isSyncing || isLoadingOlder}
+          className={`w-full rounded-lg px-3 py-1.5 text-xs font-medium border border-zinc-800 bg-zinc-900/90 hover:bg-zinc-800 text-zinc-300 hover:text-white transition flex items-center justify-center gap-1.5 ${
+            isLoadingOlder ? 'cursor-not-allowed text-zinc-500' : 'active:scale-[0.98]'
+          }`}
+          title="Fetch the next batch of 50 older emails from your Gmail archive"
+        >
+          {isLoadingOlder ? (
+            <>
+              <span className="w-2.5 h-2.5 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></span>
+              <span>Loading Older...</span>
+            </>
+          ) : (
+            <>
+              <span>↓ Load Older Emails (+50)</span>
+            </>
+          )}
+        </button>
+      </div>
 
       {/* Error */}
       {syncState?.error_message && (

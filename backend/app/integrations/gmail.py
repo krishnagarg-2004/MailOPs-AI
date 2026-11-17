@@ -26,15 +26,26 @@ class GmailClient:
 
     BASE_URL = "https://gmail.googleapis.com/gmail/v1/users/me"
     _shared_client: httpx.AsyncClient | None = None
+    _shared_loop: Any | None = None
 
     @classmethod
     def _get_client(cls) -> httpx.AsyncClient:
-        """Returns or initializes a shared AsyncClient with HTTP connection pooling."""
-        if cls._shared_client is None or cls._shared_client.is_closed:
+        """Returns or initializes an AsyncClient bound to the current running event loop."""
+        try:
+            current_loop = asyncio.get_running_loop()
+        except RuntimeError:
+            current_loop = None
+
+        if (
+            cls._shared_client is None
+            or cls._shared_client.is_closed
+            or cls._shared_loop is not current_loop
+        ):
             cls._shared_client = httpx.AsyncClient(
                 timeout=httpx.Timeout(25.0, connect=10.0),
                 limits=httpx.Limits(max_keepalive_connections=20, max_connections=50),
             )
+            cls._shared_loop = current_loop
         return cls._shared_client
 
     @classmethod

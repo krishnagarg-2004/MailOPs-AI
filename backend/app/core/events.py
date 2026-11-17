@@ -55,14 +55,15 @@ class EventBus:
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
-        async with self._lock:
-            listeners = self._subscribers.get(user_id, set()).copy()
-
-        for queue in listeners:
-            try:
-                # Non-blocking put; drops event if queue is backed up
-                queue.put_nowait(payload)
-            except asyncio.QueueFull:
+        try:
+            listeners = list(self._subscribers.get(user_id, set()))
+            for queue in listeners:
+                try:
+                    queue.put_nowait(payload)
+                except Exception:
+                    pass
+        except Exception as e:
+            logger.debug(f"EventBus publish skipped: {e}")
                 logger.warning(f"Event queue full for user {user_id}, dropping event {event_type}")
 
     async def broadcast_system(self, event_type: str, data: dict):

@@ -1,42 +1,34 @@
 # MAILOPS AI — PROJECT STATUS
 
-**Current Stage:** Milestone 11 — Production Frontend Integration & Application Shell Complete
+**Current Stage:** Milestone 13 — Production Cloud Deployment & Live Operations Complete
 
-**Implementation Status:** Version 1 Core Implementation Complete
+**Implementation Status:** Version 1 Production Cloud Deployment Live & Verified
 
-**Last Updated:** August 2026
+**Last Updated:** November 2026
 
 ---
 
 # Overall Project Status
 
-MailOps AI Version 1 has completed its planned implementation milestones.
+MailOps AI is fully deployed to production cloud infrastructure and verified end-to-end.
 
-The current implementation includes:
+The live cloud stack includes:
 
-- Secure Google OAuth authentication architecture.
-- Gmail synchronization and attachment retrieval.
-- AI-powered email analysis using structured outputs.
-- Action, decision, deadline, and risk extraction.
-- Document intelligence with PDF, DOCX, image processing, and OCR fallback.
-- Semantic and hybrid search using PostgreSQL and pgvector.
-- Retrieval-Augmented Generation with source-grounded responses.
-- PostgreSQL-based Action Graph relationships.
-- Human-in-the-Loop AI reply drafting and controlled Gmail actions.
-- Security, isolation, prompt injection, and secret leak testing.
-- Production frontend routing, application shell, and feature workspace integration.
+- **Frontend Application (Render Static Site):** [https://mailops-frontend.onrender.com](https://mailops-frontend.onrender.com)
+- **Backend REST API (Render Docker Web Service):** [https://mailops-backend-67g3.onrender.com](https://mailops-backend-67g3.onrender.com)
+- **Production Database (Supabase Cloud):** PostgreSQL 16 + `pgvector` extension with migrations applied.
+- **24/7 Uptime Monitoring (UptimeRobot):** Continuous `/health` pings preventing idle container sleep.
+- **Live Google OAuth 2.0 & Instant Demo Persona:** Cross-site cookie authentication (`SameSite=None; Secure=True`).
+- **Grounded RAG & Vector Search:** 768-dimensional cosine vector embeddings in `pgvector`.
+- **Action Graph:** BFS dependency traversal and interactive graph visualization.
+- **AI Reply Copilot & Executive Reporting:** Context-aware draft generation and daily operations digest.
 
 Current verification status:
 
-- Backend Pytest suite: **145/145 tests passing**.
-- Backend test pass rate: **100%**.
-- PostgreSQL migrations: **001 through 008 verified**.
-- Frontend production build: **Passing with 0 TypeScript or bundling errors**.
-- Git whitespace verification: **Clean `git diff --check`**.
-
-The planned Version 1 implementation is complete.
-
-The remaining work is primarily final real-environment verification and release preparation, including verification against real Google OAuth, Gmail, Gemini API, OCR runtime dependencies, and selected deployment infrastructure.
+- Backend Pytest suite: **145/145 tests passing (100%)**.
+- End-to-end live cloud walkthrough: **7/7 core user flows verified passing**.
+- Frontend production bundle: **Vite build clean, 0 errors, SPA rewrites active**.
+- Git whitespace and working tree: **Clean `git status`**.
 
 ---
 
@@ -60,6 +52,8 @@ The remaining work is primarily final real-environment verification and release 
 | **Phase 8** | Cloud-Native Real-Time Ingestion & Distributed Workers | **COMPLETED** |
 | **Phase 9** | Modern 3-Pane UI, Rich-Text AI Copilot & Executive Reporting | **COMPLETED** |
 | **Phase 10** | Power-User Experience, Instant Demo Seeding & Enterprise Polish | **COMPLETED** |
+| **Milestone 12** | Enterprise UI, RAG Hardening & Action Graph Engine | **COMPLETED** |
+| **Milestone 13** | Production Cloud Deployment & Live Operations (Render + Supabase + UptimeRobot) | **COMPLETED** |
 
 ---
 
@@ -172,3 +166,15 @@ The remaining work is primarily final real-environment verification and release 
   - Automated graph node and edge creation on email analysis.
   - Added prominent **"⚡ Auto-Generate Graph"** header control and interactive empty-state onboarding guide.
 - [x] **Gmail Ingestion Resiliency:** Implemented HTTP connection pooling with `httpx.AsyncClient`, exponential backoff for rate limits (`429` / `403`), and synchronized pacing.
+
+---
+
+## Milestone 13 — Production Cloud Deployment & Live Operations
+
+- [x] **Supabase Managed Database:** Provisioned PostgreSQL 16 on Supabase with `pgvector` extension; applied Alembic migrations `001` through `008`.
+- [x] **Render Web Service (Backend):** Containerized FastAPI app with dynamic `$PORT` binding, production environment secrets, and automated startup healthchecks.
+- [x] **Render Static Site (Frontend):** Deployed React 18 + Vite SPA with SPA route rewrite (`/* -> /index.html`) and zero-cache asset hashing.
+- [x] **Cross-Site Authentication Hardening:** Configured `SameSite=None; Secure=True` for session cookies across subdomains (`mailops-frontend.onrender.com` ➔ `mailops-backend-67g3.onrender.com`).
+- [x] **Google OAuth 2.0 In-Cloud Verification:** Connected client credentials with verified redirect URIs for real Gmail account synchronization.
+- [x] **24/7 Availability Monitoring:** Configured UptimeRobot monitor pinging `/health` every 5 minutes to prevent Render free-tier cold starts.
+- [x] **Automated Cloud Verification:** Created and executed comprehensive test suite `verify_live_site.py` validating 7/7 core flows with 100% pass rate.

@@ -140,12 +140,16 @@ async def google_login(return_to: str | None = None):
         status_code=status.HTTP_307_TEMPORARY_REDIRECT,
     )
 
+    is_cross_site = settings.APP_ENV != "development" or "onrender.com" in settings.FRONTEND_URL
+    cookie_samesite = "none" if is_cross_site else "lax"
+    cookie_secure = True if is_cross_site else settings.SESSION_COOKIE_SECURE
+
     response.set_cookie(
         key=OAUTH_STATE_COOKIE,
         value=raw_state,
         httponly=True,
-        samesite="lax",
-        secure=settings.SESSION_COOKIE_SECURE,
+        samesite=cookie_samesite,
+        secure=cookie_secure,
         max_age=600,
         path="/",
     )
@@ -177,12 +181,16 @@ async def google_authorize_compose(
         status_code=status.HTTP_307_TEMPORARY_REDIRECT,
     )
 
+    is_cross_site = settings.APP_ENV != "development" or "onrender.com" in settings.FRONTEND_URL
+    cookie_samesite = "none" if is_cross_site else "lax"
+    cookie_secure = True if is_cross_site else settings.SESSION_COOKIE_SECURE
+
     response.set_cookie(
         key=OAUTH_STATE_COOKIE,
         value=raw_state,
         httponly=True,
-        samesite="lax",
-        secure=settings.SESSION_COOKIE_SECURE,
+        samesite=cookie_samesite,
+        secure=cookie_secure,
         max_age=600,
         path="/",
     )
@@ -321,10 +329,17 @@ async def google_callback(
         status_code=status.HTTP_307_TEMPORARY_REDIRECT,
     )
 
+    # Determine cookie cross-site requirements for Render / Production
+    is_cross_site = settings.APP_ENV != "development" or "onrender.com" in settings.FRONTEND_URL
+    cookie_samesite = "none" if is_cross_site else "lax"
+    cookie_secure = True if is_cross_site else settings.SESSION_COOKIE_SECURE
+
     # Remove temporary OAuth state cookie
     response.delete_cookie(
         key=OAUTH_STATE_COOKIE,
         path="/",
+        samesite=cookie_samesite,
+        secure=cookie_secure,
     )
 
     # Set authenticated session cookie
@@ -332,8 +347,8 @@ async def google_callback(
         key=settings.SESSION_COOKIE_NAME,
         value=raw_session_token,
         httponly=True,
-        samesite="lax",
-        secure=settings.SESSION_COOKIE_SECURE,
+        samesite=cookie_samesite,
+        secure=cookie_secure,
         max_age=settings.SESSION_EXPIRE_HOURS * 3600,
         path="/",
     )

@@ -14,6 +14,8 @@ export const InboxDashboardView: React.FC = () => {
 
   const [isLoadingThreads, setIsLoadingThreads] = useState<boolean>(true);
   const [isLoadingOlder, setIsLoadingOlder] = useState<boolean>(false);
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  const [syncProgressMsg, setSyncProgressMsg] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
   const [isDrafting, setIsDrafting] = useState<boolean>(false);
   const [requiresComposeConsent, setRequiresComposeConsent] = useState<boolean>(false);
@@ -49,6 +51,13 @@ export const InboxDashboardView: React.FC = () => {
   useEffect(() => {
     fetchThreads();
 
+    // Check initial Gmail sync status
+    api.getGmailStatus().then((status) => {
+      if (status?.sync_state?.sync_status === 'SYNCING') {
+        setIsSyncing(true);
+      }
+    }).catch(() => {});
+
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '';
     let eventSource: EventSource | null = null;
     try {
@@ -56,9 +65,24 @@ export const InboxDashboardView: React.FC = () => {
         withCredentials: true,
       });
 
+      eventSource.addEventListener('sync_started', () => {
+        setIsSyncing(true);
+        setSyncProgressMsg('Syncing mailbox...');
+      });
+
+      eventSource.addEventListener('sync_progress', (e: MessageEvent) => {
+        setIsSyncing(true);
+        try {
+          const data = JSON.parse(e.data);
+          setSyncProgressMsg(`Syncing email ${data.processed}/${data.limit}...`);
+        } catch {}
+      });
+
       eventSource.addEventListener('sync_completed', () => {
-        fetchThreads();
+        setIsSyncing(false);
         setIsLoadingOlder(false);
+        setSyncProgressMsg(null);
+        fetchThreads();
       });
     } catch {
       // ignore
@@ -70,21 +94,32 @@ export const InboxDashboardView: React.FC = () => {
   }, []);
 
   const handleLoadOlderEmails = async () => {
+    if (isSyncing || isLoadingOlder) return;
+
     try {
       setIsLoadingOlder(true);
-      await api.syncOlderEmails(50);
-      // Fallback reload after 4.5s in case SSE is disconnected
-      setTimeout(() => {
-        fetchThreads();
-        setIsLoadingOlder(false);
-      }, 4500);
+      setIsSyncing(true);
+      setSyncProgressMsg('Loading older emails...');
+      const res = await api.syncOlderEmails(50);
+      if (res?.status === 'IN_PROGRESS') {
+        // Sync is already in flight, wait for SSE completion
+        return;
+      }
     } catch (err: any) {
-      if (err?.status === 404 || err?.message === 'Not Found') {
-        alert('Backend is finishing deployment on Render. Please wait 15 seconds and try again.');
+      if (err?.status === 409 || err?.message?.includes('already in progress')) {
+        // Silently mark as syncing, no ugly alert popup
+        setIsSyncing(true);
+      } else if (err?.status === 404 || err?.message === 'Not Found') {
+        alert('Backend is finishing deployment on Render. Please wait a moment and try again.');
+        setIsLoadingOlder(false);
+        setIsSyncing(false);
+        setSyncProgressMsg(null);
       } else {
         alert(`Could not load older emails: ${err?.message || err}`);
+        setIsLoadingOlder(false);
+        setIsSyncing(false);
+        setSyncProgressMsg(null);
       }
-      setIsLoadingOlder(false);
     }
   };
 
@@ -444,14 +479,18 @@ export const InboxDashboardView: React.FC = () => {
               <div className="pt-2 pb-1 text-center">
                 <button
                   onClick={handleLoadOlderEmails}
-                  disabled={isLoadingOlder}
-                  className="w-full py-2 px-3 text-xs font-semibold rounded-lg border border-zinc-800 bg-zinc-900/90 hover:bg-zinc-800 text-zinc-300 hover:text-white transition flex items-center justify-center gap-1.5 shadow-sm active:scale-[0.98] disabled:opacity-50"
-                  title="Fetch older emails from your Gmail archive"
+                  disabled={isSyncing || isLoadingOlder}
+                  className={`w-full py-2.5 px-3 text-xs font-semibold rounded-lg border transition flex items-center justify-center gap-2 shadow-sm ${
+                    isSyncing || isLoadingOlder
+                      ? 'border-zinc-800 bg-zinc-900/60 text-zinc-500 cursor-not-allowed'
+                      : 'border-zinc-800 bg-zinc-900/90 hover:bg-zinc-800 text-zinc-300 hover:text-white active:scale-[0.98]'
+                  }`}
+                  title={isSyncing ? 'Mailbox synchronization in progress...' : 'Fetch older emails from your Gmail archive'}
                 >
-                  {isLoadingOlder ? (
+                  {isSyncing || isLoadingOlder ? (
                     <>
                       <span className="w-3 h-3 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></span>
-                      <span>Loading Older Emails...</span>
+                      <span>{syncProgressMsg || 'Syncing Mailbox...'}</span>
                     </>
                   ) : (
                     <>

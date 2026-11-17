@@ -184,10 +184,19 @@ def trigger_gmail_sync(
     # in progress would produce conflicting DB sessions and duplicate work.
     sync_state = GmailRepository.get_or_create_sync_state(db, current_user.id)
     if sync_state.sync_status == "SYNCING":
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="A Gmail sync is already in progress for this account. Please wait for it to complete.",
-        )
+        now_utc = datetime.now(timezone.utc)
+        is_stale = False
+        if sync_state.updated_at:
+            updated_dt = sync_state.updated_at if sync_state.updated_at.tzinfo else sync_state.updated_at.replace(tzinfo=timezone.utc)
+            if (now_utc - updated_dt).total_seconds() > 180:
+                is_stale = True
+
+        if not is_stale:
+            return SyncTriggerResponse(
+                status="IN_PROGRESS",
+                message="A Gmail synchronization is already in progress.",
+            )
+        logger.warning("Auto-clearing stale sync lock (>3m) for user %s", current_user.id)
 
     # Update sync state to SYNCING (acts as an optimistic lock against second concurrent trigger)
     GmailRepository.update_sync_state(db, current_user.id, sync_status="SYNCING", error_message=None)
@@ -224,10 +233,19 @@ def trigger_gmail_sync_older(
 
     sync_state = GmailRepository.get_or_create_sync_state(db, current_user.id)
     if sync_state.sync_status == "SYNCING":
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="A Gmail sync is already in progress. Please wait for it to complete.",
-        )
+        now_utc = datetime.now(timezone.utc)
+        is_stale = False
+        if sync_state.updated_at:
+            updated_dt = sync_state.updated_at if sync_state.updated_at.tzinfo else sync_state.updated_at.replace(tzinfo=timezone.utc)
+            if (now_utc - updated_dt).total_seconds() > 180:
+                is_stale = True
+
+        if not is_stale:
+            return SyncTriggerResponse(
+                status="IN_PROGRESS",
+                message="A Gmail synchronization is already in progress.",
+            )
+        logger.warning("Auto-clearing stale older sync lock (>3m) for user %s", current_user.id)
 
     GmailRepository.update_sync_state(db, current_user.id, sync_status="SYNCING", error_message=None)
     background_tasks.add_task(_run_async_sync_older, current_user.id, count)

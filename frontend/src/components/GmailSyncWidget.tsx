@@ -115,6 +115,10 @@ export const GmailSyncWidget: React.FC = () => {
       // (e.g. no OAuth account, another sync already running, server error).
       // Note: fetch() only rejects on network failure, NOT on HTTP error status.
       if (!resp.ok) {
+        if (resp.status === 409) {
+          setIsSyncing(true);
+          return;
+        }
         let msg = `Sync rejected (HTTP ${resp.status}).`;
         try {
           const detail = await resp.json();
@@ -154,6 +158,10 @@ export const GmailSyncWidget: React.FC = () => {
       });
 
       if (!resp.ok) {
+        if (resp.status === 409) {
+          setIsSyncing(true);
+          return;
+        }
         let msg = `Request failed (HTTP ${resp.status}).`;
         if (resp.status === 404) {
           msg = 'Backend is finishing deployment on Render. Please try again in 10-20 seconds.';

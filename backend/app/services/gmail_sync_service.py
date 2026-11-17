@@ -175,6 +175,15 @@ class GmailSyncService:
                         await self._fetch_and_persist_message(db, user, access_token, msg_id)
                         known_ids.add(msg_id)
                         messages_processed += 1
+
+                        if messages_processed % 5 == 0:
+                            GmailRepository.update_sync_state(
+                                db,
+                                user.id,
+                                sync_status="SYNCING",
+                                synced_message_count=len(known_ids),
+                            )
+
                         await event_bus.publish(
                             user.id,
                             "sync_progress",

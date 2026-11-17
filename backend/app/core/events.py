@@ -64,7 +64,6 @@ class EventBus:
                     pass
         except Exception as e:
             logger.debug(f"EventBus publish skipped: {e}")
-                logger.warning(f"Event queue full for user {user_id}, dropping event {event_type}")
 
     async def broadcast_system(self, event_type: str, data: dict):
         """Broadcast to all connected users."""

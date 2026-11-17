@@ -45,42 +45,56 @@ async def demo_login(
     One-click demo login for evaluators and showcase presentations.
     Seeds rich enterprise mock data and establishes an authenticated session.
     """
-    from sqlalchemy import select
-    from backend.app.scripts.seed_demo_data import seed_demo_environment, DEMO_USER_EMAIL
+    try:
+        from sqlalchemy import select
+        from backend.app.scripts.seed_demo_data import seed_demo_environment, DEMO_USER_EMAIL
 
-    demo_user = db.execute(select(User).where(User.email == DEMO_USER_EMAIL)).scalar_one_or_none()
-    if not demo_user:
-        seed_result = seed_demo_environment(db=db)
-        demo_email = str(seed_result["demo_user"])
-        demo_user = db.execute(select(User).where(User.email == demo_email)).scalar_one()
+        demo_user = db.execute(select(User).where(User.email == DEMO_USER_EMAIL)).scalar_one_or_none()
+        if not demo_user:
+            seed_result = seed_demo_environment(db=db)
+            demo_email = str(seed_result["demo_user"])
+            demo_user = db.execute(select(User).where(User.email == demo_email)).scalar_one()
 
-    ip_addr = request.client.host if request.client else None
-    user_agent = request.headers.get("user-agent")
+        ip_addr = request.client.host if request.client else None
+        user_agent = request.headers.get("user-agent")
 
-    # Generate a fresh, valid session
-    session_token, _ = create_user_session(
-        db=db,
-        user=demo_user,
-        ip_address=ip_addr,
-        user_agent=user_agent,
-    )
+        # Generate a fresh, valid session
+        session_token, _ = create_user_session(
+            db=db,
+            user=demo_user,
+            ip_address=ip_addr,
+            user_agent=user_agent,
+        )
 
-    # Set authenticated session cookie
-    response.set_cookie(
-        key=settings.SESSION_COOKIE_NAME,
-        value=session_token,
-        httponly=True,
-        samesite="lax",
-        secure=settings.SESSION_COOKIE_SECURE,
-        max_age=settings.SESSION_EXPIRE_HOURS * 3600,
-        path="/",
-    )
+        # In cross-subdomain production setups (frontend.onrender.com <-> backend.onrender.com),
+        # SameSite must be 'none' with Secure=True so browsers send cookies on credentials: 'include'.
+        is_cross_site = settings.APP_ENV != "development" or "onrender.com" in settings.FRONTEND_URL
+        cookie_samesite = "none" if is_cross_site else "lax"
+        cookie_secure = True if is_cross_site else settings.SESSION_COOKIE_SECURE
 
-    return {
-        "status": "authenticated",
-        "demo_user": seed_result["demo_user"],
-        "message": "Demo environment active with realistic enterprise data.",
-    }
+        response.set_cookie(
+            key=settings.SESSION_COOKIE_NAME,
+            value=session_token,
+            httponly=True,
+            samesite=cookie_samesite,
+            secure=cookie_secure,
+            max_age=settings.SESSION_EXPIRE_HOURS * 3600,
+            path="/",
+        )
+
+        return {
+            "status": "authenticated",
+            "demo_user": demo_user.email,
+            "session_token": session_token,
+            "message": "Demo environment active with realistic enterprise data.",
+        }
+    except Exception as exc:
+        logger.exception("Demo login failed: %s", exc)
+        from fastapi import HTTPException
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Demo login failure: {type(exc).__name__}: {str(exc)}",
+        )
 
 
 @router.post(

@@ -10,30 +10,31 @@ export const Login: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-100 font-sans p-4">
-      <div className="max-w-md w-full p-8 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl space-y-6 text-center">
+    <div className="min-h-screen flex items-center justify-center bg-black text-zinc-100 font-sans p-4">
+      <div className="max-w-md w-full p-8 bg-zinc-950 border border-zinc-800/90 rounded-2xl shadow-2xl space-y-6 text-center">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-indigo-400 to-purple-400">
-            MailOps AI
+          <h1 className="text-3xl font-extrabold tracking-tight text-white flex items-center justify-center gap-2">
+            <span>MailOps</span>
+            <span className="text-red-500 text-base font-bold px-2 py-0.5 rounded bg-red-950/80 border border-red-800/80 uppercase tracking-wider">AI</span>
           </h1>
-          <p className="text-xs text-slate-400 mt-2">
+          <p className="text-xs text-zinc-400 mt-2">
             Enterprise Communication & Work Intelligence Platform
           </p>
         </div>
 
-        <div className="bg-slate-950/60 p-4 rounded-xl border border-slate-800/80 text-left text-xs space-y-2 text-slate-300">
-          <div className="flex items-center gap-2 text-emerald-400 font-medium">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <div className="bg-zinc-900/90 p-4 rounded-xl border border-zinc-800/80 text-left text-xs space-y-2 text-zinc-300">
+          <div className="flex items-center gap-2 text-red-400 font-medium">
+            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
             OIDC Single Sign-On Ready
           </div>
-          <p className="text-slate-400 leading-relaxed">
+          <p className="text-zinc-400 leading-relaxed">
             Connect your Google Workspace mailbox to unlock AI intelligence, document OCR, grounded RAG search, and human-reviewed reply drafting.
           </p>
         </div>
 
         <button
           onClick={() => login()}
-          className="w-full flex items-center justify-center gap-3 py-3 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold text-sm rounded-xl shadow-lg hover:shadow-indigo-500/25 transition duration-200"
+          className="w-full flex items-center justify-center gap-3 py-3 px-4 bg-red-600 hover:bg-red-500 text-white font-semibold text-sm rounded-xl shadow-lg shadow-red-950/60 hover:shadow-red-900/40 transition duration-200 active:scale-[0.99]"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path
@@ -57,17 +58,17 @@ export const Login: React.FC = () => {
         </button>
 
         <div className="relative flex py-1 items-center">
-          <div className="flex-grow border-t border-slate-800"></div>
-          <span className="flex-shrink mx-3 text-xs uppercase tracking-wider text-slate-500 font-medium">Or explore instantly</span>
-          <div className="flex-grow border-t border-slate-800"></div>
+          <div className="flex-grow border-t border-zinc-800"></div>
+          <span className="flex-shrink mx-3 text-xs uppercase tracking-wider text-zinc-500 font-medium">Or explore instantly</span>
+          <div className="flex-grow border-t border-zinc-800"></div>
         </div>
 
         <button
           onClick={() => loginDemo()}
           disabled={isLoading}
-          className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-slate-800 hover:bg-slate-700/80 border border-slate-700 text-slate-200 font-semibold text-sm rounded-xl transition duration-200 shadow-sm"
+          className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 hover:border-red-900/60 text-zinc-200 hover:text-white font-semibold text-sm rounded-xl transition duration-200 shadow-sm"
         >
-          <span className="text-amber-400">⚡</span>
+          <span className="text-red-400">⚡</span>
           Launch Interactive Demo Showcase (No Auth Required)
         </button>
       </div>

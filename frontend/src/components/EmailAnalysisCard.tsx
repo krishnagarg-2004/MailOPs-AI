@@ -34,13 +34,13 @@ export const EmailAnalysisCard: React.FC<EmailAnalysisCardProps> = ({
   const getPriorityBadge = (p: string) => {
     switch (p) {
       case 'HIGH':
-        return 'bg-red-500/20 text-red-400 border-red-500/30';
+        return 'bg-red-500/20 text-red-400 border-red-500/40 font-bold';
       case 'MEDIUM':
-        return 'bg-amber-500/20 text-amber-400 border-amber-500/30';
+        return 'bg-zinc-800 text-zinc-300 border-zinc-700';
       case 'LOW':
-        return 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30';
+        return 'bg-zinc-900 text-zinc-400 border-zinc-800';
       default:
-        return 'bg-slate-500/20 text-slate-400 border-slate-500/30';
+        return 'bg-zinc-800 text-zinc-400 border-zinc-700';
     }
   };
 
@@ -48,30 +48,30 @@ export const EmailAnalysisCard: React.FC<EmailAnalysisCardProps> = ({
     switch (intent) {
       case 'WORK_REQUEST':
       case 'URGENT_ACTION':
-        return 'bg-purple-500/20 text-purple-400 border-purple-500/30';
+        return 'bg-red-950/60 text-red-400 border-red-800/80';
       case 'FINANCIAL_INVOICE':
-        return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
+        return 'bg-zinc-900 text-zinc-200 border-zinc-700';
       case 'CONTRACT_LEGAL':
-        return 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30';
+        return 'bg-zinc-900 text-zinc-200 border-zinc-700';
       default:
-        return 'bg-slate-500/20 text-slate-400 border-slate-500/30';
+        return 'bg-zinc-900 text-zinc-400 border-zinc-800';
     }
   };
 
   const getConfidenceLevel = (score: number) => {
-    if (score >= 0.9) return { label: 'High Confidence', color: 'text-emerald-400', bg: 'bg-emerald-500/20 border-emerald-500/30' };
-    if (score >= 0.75) return { label: 'Moderate Confidence', color: 'text-amber-400', bg: 'bg-amber-500/20 border-amber-500/30' };
-    return { label: 'Review Suggested', color: 'text-rose-400', bg: 'bg-rose-500/20 border-rose-500/30' };
+    if (score >= 0.9) return { label: 'High Confidence', color: 'text-red-400', bg: 'bg-red-950/50 border-red-800/60' };
+    if (score >= 0.75) return { label: 'Moderate Confidence', color: 'text-zinc-300', bg: 'bg-zinc-900 border-zinc-700' };
+    return { label: 'Review Suggested', color: 'text-zinc-400', bg: 'bg-zinc-900 border-zinc-800' };
   };
 
   const conf = getConfidenceLevel(analysis.confidence_score);
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-lg space-y-3 font-sans text-slate-100 overflow-hidden break-words">
+    <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-4 shadow-xl space-y-3 font-sans text-zinc-100 overflow-hidden break-words">
       {/* Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-800 pb-3">
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mr-1">AI Intelligence</span>
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400 mr-1">AI Intelligence</span>
           <span className={`text-[11px] px-2 py-0.5 rounded-full border ${getIntentBadge(analysis.intent)} font-medium`}>
             {analysis.intent.replace('_', ' ')}
           </span>
@@ -79,7 +79,7 @@ export const EmailAnalysisCard: React.FC<EmailAnalysisCardProps> = ({
             {analysis.priority}
           </span>
           {analysis.sentiment && (
-            <span className="text-[11px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 font-mono">
+            <span className="text-[11px] px-2 py-0.5 rounded bg-zinc-900 text-zinc-300 border border-zinc-800 font-mono">
               {analysis.sentiment === 'NEGATIVE' ? '⚠️ Negative' : analysis.sentiment === 'POSITIVE' ? '✅ Positive' : '⚖️ Neutral'}
             </span>
           )}
@@ -88,15 +88,15 @@ export const EmailAnalysisCard: React.FC<EmailAnalysisCardProps> = ({
         {/* Visual Confidence Gauge Pill */}
         <div className="flex items-center gap-2 text-xs shrink-0">
           <div className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border ${conf.bg}`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${analysis.confidence_score >= 0.9 ? 'bg-emerald-400' : analysis.confidence_score >= 0.75 ? 'bg-amber-400' : 'bg-rose-400'} animate-pulse`} />
+            <span className={`w-1.5 h-1.5 rounded-full ${analysis.confidence_score >= 0.9 ? 'bg-red-500' : 'bg-zinc-500'} animate-pulse`} />
             <span className={`font-semibold text-xs ${conf.color}`}>
               {(analysis.confidence_score * 100).toFixed(0)}%
             </span>
-            <span className="text-slate-400 text-[10px]">({conf.label})</span>
+            <span className="text-zinc-400 text-[10px]">({conf.label})</span>
           </div>
           <button
             onClick={() => setShowExplainability(!showExplainability)}
-            className="text-[11px] text-indigo-400 hover:text-indigo-300 underline transition"
+            className="text-[11px] text-red-400 hover:text-red-300 underline transition"
           >
             {showExplainability ? 'Hide Details' : 'Details'}
           </button>
@@ -105,18 +105,18 @@ export const EmailAnalysisCard: React.FC<EmailAnalysisCardProps> = ({
 
       {/* AI Explainability & Verification Drawer */}
       {showExplainability && (
-        <div className="bg-slate-950 p-3.5 rounded-lg border border-indigo-500/30 space-y-2 text-xs animate-fadeIn">
-          <div className="flex items-center justify-between text-indigo-300 font-semibold border-b border-slate-800 pb-1.5">
+        <div className="bg-zinc-900 p-3.5 rounded-lg border border-red-800/60 space-y-2 text-xs animate-fadeIn">
+          <div className="flex items-center justify-between text-red-400 font-semibold border-b border-zinc-800 pb-1.5">
             <span>Model Explainability Breakdown</span>
-            <code className="text-[10px] text-slate-400 font-mono">{analysis.model_name} (v{analysis.prompt_version})</code>
+            <code className="text-[10px] text-zinc-400 font-mono">{analysis.model_name} (v{analysis.prompt_version})</code>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-slate-300 pt-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-zinc-300 pt-1">
             <div>
-              <strong className="text-slate-400 block mb-0.5">Intent Reasoning:</strong>
+              <strong className="text-zinc-400 block mb-0.5">Intent Reasoning:</strong>
               <span>Classified as <code>{analysis.intent}</code> based on explicit operational requests in text.</span>
             </div>
             <div>
-              <strong className="text-slate-400 block mb-0.5">Priority Calculation:</strong>
+              <strong className="text-zinc-400 block mb-0.5">Priority Calculation:</strong>
               <span>Weighted as <code>{analysis.priority}</code> based on detected deadlines and SLA commitments.</span>
             </div>
           </div>
@@ -125,38 +125,44 @@ export const EmailAnalysisCard: React.FC<EmailAnalysisCardProps> = ({
 
       {/* Executive Summary */}
       <div>
-        <h4 className="text-sm font-semibold text-slate-200 mb-1">Executive Summary</h4>
-        <p className="text-xs text-slate-300 leading-relaxed bg-slate-950/50 p-3 rounded-lg border border-slate-800/60">
+        <h4 className="text-sm font-semibold text-white mb-1 flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+          Executive Summary
+        </h4>
+        <p className="text-xs text-zinc-200 leading-relaxed bg-zinc-900/90 p-3 rounded-lg border border-zinc-800">
           {analysis.summary}
         </p>
       </div>
 
       {/* Evidence-Grounded Rationale */}
       <div>
-        <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Rationale</h4>
-        <p className="text-xs text-slate-400 italic">"{analysis.rationale}"</p>
+        <h4 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1">Rationale</h4>
+        <p className="text-xs text-zinc-400 italic">"{analysis.rationale}"</p>
       </div>
 
       {/* Extracted Actions & Intelligence Items */}
       {analysis.extracted_items && analysis.extracted_items.length > 0 && (
         <div className="space-y-2">
-          <h4 className="text-sm font-semibold text-slate-200">Extracted Action Items ({analysis.extracted_items.length})</h4>
+          <h4 className="text-sm font-semibold text-white flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+            Extracted Action Items ({analysis.extracted_items.length})
+          </h4>
           <div className="space-y-2">
             {analysis.extracted_items.map((item: ExtractedActionItem) => (
               <div
                 key={item.id}
-                className="flex items-start justify-between gap-3 bg-slate-950/70 p-3 rounded-lg border border-slate-800/80 hover:border-slate-700 transition"
+                className="flex items-start justify-between gap-3 bg-zinc-900 p-3 rounded-lg border border-zinc-800 hover:border-zinc-700 transition"
               >
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-zinc-800 text-red-400 border border-zinc-700">
                       {item.item_type}
                     </span>
-                    <span className="text-xs font-medium text-slate-200">{item.description}</span>
+                    <span className="text-xs font-medium text-white">{item.description}</span>
                   </div>
-                  <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-400">
-                    {item.assignee && <span>Assignee: <strong className="text-slate-300">{item.assignee}</strong></span>}
-                    {item.due_date && <span>Due: <strong className="text-amber-400">{new Date(item.due_date).toLocaleDateString()}</strong></span>}
+                  <div className="flex flex-wrap items-center gap-3 text-[11px] text-zinc-400">
+                    {item.assignee && <span>Assignee: <strong className="text-zinc-200">{item.assignee}</strong></span>}
+                    {item.due_date && <span>Due: <strong className="text-red-400">{new Date(item.due_date).toLocaleDateString()}</strong></span>}
                     {!item.is_evidence_valid && (
                       <span className="text-red-400 bg-red-950/50 px-1.5 py-0.5 rounded border border-red-800/40" title="Evidence snippet not found verbatim in email text">
                         ⚠️ Invalid Evidence
@@ -173,7 +179,7 @@ export const EmailAnalysisCard: React.FC<EmailAnalysisCardProps> = ({
                       href={scheduledLinks[item.id]}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-[11px] px-2 py-1 rounded bg-sky-600/20 text-sky-300 border border-sky-500/40 font-medium hover:bg-sky-600/30 transition flex items-center gap-1"
+                      className="text-[11px] px-2 py-1 rounded bg-zinc-800 text-red-400 border border-zinc-700 font-medium hover:bg-zinc-700 transition flex items-center gap-1"
                       title="Open in Google Calendar"
                     >
                       <span>📅</span> View GCal
@@ -182,7 +188,7 @@ export const EmailAnalysisCard: React.FC<EmailAnalysisCardProps> = ({
                     <button
                       onClick={() => handleScheduleAction(item)}
                       disabled={schedulingId === item.id}
-                      className="text-[11px] px-2 py-1 rounded bg-indigo-600/20 text-indigo-300 hover:bg-indigo-600/30 border border-indigo-500/40 font-medium transition flex items-center gap-1 disabled:opacity-50"
+                      className="text-[11px] px-2 py-1 rounded bg-red-950/40 text-red-400 hover:bg-red-900/60 border border-red-800/60 font-medium transition flex items-center gap-1 disabled:opacity-50"
                       title="Schedule Deadline into Google Calendar"
                     >
                       <span>📅</span> {schedulingId === item.id ? 'Syncing...' : 'Sync GCal'}
@@ -193,26 +199,26 @@ export const EmailAnalysisCard: React.FC<EmailAnalysisCardProps> = ({
                     <>
                       <button
                         onClick={() => onActionStatusChange && onActionStatusChange(item.id, 'CONFIRMED')}
-                        className="text-[11px] px-2.5 py-1 rounded bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 border border-emerald-500/40 font-medium transition"
+                        className="text-[11px] px-2.5 py-1 rounded bg-zinc-800 text-zinc-200 hover:bg-zinc-700 border border-zinc-700 font-medium transition"
                       >
                         Confirm
                       </button>
                       <button
                         onClick={() => onActionStatusChange && onActionStatusChange(item.id, 'COMPLETED')}
-                        className="text-[11px] px-2.5 py-1 rounded bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 border border-blue-500/40 font-medium transition"
+                        className="text-[11px] px-2.5 py-1 rounded bg-red-600 hover:bg-red-500 text-white font-medium shadow-sm transition"
                         title="Mark Complete"
                       >
                         Complete
                       </button>
                       <button
                         onClick={() => onActionStatusChange && onActionStatusChange(item.id, 'DISMISSED')}
-                        className="text-[11px] px-2.5 py-1 rounded bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-700 font-medium transition"
+                        className="text-[11px] px-2.5 py-1 rounded bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800 font-medium transition"
                       >
                         Dismiss
                       </button>
                     </>
                   ) : (
-                    <span className="text-[11px] px-2 py-0.5 rounded font-mono font-medium border bg-slate-800 text-slate-300 border-slate-700">
+                    <span className="text-[11px] px-2 py-0.5 rounded font-mono font-medium border bg-zinc-800 text-zinc-300 border-zinc-700">
                       {item.status}
                     </span>
                   )}
@@ -225,20 +231,20 @@ export const EmailAnalysisCard: React.FC<EmailAnalysisCardProps> = ({
 
       {/* Supporting Evidence Drawer Toggle */}
       {analysis.extracted_items && analysis.extracted_items.some((i) => i.evidence_snippet) && (
-        <div className="border-t border-slate-800 pt-3">
+        <div className="border-t border-zinc-800 pt-3">
           <button
             onClick={() => setShowEvidence(!showEvidence)}
-            className="text-xs text-indigo-400 hover:text-indigo-300 font-medium flex items-center gap-1 transition"
+            className="text-xs text-red-400 hover:text-red-300 font-medium flex items-center gap-1 transition"
           >
             <span>{showEvidence ? '▼ Hide' : '▶ Show'} Grounding Evidence Snippets</span>
           </button>
           {showEvidence && (
-            <div className="mt-2 space-y-2 bg-slate-950 p-3 rounded-lg border border-slate-800 text-xs">
+            <div className="mt-2 space-y-2 bg-zinc-900 p-3 rounded-lg border border-zinc-800 text-xs">
               {analysis.extracted_items.map((item: ExtractedActionItem) =>
                 item.evidence_snippet ? (
-                  <div key={`ev-${item.id}`} className="space-y-0.5 border-b border-slate-900 pb-1.5 last:border-b-0">
-                    <span className="text-[11px] font-semibold text-slate-300">{item.description}:</span>
-                    <blockquote className="text-slate-400 italic border-l-2 border-indigo-500/50 pl-2">
+                  <div key={`ev-${item.id}`} className="space-y-0.5 border-b border-zinc-800 pb-1.5 last:border-b-0">
+                    <span className="text-[11px] font-semibold text-zinc-300">{item.description}:</span>
+                    <blockquote className="text-zinc-400 italic border-l-2 border-red-500 pl-2">
                       "{item.evidence_snippet}"
                     </blockquote>
                   </div>

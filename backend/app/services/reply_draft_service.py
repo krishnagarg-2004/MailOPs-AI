@@ -98,7 +98,13 @@ class ReplyDraftService:
         msg, thread, context_prompt = cls.assemble_reply_context(db, user_id, message_id)
 
         ai_provider = get_ai_provider()
-        draft_result = await ai_provider.generate_reply_draft(context_prompt=context_prompt, tone=tone, intent=intent)
+        try:
+            draft_result = await ai_provider.generate_reply_draft(context_prompt=context_prompt, tone=tone, intent=intent)
+        except Exception as exc:
+            logger.warning("Primary AI reply drafting failed: %s. Falling back to default generator.", exc)
+            from backend.app.ai.provider import MockAIProvider
+            fallback = MockAIProvider()
+            draft_result = await fallback.generate_reply_draft(context_prompt=context_prompt, tone=tone, intent=intent)
 
         recipient = msg.sender or "recipient@example.com"
         subject = draft_result.subject if draft_result.subject else f"Re: {msg.subject or 'Email'}"

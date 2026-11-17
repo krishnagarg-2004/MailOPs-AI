@@ -124,10 +124,13 @@ export const DocumentsView: React.FC = () => {
 
   return (
     <div className="space-y-6 font-sans">
-      <div className="flex flex-wrap items-center justify-between border-b border-slate-800 pb-4 gap-3">
+      <div className="flex flex-wrap items-center justify-between border-b border-zinc-800 pb-4 gap-3">
         <div>
-          <h2 className="text-lg font-bold text-slate-100">Document Intelligence & OCR Workspace</h2>
-          <p className="text-xs text-slate-400">
+          <h2 className="text-lg font-bold text-white flex items-center gap-2">
+            <span>Document Intelligence & OCR Workspace</span>
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-red-950/60 text-red-400 border border-red-800/60 uppercase tracking-wider font-semibold">Tesseract OCR</span>
+          </h2>
+          <p className="text-xs text-zinc-400">
             Extract native text, perform Tesseract OCR page rendering, and parse structured invoice/contract metadata.
           </p>
         </div>
@@ -135,7 +138,7 @@ export const DocumentsView: React.FC = () => {
         {extraction?.extracted_text && (
           <button
             onClick={handleDownloadOcrText}
-            className="flex items-center gap-1.5 text-xs bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/40 px-3 py-1.5 rounded-lg transition font-medium"
+            className="flex items-center gap-1.5 text-xs bg-red-950/40 hover:bg-red-900/60 text-red-300 border border-red-800/60 hover:border-red-600 px-3 py-1.5 rounded-lg transition font-medium shadow-sm"
             title="Download extracted plaintext file"
           >
             <span>📥</span> Download OCR Text (.txt)
@@ -145,12 +148,12 @@ export const DocumentsView: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column: Attachment Browser with Search & Categories */}
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3">
+        <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-4 space-y-3 shadow-lg">
           <div className="flex items-center justify-between">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
               Attachments ({filteredAttachments.length})
             </h3>
-            <span className="text-[10px] text-slate-500 font-mono">Total: {attachments.length}</span>
+            <span className="text-[10px] text-zinc-500 font-mono">Total: {attachments.length}</span>
           </div>
 
           {/* Search Box */}
@@ -159,7 +162,7 @@ export const DocumentsView: React.FC = () => {
             placeholder="Search attachments..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-slate-950 border border-slate-800 rounded-lg text-xs px-3 py-1.5 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+            className="w-full bg-zinc-900 border border-zinc-800 rounded-lg text-xs px-3 py-1.5 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500/30"
           />
 
           {/* Category Filter Pills */}
@@ -170,8 +173,8 @@ export const DocumentsView: React.FC = () => {
                 onClick={() => setCategoryFilter(cat)}
                 className={`px-2 py-0.5 rounded font-medium transition ${
                   categoryFilter === cat
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-slate-800 text-slate-400 hover:text-slate-200'
+                    ? 'bg-red-600 text-white font-semibold shadow-sm'
+                    : 'bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800'
                 }`}
               >
                 {cat}
@@ -180,9 +183,9 @@ export const DocumentsView: React.FC = () => {
           </div>
 
           {isLoading ? (
-            <div className="text-xs text-slate-500 py-8 text-center">Loading attachments...</div>
+            <div className="text-xs text-zinc-500 py-8 text-center">Loading attachments...</div>
           ) : filteredAttachments.length === 0 ? (
-            <div className="text-xs text-slate-500 py-8 text-center">No matching attachments found.</div>
+            <div className="text-xs text-zinc-500 py-8 text-center">No matching attachments found.</div>
           ) : (
             <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1">
               {filteredAttachments.map((att) => (
@@ -191,19 +194,19 @@ export const DocumentsView: React.FC = () => {
                   onClick={() => handleSelectAttachment(att)}
                   className={`p-3 rounded-lg border cursor-pointer transition ${
                     selectedAttachment?.id === att.id
-                      ? 'bg-slate-800 border-purple-500/50 shadow-xs'
-                      : 'bg-slate-950/60 border-slate-800/80 hover:border-slate-700'
+                      ? 'bg-zinc-900 border-l-4 border-l-red-500 border-y border-r border-zinc-800 shadow-md'
+                      : 'bg-zinc-900/60 border-zinc-800/80 hover:border-zinc-700'
                   }`}
                 >
                   <div className="flex items-center justify-between text-xs mb-1">
-                    <span className="font-semibold text-slate-200 truncate max-w-[170px]">
+                    <span className="font-semibold text-zinc-200 truncate max-w-[170px]">
                       {att.filename}
                     </span>
-                    <span className="text-[10px] text-slate-500 font-mono">
+                    <span className="text-[10px] text-zinc-500 font-mono">
                       {(att.size_bytes / 1024).toFixed(1)} KB
                     </span>
                   </div>
-                  <p className="text-[11px] text-slate-400 font-mono truncate">
+                  <p className="text-[11px] text-zinc-400 font-mono truncate">
                     {att.mime_type}
                   </p>
                 </div>

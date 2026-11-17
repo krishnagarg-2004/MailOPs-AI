@@ -154,12 +154,13 @@ export const GmailSyncWidget: React.FC = () => {
 
   if (!statusData?.connected) {
     return (
-      <div className="w-full rounded-xl border border-slate-800 bg-slate-900 p-3 text-slate-100 shadow-sm">
-        <h3 className="text-sm font-bold text-sky-400">
+      <div className="w-full rounded-xl border border-zinc-800 bg-zinc-950 p-3 text-zinc-100 shadow-sm">
+        <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-zinc-600"></span>
           Gmail Connection
         </h3>
 
-        <p className="mt-2 text-[11px] leading-relaxed text-slate-400">
+        <p className="mt-2 text-[11px] leading-relaxed text-zinc-400">
           No Gmail account connected. Please sign in with Google to enable
           email sync.
         </p>
@@ -170,16 +171,17 @@ export const GmailSyncWidget: React.FC = () => {
   const syncState = statusData.sync_state;
 
   return (
-    <div className="w-full rounded-xl border border-slate-800 bg-slate-900 p-3 text-slate-100 shadow-sm">
+    <div className="w-full rounded-xl border border-zinc-800 bg-zinc-950 p-3 text-zinc-100 shadow-sm">
 
       {/* Header */}
       <div className="mb-3">
-        <h3 className="text-sm font-bold text-sky-400">
-          Gmail Synchronization
+        <h3 className="text-xs font-bold text-white flex items-center justify-between">
+          <span>Gmail Synchronization</span>
+          <span className={`w-2 h-2 rounded-full ${syncState?.sync_status === 'COMPLETED' ? 'bg-red-500 shadow-sm shadow-red-500/80' : 'bg-zinc-600'}`}></span>
         </h3>
 
         <p
-          className="mt-1 truncate text-[11px] text-slate-400"
+          className="mt-1 truncate text-[11px] text-zinc-400 font-mono"
           title={statusData.email || ''}
         >
           {statusData.email || 'Gmail account'}
@@ -187,28 +189,28 @@ export const GmailSyncWidget: React.FC = () => {
       </div>
 
       {/* Sync Information */}
-      <div className="grid grid-cols-2 gap-2 rounded-lg bg-slate-950 p-2.5">
+      <div className="grid grid-cols-2 gap-2 rounded-lg bg-zinc-900 border border-zinc-800/60 p-2.5">
 
         {/* Live SSE Notification Toast */}
         {liveEventMessage && (
-          <div className="col-span-2 mb-1 flex items-center gap-1.5 rounded bg-sky-950/60 border border-sky-800/80 px-2 py-1 text-[10px] text-sky-300">
-            <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-ping"></span>
+          <div className="col-span-2 mb-1 flex items-center gap-1.5 rounded bg-red-950/60 border border-red-800/80 px-2 py-1 text-[10px] text-red-300">
+            <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-ping"></span>
             <span className="truncate">{liveEventMessage}</span>
           </div>
         )}
 
         {/* Status */}
         <div className="min-w-0">
-          <span className="block text-[9px] font-semibold uppercase tracking-wider text-slate-500">
+          <span className="block text-[9px] font-semibold uppercase tracking-wider text-zinc-500">
             Status
           </span>
 
           <div
             className={`mt-1 truncate text-[11px] font-bold ${syncState?.sync_status === 'COMPLETED'
-                ? 'text-green-400'
+                ? 'text-red-400'
                 : syncState?.sync_status === 'FAILED'
-                  ? 'text-red-400'
-                  : 'text-yellow-400'
+                  ? 'text-red-500 font-extrabold'
+                  : 'text-zinc-400'
               }`}
           >
             {syncState?.sync_status || 'IDLE'}
@@ -217,22 +219,22 @@ export const GmailSyncWidget: React.FC = () => {
 
         {/* Messages */}
         <div className="min-w-0">
-          <span className="block text-[9px] font-semibold uppercase tracking-wider text-slate-500">
+          <span className="block text-[9px] font-semibold uppercase tracking-wider text-zinc-500">
             Messages
           </span>
 
-          <div className="mt-1 text-sm font-bold text-slate-100">
+          <div className="mt-1 text-sm font-bold text-white">
             {syncState?.synced_message_count || 0}
           </div>
         </div>
 
         {/* Last Synced */}
-        <div className="col-span-2 border-t border-slate-800 pt-2">
-          <span className="block text-[9px] font-semibold uppercase tracking-wider text-slate-500">
+        <div className="col-span-2 border-t border-zinc-800 pt-2">
+          <span className="block text-[9px] font-semibold uppercase tracking-wider text-zinc-500">
             Last Synced
           </span>
 
-          <div className="mt-1 truncate text-[11px] text-slate-300">
+          <div className="mt-1 truncate text-[11px] text-zinc-300">
             {syncState?.last_synced_at
               ? new Date(syncState.last_synced_at).toLocaleTimeString()
               : 'Never'}
@@ -245,8 +247,8 @@ export const GmailSyncWidget: React.FC = () => {
         onClick={triggerSync}
         disabled={isSyncing}
         className={`mt-3 w-full rounded-lg px-3 py-2 text-xs font-semibold text-white transition ${isSyncing
-            ? 'cursor-not-allowed bg-slate-700'
-            : 'bg-indigo-600 hover:bg-indigo-500'
+            ? 'cursor-not-allowed bg-zinc-800 text-zinc-500'
+            : 'bg-red-600 hover:bg-red-500 shadow-md shadow-red-950/50 active:scale-[0.98]'
           }`}
       >
         {isSyncing ? 'Syncing...' : 'Sync Inbox'}

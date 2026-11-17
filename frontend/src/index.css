@@ -18,4 +18,22 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  background-color: #000000;
+  color: #f4f4f5;
+}
+
+/* Custom dark scrollbars with red highlight */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #09090b;
+}
+::-webkit-scrollbar-thumb {
+  background: #27272a;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #ef4444;
 }

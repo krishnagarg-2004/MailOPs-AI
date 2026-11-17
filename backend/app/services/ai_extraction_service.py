@@ -55,7 +55,7 @@ class AIExtractionService:
         # 3. Extract text payload
         source_text = email_message.body_plain or email_message.snippet or ""
 
-        # 4. Invoke LLM provider
+        # 4. Invoke LLM provider (with robust fallback)
         try:
             result = await self.provider.extract_email_intelligence(
                 subject=email_message.subject,
@@ -63,25 +63,34 @@ class AIExtractionService:
                 sender=email_message.sender,
             )
         except Exception as exc:
-            logger.error("AI Provider extraction failed for message %s: %s", message_id, exc)
-            # Record failed analysis
-            return AIRepository.save_analysis_with_items(
-                db=db,
-                user_id=user_id,
-                email_message_id=message_id,
-                email_thread_id=email_message.thread_id,
-                summary="AI Extraction Failed",
-                intent="OTHER",
-                priority="LOW",
-                sentiment="NEUTRAL",
-                confidence_score=0.0,
-                rationale="Extraction failed due to provider error.",
-                model_name=self.provider.model_name,
-                prompt_version=PROMPT_VERSION,
-                extracted_items=[],
-                status="FAILED",
-                error_message=str(exc),
-            )
+            logger.warning("Primary AI Provider failed for message %s: %s. Falling back to heuristic extractor.", message_id, exc)
+            try:
+                from backend.app.ai.provider import MockAIProvider
+                fallback_provider = MockAIProvider()
+                result = await fallback_provider.extract_email_intelligence(
+                    subject=email_message.subject,
+                    body=source_text,
+                    sender=email_message.sender,
+                )
+            except Exception as inner_exc:
+                logger.error("Fallback AI extraction failed for message %s: %s", message_id, inner_exc)
+                return AIRepository.save_analysis_with_items(
+                    db=db,
+                    user_id=user_id,
+                    email_message_id=message_id,
+                    email_thread_id=email_message.thread_id,
+                    summary="AI Extraction Failed",
+                    intent="OTHER",
+                    priority="LOW",
+                    sentiment="NEUTRAL",
+                    confidence_score=0.0,
+                    rationale="Extraction failed due to provider error.",
+                    model_name=self.provider.model_name,
+                    prompt_version=PROMPT_VERSION,
+                    extracted_items=[],
+                    status="FAILED",
+                    error_message=str(inner_exc),
+                )
 
         # 5. Process & Validate Evidence Snippets
         items_to_save: list[dict] = []

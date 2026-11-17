@@ -183,23 +183,23 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 bg-slate-950/70 backdrop-blur-sm p-4 font-sans animate-in fade-in duration-150">
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 bg-black/80 backdrop-blur-md p-4 font-sans animate-in fade-in duration-150">
       <div
-        className="w-full max-w-xl bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden text-slate-100 flex flex-col"
+        className="w-full max-w-xl bg-zinc-950 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden text-zinc-100 flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Search input header */}
-        <div className="flex items-center gap-3 px-4 py-3.5 border-b border-slate-800">
-          <span className="text-slate-400 text-sm">🔍</span>
+        <div className="flex items-center gap-3 px-4 py-3.5 border-b border-zinc-800">
+          <span className="text-red-500 text-sm">🔍</span>
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Type a command or jump to workspace..."
             autoFocus
-            className="w-full bg-transparent text-sm text-slate-100 placeholder-slate-500 focus:outline-none"
+            className="w-full bg-transparent text-sm text-white placeholder-zinc-500 focus:outline-none"
           />
-          <kbd className="hidden sm:inline-block text-[10px] font-semibold bg-slate-800 border border-slate-700 px-1.5 py-0.5 rounded text-slate-400">
+          <kbd className="hidden sm:inline-block text-[10px] font-semibold bg-zinc-900 border border-zinc-800 px-1.5 py-0.5 rounded text-zinc-400">
             ESC
           </kbd>
         </div>
@@ -207,7 +207,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
         {/* Command List */}
         <div className="max-h-80 overflow-y-auto p-2 space-y-1">
           {filteredCommands.length === 0 ? (
-            <div className="text-center py-8 text-xs text-slate-500">
+            <div className="text-center py-8 text-xs text-zinc-500">
               No matching commands found.
             </div>
           ) : (
@@ -217,16 +217,16 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
                 onClick={() => cmd.action()}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer text-xs transition ${
                   selectedIndex === idx
-                    ? 'bg-gradient-to-r from-sky-500/20 to-indigo-500/20 text-sky-200 border border-sky-500/30'
-                    : 'hover:bg-slate-800/60 text-slate-300'
+                    ? 'bg-red-950/60 text-red-300 border border-red-800/80 shadow-sm'
+                    : 'hover:bg-zinc-900/80 text-zinc-300'
                 }`}
               >
                 <span className="text-base">{cmd.icon}</span>
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold truncate">{cmd.title}</div>
-                  <div className="text-[11px] text-slate-400 truncate">{cmd.description}</div>
+                  <div className="text-[11px] text-zinc-400 truncate">{cmd.description}</div>
                 </div>
-                <span className="text-[9px] uppercase tracking-wider px-2 py-0.5 rounded bg-slate-800 text-slate-400 font-medium">
+                <span className="text-[9px] uppercase tracking-wider px-2 py-0.5 rounded bg-zinc-900 text-zinc-400 font-medium border border-zinc-800">
                   {cmd.category}
                 </span>
               </div>
@@ -235,9 +235,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
         </div>
 
         {/* Footer shortcuts */}
-        <div className="px-4 py-2 border-t border-slate-800/80 bg-slate-950/40 flex items-center justify-between text-[11px] text-slate-500">
-          <span>Navigation: <kbd className="text-[10px] bg-slate-800 px-1 rounded">↑</kbd> <kbd className="text-[10px] bg-slate-800 px-1 rounded">↓</kbd></span>
-          <span>Select: <kbd className="text-[10px] bg-slate-800 px-1 rounded">↵</kbd></span>
+        <div className="px-4 py-2 border-t border-zinc-800/80 bg-black/60 flex items-center justify-between text-[11px] text-zinc-500">
+          <span>Navigation: <kbd className="text-[10px] bg-zinc-900 px-1 rounded border border-zinc-800 text-zinc-400">↑</kbd> <kbd className="text-[10px] bg-zinc-900 px-1 rounded border border-zinc-800 text-zinc-400">↓</kbd></span>
+          <span>Select: <kbd className="text-[10px] bg-zinc-900 px-1 rounded border border-zinc-800 text-zinc-400">↵</kbd></span>
         </div>
       </div>
     </div>

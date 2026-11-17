@@ -80,15 +80,15 @@ export const ActionGraphView: React.FC = () => {
 
   return (
     <div className="space-y-6 font-sans">
-      <div className="flex flex-wrap items-center justify-between border-b border-slate-800 pb-4 gap-3">
+      <div className="flex flex-wrap items-center justify-between border-b border-zinc-800 pb-4 gap-3">
         <div>
-          <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
+          <h2 className="text-lg font-bold text-white flex items-center gap-2">
             <span>🕸️ Action Graph & Relationship Workspace</span>
-            <span className="text-xs font-normal px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-red-950/60 text-red-400 border border-red-800/60">
               BFS Dependency Engine
             </span>
           </h2>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-zinc-400 mt-0.5">
             Visualize relational dependencies across email threads, action items, documents, and risks with BFS traversal.
           </p>
         </div>
@@ -97,7 +97,7 @@ export const ActionGraphView: React.FC = () => {
           <button
             onClick={handleRebuildGraph}
             disabled={isLoading}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-indigo-600 hover:bg-indigo-500 text-white shadow transition disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-red-600 hover:bg-red-500 text-white shadow-md shadow-red-950/50 transition disabled:opacity-50"
             title="Scan all synced emails and actions to construct the dependency graph"
           >
             {isLoading ? (
@@ -116,13 +116,13 @@ export const ActionGraphView: React.FC = () => {
             )}
           </button>
 
-          <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 p-1 rounded-lg text-xs">
+          <div className="flex items-center gap-1 bg-zinc-900 border border-zinc-800 p-1 rounded-lg text-xs">
             <button
               onClick={() => setViewMode('canvas')}
               className={`px-3 py-1 rounded-md font-medium transition ${
                 viewMode === 'canvas'
-                  ? 'bg-sky-500/20 text-sky-300 border border-sky-500/30'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-red-950/70 text-red-400 border border-red-800/80 shadow-xs'
+                  : 'text-zinc-400 hover:text-white'
               }`}
             >
               🎨 Interactive Canvas
@@ -131,8 +131,8 @@ export const ActionGraphView: React.FC = () => {
               onClick={() => setViewMode('grid')}
               className={`px-3 py-1 rounded-md font-medium transition ${
                 viewMode === 'grid'
-                  ? 'bg-sky-500/20 text-sky-300 border border-sky-500/30'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-red-950/70 text-red-400 border border-red-800/80 shadow-xs'
+                  : 'text-zinc-400 hover:text-white'
               }`}
             >
               📋 Grid Cards
@@ -142,9 +142,9 @@ export const ActionGraphView: React.FC = () => {
       </div>
 
       {/* Filter Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-900 border border-slate-800 p-3 rounded-xl">
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-zinc-950 border border-zinc-800 p-3 rounded-xl shadow-sm">
         <div className="flex flex-wrap items-center gap-1.5 text-xs">
-          <span className="text-slate-400 font-semibold mr-1">Filter Nodes:</span>
+          <span className="text-zinc-400 font-semibold mr-1">Filter Nodes:</span>
           {[
             { id: 'ALL', label: 'All Nodes' },
             { id: 'ACTION_ITEM', label: '⚡ Actions' },
@@ -158,8 +158,8 @@ export const ActionGraphView: React.FC = () => {
               onClick={() => setNodeTypeFilter(cat.id)}
               className={`px-2.5 py-1 rounded-md font-medium transition ${
                 nodeTypeFilter === cat.id
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-slate-950 text-slate-400 hover:text-slate-200 border border-slate-800'
+                  ? 'bg-red-600 text-white font-semibold shadow-sm'
+                  : 'bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800'
               }`}
             >
               {cat.label}
@@ -173,9 +173,9 @@ export const ActionGraphView: React.FC = () => {
             placeholder="Search nodes..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="bg-slate-950 border border-slate-800 rounded-lg text-xs px-3 py-1 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 w-44"
+            className="bg-zinc-900 border border-zinc-800 rounded-lg text-xs px-3 py-1 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500/30 w-44"
           />
-          <span className="text-[11px] text-slate-500 font-mono">
+          <span className="text-[11px] text-zinc-500 font-mono">
             {filteredNodes.length}/{nodes.length} nodes
           </span>
         </div>
@@ -183,21 +183,21 @@ export const ActionGraphView: React.FC = () => {
 
       {/* Visual Canvas or Empty State Explainer */}
       {nodes.length === 0 && !isLoading ? (
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-8 text-center space-y-6">
-          <div className="mx-auto w-16 h-16 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-3xl">
+        <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-8 text-center space-y-6">
+          <div className="mx-auto w-16 h-16 rounded-2xl bg-red-950/40 border border-red-800/60 flex items-center justify-center text-3xl text-red-500">
             🕸️
           </div>
           <div className="max-w-xl mx-auto space-y-2">
-            <h3 className="text-base font-bold text-slate-100">Action Graph is Not Yet Generated</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">
+            <h3 className="text-base font-bold text-white">Action Graph is Not Yet Generated</h3>
+            <p className="text-xs text-zinc-400 leading-relaxed">
               Action Graph automatically maps relationships between your emails, extracted action items, stakeholders, decisions, and risks into a navigable knowledge and dependency graph.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 max-w-3xl mx-auto text-left">
-            <div className="bg-slate-950 p-4 rounded-lg border border-slate-800">
+            <div className="bg-zinc-900 p-4 rounded-lg border border-zinc-800">
               <span className="text-lg">⚡</span>
-              <h4 className="text-xs font-semibold text-amber-300 mt-2">Action Dependencies</h4>
+              <h4 className="text-xs font-semibold text-red-400 mt-2">Action Dependencies</h4>
               <p className="text-[11px] text-slate-400 mt-1">
                 Identifies which tasks depend on other prerequisites (e.g. review PR before merge, countersign NDA before payment).
               </p>

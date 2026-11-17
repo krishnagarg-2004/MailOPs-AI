@@ -46,11 +46,13 @@ async def demo_login(
     Seeds rich enterprise mock data and establishes an authenticated session.
     """
     from sqlalchemy import select
-    from backend.app.scripts.seed_demo_data import seed_demo_environment
+    from backend.app.scripts.seed_demo_data import seed_demo_environment, DEMO_USER_EMAIL
 
-    seed_result = seed_demo_environment(db=db)
-    demo_email = str(seed_result["demo_user"])
-    demo_user = db.execute(select(User).where(User.email == demo_email)).scalar_one()
+    demo_user = db.execute(select(User).where(User.email == DEMO_USER_EMAIL)).scalar_one_or_none()
+    if not demo_user:
+        seed_result = seed_demo_environment(db=db)
+        demo_email = str(seed_result["demo_user"])
+        demo_user = db.execute(select(User).where(User.email == demo_email)).scalar_one()
 
     ip_addr = request.client.host if request.client else None
     user_agent = request.headers.get("user-agent")

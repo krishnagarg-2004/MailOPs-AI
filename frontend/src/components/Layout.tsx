@@ -1,5 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
+import {
+  Inbox,
+  FileText,
+  Search,
+  Network,
+  Menu,
+  ChevronLeft,
+  Sparkles,
+  Command,
+  LogOut,
+  Zap,
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { api } from '../services/api';
@@ -24,41 +36,43 @@ export const Layout: React.FC = () => {
   }, []);
 
   const navItems = [
-    { path: '/dashboard', label: 'Inbox & AI Reply', icon: '📬' },
-    { path: '/documents', label: 'Document OCR', icon: '📄' },
-    { path: '/search', label: 'Search & RAG Chat', icon: '🔍' },
-    { path: '/graph', label: 'Action Graph', icon: '⚙️' },
+    { path: '/dashboard', label: 'Inbox & AI Reply', icon: Inbox },
+    { path: '/documents', label: 'Document OCR', icon: FileText },
+    { path: '/search', label: 'Search & RAG Chat', icon: Search },
+    { path: '/graph', label: 'Action Graph', icon: Network },
   ];
 
   return (
-    <div className="min-h-screen bg-black text-zinc-100 font-sans flex flex-col">
-      {/* Top Glassmorphic Navigation Header */}
-      <header className="h-16 glass-header border-b border-zinc-800/80 px-4 md:px-6 flex items-center justify-between shrink-0 sticky top-0 z-40 transition-all">
+    <div className="min-h-screen bg-[#08080a] text-[#ededed] font-sans flex flex-col selection:bg-red-500/20 selection:text-white">
+      {/* Fey Glassmorphic Navigation Header */}
+      <header className="h-14 fey-glass border-b border-white/[0.06] px-4 md:px-6 flex items-center justify-between shrink-0 sticky top-0 z-40 transition-all">
         {/* Brand & Sidebar Toggle */}
         <div className="flex items-center gap-3">
           <button
             onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-            className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-900 border border-transparent hover:border-zinc-800 transition active:scale-95"
+            className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.05] border border-transparent hover:border-white/[0.08] transition active:scale-95"
             title={isSidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
             aria-label="Toggle Navigation Sidebar"
           >
-            <span className="text-base select-none">{isSidebarCollapsed ? '☰' : '◀'}</span>
+            {isSidebarCollapsed ? (
+              <Menu className="w-4 h-4 text-zinc-400" />
+            ) : (
+              <ChevronLeft className="w-4 h-4 text-zinc-400" />
+            )}
           </button>
 
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-red-600 via-rose-600 to-red-500 flex items-center justify-center font-extrabold text-white text-sm shadow-md shadow-red-950/60 border border-red-400/40 select-none">
-            M
-          </div>
+          {/* Fey Brand Capsule */}
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-b from-zinc-800 to-zinc-950 flex items-center justify-center text-red-500 shadow-sm border border-white/[0.09] select-none">
+              <Sparkles className="w-3.5 h-3.5" />
+            </div>
 
-          <div>
-            <div className="flex items-center gap-1.5">
-              <span className="text-base font-bold tracking-tight text-white">MailOps</span>
-              <span className="text-[10px] font-bold text-red-400 px-1.5 py-0.5 rounded bg-red-950/80 border border-red-800/70 tracking-wider">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold tracking-tight text-white">MailOps</span>
+              <span className="text-[10px] font-medium tracking-wide text-red-400 px-1.5 py-0.5 rounded-full bg-red-950/60 border border-red-500/30">
                 AI
               </span>
             </div>
-            <span className="text-[10px] text-zinc-400 tracking-wider font-medium hidden sm:block">
-              Work Intelligence Engine
-            </span>
           </div>
         </div>
 
@@ -81,33 +95,35 @@ export const Layout: React.FC = () => {
                 },
               });
             }}
-            className="flex items-center gap-1.5 bg-red-950/40 hover:bg-red-900/60 text-red-300 border border-red-800/60 hover:border-red-600 text-xs px-2.5 py-1.5 rounded-lg transition font-medium shadow-sm active:scale-95"
+            className="flex items-center gap-1.5 bg-white/[0.03] hover:bg-red-950/40 text-zinc-300 hover:text-red-300 border border-white/[0.08] hover:border-red-500/40 text-xs px-2.5 py-1.5 rounded-lg transition font-medium active:scale-95 shadow-sm"
             title="Populate account with sample enterprise data"
           >
-            <span className="text-red-400">⚡</span>
+            <Zap className="w-3 h-3 text-red-400" />
             <span className="hidden sm:inline">Seed Demo</span>
           </button>
 
+          {/* Fey Search / Quick Jump Pill */}
           <button
             onClick={() => setIsCommandPaletteOpen(true)}
-            className="flex items-center gap-2 bg-zinc-900/90 hover:bg-zinc-850 text-zinc-300 hover:text-white border border-zinc-800 text-xs px-3 py-1.5 rounded-lg transition font-medium active:scale-95 shadow-sm"
+            className="flex items-center gap-2 bg-[#101014] hover:bg-[#15151c] text-zinc-400 hover:text-zinc-200 border border-white/[0.08] hover:border-white/[0.14] text-xs px-2.5 py-1.5 rounded-lg transition font-medium active:scale-95 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)]"
           >
-            <span>Quick Jump</span>
-            <kbd className="hidden sm:inline-block text-[10px] bg-zinc-800 text-zinc-400 px-1.5 py-0.5 rounded font-mono border border-zinc-700/60">
-              Ctrl+K
+            <Command className="w-3.5 h-3.5 text-zinc-400" />
+            <span className="hidden sm:inline text-xs">Jump to</span>
+            <kbd className="text-[10px] bg-white/[0.06] text-zinc-400 px-1.5 py-0.5 rounded font-mono border border-white/[0.06]">
+              ⌘K
             </kbd>
           </button>
 
           {/* User Account Capsule */}
-          <div className="hidden md:flex items-center gap-2.5 pl-2 border-l border-zinc-800/80">
-            <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-zinc-800 to-zinc-700 border border-zinc-600/60 flex items-center justify-center font-bold text-white text-xs select-none">
+          <div className="hidden md:flex items-center gap-2.5 pl-3 border-l border-white/[0.06]">
+            <div className="w-6 h-6 rounded-full bg-gradient-to-b from-zinc-800 to-zinc-900 border border-white/[0.1] flex items-center justify-center font-bold text-zinc-200 text-[11px] select-none">
               {user?.full_name ? user.full_name.charAt(0).toUpperCase() : user?.email ? user.email.charAt(0).toUpperCase() : 'U'}
             </div>
             <div className="text-right">
-              <div className="text-xs font-semibold text-zinc-200 leading-tight">
+              <div className="text-xs font-medium text-zinc-300 leading-tight">
                 {user?.full_name || 'User Account'}
               </div>
-              <div className="text-[10px] text-zinc-400 font-mono leading-tight">
+              <div className="text-[10px] text-zinc-500 font-mono leading-tight">
                 {user?.email}
               </div>
             </div>
@@ -115,9 +131,11 @@ export const Layout: React.FC = () => {
 
           <button
             onClick={() => logout()}
-            className="text-xs bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-red-400 hover:border-red-900/60 px-3 py-1.5 rounded-lg border border-zinc-800 font-medium transition active:scale-95"
+            className="p-1.5 text-zinc-400 hover:text-red-400 hover:bg-red-950/30 rounded-lg border border-transparent hover:border-red-900/40 transition active:scale-95"
+            title="Logout"
+            aria-label="Logout"
           >
-            Logout
+            <LogOut className="w-4 h-4" />
           </button>
         </div>
       </header>
@@ -127,14 +145,14 @@ export const Layout: React.FC = () => {
         {/* Left Rail Sidebar */}
         <aside
           className={`${
-            isSidebarCollapsed ? 'w-16' : 'w-64'
-          } shrink-0 bg-zinc-950/95 border-r border-zinc-800/80 flex flex-col overflow-y-auto transition-all duration-200 z-30`}
+            isSidebarCollapsed ? 'w-16' : 'w-60'
+          } shrink-0 bg-[#0b0b0e] border-r border-white/[0.06] flex flex-col overflow-y-auto transition-all duration-200 z-30`}
         >
           {/* Gmail Synchronization Widget Container */}
-          <div className="p-3 border-b border-zinc-800/80">
+          <div className="p-3 border-b border-white/[0.06]">
             {isSidebarCollapsed ? (
-              <div className="flex justify-center p-2 text-base text-red-400" title="Gmail Sync Active">
-                📬
+              <div className="flex justify-center p-2 text-red-400" title="Gmail Sync Active">
+                <Inbox className="w-4 h-4" />
               </div>
             ) : (
               <GmailSyncWidget />
@@ -142,37 +160,40 @@ export const Layout: React.FC = () => {
           </div>
 
           {/* Navigation Links */}
-          <nav className="p-3 space-y-1">
+          <nav className="p-2 space-y-0.5">
             {!isSidebarCollapsed && (
-              <div className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 px-3 mb-2">
-                Navigation
+              <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 px-3 py-2">
+                Workspaces
               </div>
             )}
 
-            {navItems.map((item) => (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                title={isSidebarCollapsed ? item.label : undefined}
-                className={({ isActive }) =>
-                  `flex items-center ${
-                    isSidebarCollapsed ? 'justify-center px-2 py-3' : 'gap-3 px-3 py-2.5'
-                  } rounded-xl text-xs font-medium transition duration-150 ${
-                    isActive
-                      ? 'bg-red-950/50 text-red-400 border border-red-800/70 shadow-sm shadow-red-950/40 font-semibold'
-                      : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900/80 border border-transparent'
-                  }`
-                }
-              >
-                <span className="text-base select-none">{item.icon}</span>
-                {!isSidebarCollapsed && <span>{item.label}</span>}
-              </NavLink>
-            ))}
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  title={isSidebarCollapsed ? item.label : undefined}
+                  className={({ isActive }) =>
+                    `flex items-center ${
+                      isSidebarCollapsed ? 'justify-center px-2 py-2.5' : 'gap-2.5 px-3 py-2'
+                    } rounded-lg text-xs font-medium transition-all duration-150 ${
+                      isActive
+                        ? 'bg-[#18181f] text-white border border-white/[0.12] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)] font-semibold'
+                        : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.03] border border-transparent'
+                    }`
+                  }
+                >
+                  <Icon className="w-4 h-4 shrink-0 text-zinc-400 group-hover:text-zinc-200" />
+                  {!isSidebarCollapsed && <span>{item.label}</span>}
+                </NavLink>
+              );
+            })}
           </nav>
         </aside>
 
         {/* Main Workspace Area */}
-        <main className="flex-1 min-w-0 overflow-y-auto p-3 md:p-6 bg-black">
+        <main className="flex-1 min-w-0 overflow-y-auto p-4 md:p-6 bg-[#08080a]">
           <div className="max-w-[1600px] mx-auto w-full">
             <Outlet />
           </div>

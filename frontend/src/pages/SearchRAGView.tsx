@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { RefreshCw, MessageSquare, CheckCircle2, X } from 'lucide-react';
 import { RAGChatWidget } from '../components/RAGChatWidget';
 import { SemanticSearchWidget } from '../components/SemanticSearchWidget';
 import { useToast } from '../context/ToastContext';
@@ -64,16 +65,16 @@ export const SearchRAGView: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-6 font-sans">
-      <div className="flex flex-wrap items-center justify-between border-b border-zinc-800/80 pb-4 gap-3">
+    <div className="space-y-5 font-sans">
+      <div className="flex flex-wrap items-center justify-between border-b border-white/[0.06] pb-3.5 gap-3">
         <div>
-          <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2 tracking-tight">
+          <h2 className="text-sm font-semibold text-white flex items-center gap-2 tracking-tight">
             <span>Semantic Search & Grounded RAG Assistant</span>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-red-950/70 text-red-400 border border-red-800/70 font-semibold uppercase">
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/[0.04] text-zinc-400 border border-white/[0.08] tracking-wider">
               pgvector 768-d
             </span>
           </h2>
-          <p className="text-xs text-zinc-400 mt-0.5">
+          <p className="text-xs text-zinc-500 mt-0.5">
             Query indexed email messages and attachments with pgvector cosine similarity and grounded citation synthesis.
           </p>
         </div>
@@ -82,35 +83,42 @@ export const SearchRAGView: React.FC = () => {
           <button
             onClick={handleReindex}
             disabled={isIndexing}
-            className="flex items-center gap-1.5 bg-red-950/40 hover:bg-red-900/60 text-red-300 border border-red-800/60 hover:border-red-600 text-xs px-3.5 py-1.5 rounded-xl transition font-medium disabled:opacity-50 shadow-sm active:scale-95"
+            className="flex items-center gap-1.5 bg-white/[0.04] hover:bg-white/[0.08] text-zinc-200 border border-white/[0.08] hover:border-white/[0.14] text-xs px-3 py-1.5 rounded-lg transition font-medium disabled:opacity-50 shadow-sm active:scale-95"
           >
-            <span>{isIndexing ? '⏳ Indexing Mailbox...' : '⚡ Re-Index Mailbox (pgvector)'}</span>
+            <RefreshCw className={`w-3 h-3 text-red-400 ${isIndexing ? 'animate-spin' : ''}`} />
+            <span>{isIndexing ? 'Indexing...' : 'Re-Index Mailbox (pgvector)'}</span>
           </button>
         </div>
       </div>
 
       {indexMessage && (
-        <div className="bg-red-950/40 border border-red-800/60 text-red-300 text-xs px-4 py-3 rounded-2xl flex items-center justify-between shadow-sm animate-fadeIn">
-          <span>✅ {indexMessage}</span>
-          <button onClick={() => setIndexMessage(null)} className="text-zinc-400 hover:text-white px-2 py-1">✕</button>
+        <div className="bg-[#121216] border border-emerald-500/30 text-emerald-300 text-xs px-3.5 py-2.5 rounded-xl flex items-center justify-between shadow-sm animate-fadeIn">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+            <span>{indexMessage}</span>
+          </div>
+          <button onClick={() => setIndexMessage(null)} className="text-zinc-500 hover:text-white p-1">
+            <X className="w-3.5 h-3.5" />
+          </button>
         </div>
       )}
 
       {/* Suggested Query Chips */}
-      <div className="bg-zinc-950/90 border border-zinc-800/80 p-3.5 rounded-2xl flex flex-wrap items-center gap-2 text-xs shadow-md">
-        <span className="text-zinc-400 font-semibold text-xs mr-1">Suggested Questions:</span>
+      <div className="bg-[#0e0e12] border border-white/[0.07] p-3 rounded-xl flex flex-wrap items-center gap-1.5 text-xs shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)]">
+        <span className="text-zinc-500 text-[10px] font-medium uppercase tracking-wider mr-1">Suggested:</span>
         {sampleQueries.map((q, idx) => (
           <button
             key={idx}
             onClick={() => handleAskRAG(q)}
-            className="bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-red-400 border border-zinc-800 hover:border-red-900/60 px-3 py-1.5 rounded-xl transition text-[11px] font-medium active:scale-95"
+            className="bg-[#121216] hover:bg-[#16161c] text-zinc-300 hover:text-white border border-white/[0.06] hover:border-white/[0.12] px-2.5 py-1 rounded-md transition text-[11px] font-medium active:scale-95 flex items-center gap-1.5"
           >
-            💬 {q}
+            <MessageSquare className="w-3 h-3 text-zinc-500" />
+            <span>{q}</span>
           </button>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Left Column: Semantic & Hybrid Search Widget */}
         <SemanticSearchWidget
           onSearch={handleSearch}

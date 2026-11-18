@@ -1,5 +1,6 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
+import { Sparkles, Zap } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export const Login: React.FC = () => {
@@ -10,41 +11,41 @@ export const Login: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-zinc-900 via-black to-black text-zinc-100 font-sans p-4 relative overflow-hidden">
-      {/* Background ambient decorative glows */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-96 h-96 bg-red-600/10 rounded-full blur-3xl pointer-events-none" />
+    <div className="min-h-screen flex items-center justify-center bg-[#08080a] text-[#ededed] font-sans p-4 relative overflow-hidden">
+      {/* Subtle ambient lighting */}
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[500px] h-[300px] bg-red-600/[0.07] rounded-full blur-[100px] pointer-events-none" />
 
-      <div className="max-w-md w-full p-8 sm:p-10 bg-zinc-950/80 border border-zinc-800/80 rounded-3xl shadow-2xl backdrop-blur-xl space-y-6 text-center relative z-10">
+      <div className="max-w-md w-full p-8 sm:p-10 bg-[#0e0e12] border border-white/[0.08] rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.8),inset_0_1px_0_0_rgba(255,255,255,0.06)] backdrop-blur-2xl space-y-6 text-center relative z-10">
         <div>
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-red-600 via-rose-600 to-red-500 flex items-center justify-center font-extrabold text-white text-xl shadow-lg shadow-red-950/80 border border-red-400/40 mx-auto mb-4">
-            M
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-b from-zinc-800 to-zinc-950 flex items-center justify-center text-red-500 shadow-sm border border-white/[0.1] mx-auto mb-3.5 select-none">
+            <Sparkles className="w-5 h-5" />
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white flex items-center justify-center gap-2">
+          <h1 className="text-xl font-semibold tracking-tight text-white flex items-center justify-center gap-2">
             <span>MailOps</span>
-            <span className="text-red-400 text-sm font-bold px-2 py-0.5 rounded-full bg-red-950/80 border border-red-800/80 tracking-wider">
+            <span className="text-red-400 text-[10px] font-mono font-medium px-2 py-0.5 rounded-full bg-red-950/40 border border-red-500/20 tracking-wider">
               AI
             </span>
           </h1>
-          <p className="text-xs text-zinc-400 mt-2">
+          <p className="text-xs text-zinc-500 mt-1">
             Enterprise Communication & Work Intelligence Platform
           </p>
         </div>
 
-        <div className="bg-zinc-900/60 p-4 rounded-2xl border border-zinc-800/80 text-left text-xs space-y-2 text-zinc-300">
-          <div className="flex items-center gap-2 text-red-400 font-medium">
-            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
-            OIDC Single Sign-On Ready
+        <div className="bg-[#0a0a0d] p-3.5 rounded-xl border border-white/[0.05] text-left text-xs space-y-1.5 text-zinc-300">
+          <div className="flex items-center gap-1.5 text-zinc-300 font-medium">
+            <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+            <span>Single Sign-On Ready</span>
           </div>
-          <p className="text-zinc-400 leading-relaxed text-[11px]">
+          <p className="text-zinc-500 leading-relaxed text-[11px]">
             Connect your Google Workspace mailbox to unlock AI intelligence, document OCR, grounded RAG search, and human-reviewed reply drafting.
           </p>
         </div>
 
         <button
           onClick={() => login()}
-          className="w-full flex items-center justify-center gap-3 py-3 px-4 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-semibold text-sm rounded-xl shadow-lg shadow-red-950/60 transition duration-200 active:scale-[0.98]"
+          className="w-full flex items-center justify-center gap-2.5 py-2.5 px-4 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-medium text-xs sm:text-sm rounded-lg shadow-sm transition duration-150 active:scale-[0.98]"
         >
-          <svg className="w-5 h-5" viewBox="0 0 24 24">
+          <svg className="w-4 h-4" viewBox="0 0 24 24">
             <path
               fill="currentColor"
               d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -66,18 +67,18 @@ export const Login: React.FC = () => {
         </button>
 
         <div className="relative flex py-1 items-center">
-          <div className="flex-grow border-t border-zinc-800"></div>
-          <span className="flex-shrink mx-3 text-[10px] uppercase tracking-wider text-zinc-500 font-medium">Or explore instantly</span>
-          <div className="flex-grow border-t border-zinc-800"></div>
+          <div className="flex-grow border-t border-white/[0.06]"></div>
+          <span className="flex-shrink mx-3 text-[10px] uppercase tracking-wider text-zinc-500 font-mono">Or</span>
+          <div className="flex-grow border-t border-white/[0.06]"></div>
         </div>
 
         <button
           onClick={() => loginDemo()}
           disabled={isLoading}
-          className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-zinc-900/90 hover:bg-zinc-850 border border-zinc-800 hover:border-red-900/60 text-zinc-200 hover:text-white font-semibold text-xs sm:text-sm rounded-xl transition duration-200 shadow-sm active:scale-[0.98]"
+          className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.08] hover:border-white/[0.14] text-zinc-300 hover:text-white font-medium text-xs sm:text-sm rounded-lg transition duration-150 shadow-sm active:scale-[0.98]"
         >
-          <span className="text-red-400">⚡</span>
-          Launch Interactive Demo Showcase (No Auth Required)
+          <Zap className="w-3.5 h-3.5 text-red-400" />
+          <span>Launch Interactive Demo Showcase</span>
         </button>
       </div>
     </div>

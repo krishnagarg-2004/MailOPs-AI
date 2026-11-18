@@ -1,4 +1,18 @@
 import React, { useEffect, useRef, useState } from 'react';
+import {
+  Sparkles,
+  Send,
+  Save,
+  Trash2,
+  RefreshCw,
+  Bold,
+  Italic,
+  List,
+  Quote,
+  Code,
+  Mail,
+  Zap,
+} from 'lucide-react';
 import { ReplyDraftResult, ToneEnum } from '../types/reply_draft';
 
 interface ReplyDraftWidgetProps {
@@ -97,7 +111,6 @@ export const ReplyDraftWidget: React.FC<ReplyDraftWidgetProps> = ({
     const start = el.selectionStart;
     const end = el.selectionEnd;
     const selected = bodyText.substring(start, end);
-
     const replacement = `${prefix}${selected || 'text'}${suffix}`;
     const newBody = bodyText.substring(0, start) + replacement + bodyText.substring(end);
 
@@ -147,26 +160,26 @@ export const ReplyDraftWidget: React.FC<ReplyDraftWidgetProps> = ({
   };
 
   return (
-    <div className="bg-zinc-950/90 border border-zinc-800/80 rounded-2xl p-4 sm:p-5 shadow-xl space-y-4 text-zinc-100 font-sans">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-800/80 pb-3">
+    <div className="bg-[#0e0e12] border border-white/[0.07] rounded-xl p-4 sm:p-5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)] space-y-4 text-[#ededed] font-sans">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/[0.06] pb-3">
         <div>
           <div className="flex items-center gap-2">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-red-400 flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+            <h3 className="text-xs font-semibold tracking-tight text-white flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-red-400" />
               AI Copilot & Reply Workspace
             </h3>
-            <span className="text-[10px] bg-red-950/70 text-red-400 font-mono px-2 py-0.5 rounded-full border border-red-800/70">
+            <span className="text-[10px] bg-red-950/40 text-red-400 font-mono px-2 py-0.5 rounded-full border border-red-500/20">
               Copilot 2.0
             </span>
           </div>
-          <p className="text-xs text-zinc-400 mt-0.5">
+          <p className="text-xs text-zinc-500 mt-0.5">
             Rich-text drafting with tab autocomplete and human-in-the-loop consent.
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
           {/* Tone Selector Pills */}
-          <div className="flex items-center gap-1 bg-zinc-900/90 p-1 rounded-xl border border-zinc-800/80">
+          <div className="flex items-center gap-1 bg-[#121216] p-1 rounded-lg border border-white/[0.06]">
             {(['PROFESSIONAL', 'CONCISE', 'URGENT', 'EMPATHETIC'] as ToneEnum[]).map((t) => (
               <button
                 key={t}
@@ -177,9 +190,9 @@ export const ReplyDraftWidget: React.FC<ReplyDraftWidgetProps> = ({
                   }
                 }}
                 disabled={isLoading}
-                className={`text-[11px] px-2.5 py-1 rounded-lg font-medium transition ${
+                className={`text-[11px] px-2.5 py-1 rounded-md font-medium transition ${
                   tone === t
-                    ? 'bg-red-950/80 text-red-400 border border-red-800/80 font-semibold shadow-xs'
+                    ? 'bg-white/[0.08] text-white border border-white/[0.12] font-semibold shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]'
                     : 'text-zinc-400 hover:text-white'
                 }`}
               >
@@ -191,39 +204,47 @@ export const ReplyDraftWidget: React.FC<ReplyDraftWidgetProps> = ({
           <button
             onClick={handleGenerate}
             disabled={isLoading}
-            className="text-xs bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white px-3.5 py-1.5 rounded-xl transition font-medium disabled:opacity-50 shadow-md shadow-red-950/60 active:scale-95"
+            className="text-xs bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white px-3 py-1.5 rounded-lg transition font-medium disabled:opacity-50 shadow-sm flex items-center gap-1.5 active:scale-95"
           >
-            {isLoading ? 'Drafting...' : '⚡ Regenerate'}
+            {isLoading ? (
+              <>
+                <RefreshCw className="w-3 h-3 animate-spin" />
+                <span>Drafting...</span>
+              </>
+            ) : (
+              <>
+                <Zap className="w-3 h-3" />
+                <span>Regenerate</span>
+              </>
+            )}
           </button>
         </div>
       </div>
 
       {requiresComposeConsent && (
-        <div className="bg-red-950/40 border border-red-800/70 p-3.5 rounded-xl text-xs text-red-300 flex items-center justify-between">
-          <span>
-            Gmail compose scope is required to sync or send emails.
-          </span>
+        <div className="bg-red-950/30 border border-red-500/20 p-3 rounded-lg text-xs text-red-300 flex items-center justify-between">
+          <span>Gmail compose scope is required to sync or send emails.</span>
           <a
             href={`${import.meta.env.VITE_API_BASE_URL ?? ''}/api/v1/auth/google/authorize-compose`}
-            className="bg-red-600 hover:bg-red-500 text-white font-semibold px-3 py-1 rounded-lg transition ml-2 shadow-sm"
+            className="bg-red-600 hover:bg-red-500 text-white font-medium px-3 py-1 rounded-md transition ml-2 shadow-sm text-xs"
           >
-            Authorize Compose Scope
+            Authorize Scope
           </a>
         </div>
       )}
 
       {draft ? (
-        <div className="space-y-3.5">
-          <div className="flex items-center justify-between text-xs text-zinc-400 bg-zinc-900/40 px-3 py-2 rounded-xl border border-zinc-800/80">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between text-xs text-zinc-400 bg-[#0a0a0d] px-3 py-2 rounded-lg border border-white/[0.05]">
             <span>
               Status:{' '}
-              <strong className="text-red-400 uppercase font-mono">
+              <strong className="text-red-400 uppercase font-mono tracking-wider">
                 {draft.status}
               </strong>
             </span>
             <span>
               Recipient:{' '}
-              <strong className="text-white font-mono">
+              <strong className="text-zinc-200 font-mono">
                 {draft.recipient_email}
               </strong>
             </span>
@@ -231,7 +252,7 @@ export const ReplyDraftWidget: React.FC<ReplyDraftWidgetProps> = ({
 
           <div className="space-y-2">
             <div>
-              <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 block mb-1">
+              <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 block mb-1">
                 Subject Line
               </label>
               <input
@@ -241,52 +262,52 @@ export const ReplyDraftWidget: React.FC<ReplyDraftWidgetProps> = ({
                   setSubject(e.target.value);
                   setIsEditing(true);
                 }}
-                className="w-full bg-zinc-900/80 border border-zinc-800 rounded-xl text-xs p-2.5 text-white focus:outline-none focus:border-red-500/80 focus:ring-1 focus:ring-red-500/30 transition"
+                className="w-full bg-[#0a0a0d] border border-white/[0.07] rounded-lg text-xs p-2.5 text-white focus:outline-none focus:border-red-500/60 transition"
               />
             </div>
 
             {/* Rich-Text Formatting Toolbar */}
-            <div className="flex flex-wrap items-center justify-between gap-1.5 bg-zinc-900/90 p-2 rounded-t-xl border border-zinc-800/80 border-b-0">
+            <div className="flex flex-wrap items-center justify-between gap-1.5 bg-[#121216] p-2 rounded-t-lg border border-white/[0.06] border-b-0">
               <div className="flex items-center gap-1">
                 <button
                   type="button"
                   onClick={() => applyFormat('**', '**')}
-                  title="Bold (**text**)"
-                  className="px-2 py-0.5 rounded text-xs font-bold text-zinc-300 hover:text-white hover:bg-zinc-800 transition"
+                  title="Bold"
+                  className="p-1.5 rounded text-zinc-400 hover:text-white hover:bg-white/[0.06] transition"
                 >
-                  B
+                  <Bold className="w-3.5 h-3.5" />
                 </button>
                 <button
                   type="button"
                   onClick={() => applyFormat('*', '*')}
-                  title="Italic (*text*)"
-                  className="px-2 py-0.5 rounded text-xs italic text-zinc-300 hover:text-white hover:bg-zinc-800 transition"
+                  title="Italic"
+                  className="p-1.5 rounded text-zinc-400 hover:text-white hover:bg-white/[0.06] transition"
                 >
-                  I
+                  <Italic className="w-3.5 h-3.5" />
                 </button>
                 <button
                   type="button"
                   onClick={() => applyFormat('\n- ')}
-                  title="Bullet List (- item)"
-                  className="px-2 py-0.5 rounded text-xs text-zinc-300 hover:text-white hover:bg-zinc-800 transition"
+                  title="Bullet List"
+                  className="p-1.5 rounded text-zinc-400 hover:text-white hover:bg-white/[0.06] transition"
                 >
-                  • List
+                  <List className="w-3.5 h-3.5" />
                 </button>
                 <button
                   type="button"
                   onClick={() => applyFormat('\n> ')}
-                  title="Quote (> quote)"
-                  className="px-2 py-0.5 rounded text-xs text-zinc-300 hover:text-white hover:bg-zinc-800 transition"
+                  title="Quote"
+                  className="p-1.5 rounded text-zinc-400 hover:text-white hover:bg-white/[0.06] transition"
                 >
-                  " Quote
+                  <Quote className="w-3.5 h-3.5" />
                 </button>
                 <button
                   type="button"
                   onClick={() => applyFormat('`', '`')}
                   title="Code snippet"
-                  className="px-2 py-0.5 rounded text-xs font-mono text-zinc-300 hover:text-white hover:bg-zinc-800 transition"
+                  className="p-1.5 rounded text-zinc-400 hover:text-white hover:bg-white/[0.06] transition font-mono"
                 >
-                  &lt;/&gt;
+                  <Code className="w-3.5 h-3.5" />
                 </button>
               </div>
 
@@ -295,21 +316,21 @@ export const ReplyDraftWidget: React.FC<ReplyDraftWidgetProps> = ({
                 <button
                   type="button"
                   onClick={() => insertQuickSnippet("Thank you for the update. I have confirmed receipt and reviewed the details.")}
-                  className="text-[10px] bg-zinc-800/80 hover:bg-zinc-700 text-zinc-200 border border-zinc-700/80 px-2.5 py-0.5 rounded-lg transition"
+                  className="text-[10px] bg-white/[0.04] hover:bg-white/[0.08] text-zinc-300 border border-white/[0.06] px-2.5 py-1 rounded-md transition"
                 >
                   + Confirm Receipt
                 </button>
                 <button
                   type="button"
                   onClick={() => insertQuickSnippet("Could you please provide the estimated timeline for delivery?")}
-                  className="text-[10px] bg-zinc-800/80 hover:bg-zinc-700 text-zinc-200 border border-zinc-700/80 px-2.5 py-0.5 rounded-lg transition"
+                  className="text-[10px] bg-white/[0.04] hover:bg-white/[0.08] text-zinc-300 border border-white/[0.06] px-2.5 py-1 rounded-md transition"
                 >
                   + Request Timeline
                 </button>
                 <button
                   type="button"
                   onClick={() => insertQuickSnippet("The proposed invoice items have been reviewed and approved for processing.")}
-                  className="text-[10px] bg-red-950/60 hover:bg-red-900/60 text-red-300 border border-red-800/60 px-2.5 py-0.5 rounded-lg transition"
+                  className="text-[10px] bg-red-950/40 hover:bg-red-900/40 text-red-300 border border-red-500/20 px-2.5 py-1 rounded-md transition"
                 >
                   + Approve
                 </button>
@@ -327,16 +348,16 @@ export const ReplyDraftWidget: React.FC<ReplyDraftWidgetProps> = ({
                   setBodyText(e.target.value);
                   setIsEditing(true);
                 }}
-                className="w-full bg-zinc-900/60 border border-zinc-800 rounded-b-xl text-xs p-3 text-white focus:outline-none focus:border-red-500/80 font-mono leading-relaxed"
+                className="w-full bg-[#0a0a0d] border border-white/[0.07] rounded-b-lg text-xs p-3 text-white focus:outline-none focus:border-red-500/60 font-mono leading-relaxed"
                 placeholder="Draft body content with AI copilot assistance..."
               />
 
               {/* Ghost-Text Autocomplete Floating Badge */}
               {ghostSuggestion && (
-                <div className="mt-1.5 flex items-center justify-between bg-red-950/60 border border-red-800/60 px-3 py-1.5 rounded-xl text-xs text-red-200 animate-fadeIn">
+                <div className="mt-1.5 flex items-center justify-between bg-red-950/40 border border-red-500/20 px-3 py-1.5 rounded-lg text-xs text-red-200 animate-fadeIn">
                   <div className="flex items-center gap-2 truncate max-w-[80%]">
-                    <span className="text-[10px] uppercase font-bold text-red-400 bg-red-950 px-1.5 py-0.5 rounded border border-red-800/70">
-                      Tab Suggestion
+                    <span className="text-[10px] uppercase font-mono font-bold text-red-400 bg-red-950/80 px-1.5 py-0.5 rounded border border-red-800/60">
+                      Tab Auto
                     </span>
                     <span className="italic text-red-300 truncate">
                       "{ghostSuggestion.trim()}"
@@ -345,9 +366,10 @@ export const ReplyDraftWidget: React.FC<ReplyDraftWidgetProps> = ({
                   <button
                     type="button"
                     onClick={acceptGhostSuggestion}
-                    className="text-[11px] bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-medium px-2.5 py-1 rounded-lg transition shrink-0 ml-2 shadow-xs active:scale-95"
+                    className="text-[11px] bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-medium px-2.5 py-1 rounded-md transition shrink-0 ml-2 shadow-sm active:scale-95 flex items-center gap-1"
                   >
-                    ⚡ Accept (Tab)
+                    <span>Accept</span>
+                    <kbd className="text-[9px] bg-white/[0.2] px-1 py-0.2 rounded font-mono">Tab</kbd>
                   </button>
                 </div>
               )}
@@ -355,15 +377,15 @@ export const ReplyDraftWidget: React.FC<ReplyDraftWidgetProps> = ({
           </div>
 
           {draft.rationale_and_provenance && draft.rationale_and_provenance.length > 0 && (
-            <div className="bg-zinc-900/50 border border-zinc-800/80 rounded-xl p-3.5 space-y-1.5 text-xs">
-              <span className="font-semibold text-zinc-300 flex items-center gap-1.5">
+            <div className="bg-[#0a0a0d] border border-white/[0.05] rounded-lg p-3 space-y-1 text-xs">
+              <span className="font-medium text-zinc-300 flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
                 AI Context Rationale & Provenance:
               </span>
-              <ul className="list-disc list-inside text-zinc-400 space-y-1">
+              <ul className="list-disc list-inside text-zinc-400 space-y-0.5">
                 {draft.rationale_and_provenance.map((item, idx) => (
                   <li key={idx}>
-                    <strong className="text-white">[{item.source_type}]</strong>{' '}
+                    <strong className="text-zinc-200">[{item.source_type}]</strong>{' '}
                     {item.description}
                   </li>
                 ))}
@@ -371,46 +393,50 @@ export const ReplyDraftWidget: React.FC<ReplyDraftWidgetProps> = ({
             </div>
           )}
 
-          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-zinc-800/80 pt-3">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/[0.06] pt-3">
             <button
               onClick={onDiscardDraft}
-              className="text-xs text-zinc-400 hover:text-red-400 border border-zinc-800 hover:border-red-900/60 px-3 py-1.5 rounded-lg transition"
+              className="text-xs text-zinc-400 hover:text-red-400 border border-white/[0.06] hover:border-red-500/30 px-3 py-1.5 rounded-lg transition flex items-center gap-1.5"
             >
-              Discard Draft
+              <Trash2 className="w-3 h-3" />
+              <span>Discard</span>
             </button>
 
             <div className="flex items-center gap-2">
               {isEditing && (
                 <button
                   onClick={handleSave}
-                  className="text-xs bg-zinc-800 text-zinc-200 border border-zinc-700 px-3 py-1.5 rounded-lg hover:bg-zinc-700 transition"
+                  className="text-xs bg-white/[0.04] text-zinc-200 border border-white/[0.08] px-3 py-1.5 rounded-lg hover:bg-white/[0.08] transition flex items-center gap-1.5"
                 >
-                  Save Edits
+                  <Save className="w-3 h-3" />
+                  <span>Save Edits</span>
                 </button>
               )}
 
               <button
                 onClick={onSyncGmail}
                 disabled={requiresComposeConsent}
-                className="text-xs bg-zinc-900 text-zinc-200 border border-zinc-800 hover:border-zinc-700 hover:text-red-400 px-3 py-1.5 rounded-lg transition font-medium disabled:opacity-50"
+                className="text-xs bg-[#121216] text-zinc-300 border border-white/[0.08] hover:border-white/[0.14] hover:text-white px-3 py-1.5 rounded-lg transition font-medium disabled:opacity-50 flex items-center gap-1.5"
               >
-                Sync to Gmail Drafts
+                <Mail className="w-3 h-3 text-zinc-400" />
+                <span>Sync to Gmail</span>
               </button>
 
               <button
                 onClick={onSendEmail}
                 disabled={requiresComposeConsent}
-                className="text-xs bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white px-4 py-1.5 rounded-lg transition font-semibold disabled:opacity-50 shadow-md shadow-red-950/60 active:scale-95"
+                className="text-xs bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white px-4 py-1.5 rounded-lg transition font-medium disabled:opacity-50 shadow-sm flex items-center gap-1.5 active:scale-95"
               >
-                Approve & Send Email
+                <Send className="w-3 h-3" />
+                <span>Approve & Send</span>
               </button>
             </div>
           </div>
         </div>
       ) : (
-        <div className="text-center py-10 text-zinc-500 text-xs space-y-2">
+        <div className="text-center py-10 text-zinc-500 text-xs space-y-1.5">
           <p>No AI reply draft generated yet.</p>
-          <p>Click <strong className="text-red-400">⚡ Regenerate</strong> to generate a context-aware response.</p>
+          <p>Click <strong className="text-red-400">Regenerate</strong> to generate a context-aware response.</p>
         </div>
       )}
     </div>

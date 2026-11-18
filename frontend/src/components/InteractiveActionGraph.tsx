@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { ZoomIn, ZoomOut, RotateCcw, Move } from 'lucide-react';
 import { GraphEdgeResult, GraphNodeResult } from '../types/graph';
 
 interface VisualNode extends GraphNodeResult {
@@ -81,51 +82,50 @@ export const InteractiveActionGraph: React.FC<InteractiveActionGraphProps> = ({
         ctx.beginPath();
         ctx.moveTo(src.x, src.y);
         ctx.lineTo(tgt.x, tgt.y);
-        ctx.strokeStyle = '#27272a'; // zinc-800
-        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+        ctx.lineWidth = 1.2;
         ctx.stroke();
 
         // Edge label (relationship type)
         const midX = (src.x + tgt.x) / 2;
         const midY = (src.y + tgt.y) / 2;
-        ctx.fillStyle = '#a1a1aa'; // zinc-400
-        ctx.font = '9px sans-serif';
+        ctx.fillStyle = '#71717a';
+        ctx.font = '9px monospace';
         ctx.fillText(edge.relationship_type, midX, midY - 4);
       });
 
       // 2. Draw Nodes
       visualNodes.forEach((n) => {
         const isSelected = selectedNodeId === n.id;
-        const radius = isSelected ? 22 : 18;
+        const radius = isSelected ? 20 : 16;
 
-        // Node fill color by type
-        let fillColor = '#18181b'; // zinc-900
-        let strokeColor = '#71717a'; // zinc-500
+        let fillColor = '#121216';
+        let strokeColor = 'rgba(255, 255, 255, 0.15)';
         if (n.node_type === 'ACTION_ITEM') {
-          fillColor = '#7f1d1d'; // red-900
-          strokeColor = '#ef4444'; // red-500
+          fillColor = '#450a0a';
+          strokeColor = '#ef4444';
         } else if (n.node_type === 'EMAIL_MESSAGE' || n.node_type === 'EMAIL_THREAD') {
-          fillColor = '#27272a'; // zinc-800
-          strokeColor = '#a1a1aa'; // zinc-400
+          fillColor = '#18181f';
+          strokeColor = 'rgba(255, 255, 255, 0.2)';
         } else if (n.node_type === 'INVOICE') {
-          fillColor = '#18181b'; // zinc-900
-          strokeColor = '#f87171'; // red-400
+          fillColor = '#1e1b4b';
+          strokeColor = '#818cf8';
         } else if (n.node_type === 'CONTRACT') {
-          fillColor = '#27272a'; // zinc-800
-          strokeColor = '#b91c1c'; // red-700
+          fillColor = '#14532d';
+          strokeColor = '#4ade80';
         }
 
         ctx.beginPath();
         ctx.arc(n.x, n.y, radius, 0, 2 * Math.PI);
         ctx.fillStyle = fillColor;
         ctx.fill();
-        ctx.lineWidth = isSelected ? 3 : 1.5;
+        ctx.lineWidth = isSelected ? 2.5 : 1;
         ctx.strokeStyle = isSelected ? '#ef4444' : strokeColor;
         ctx.stroke();
 
         // Label
-        ctx.fillStyle = '#f4f4f5';
-        ctx.font = '10px sans-serif';
+        ctx.fillStyle = '#ededed';
+        ctx.font = '10px -apple-system, sans-serif';
         ctx.textAlign = 'center';
         const labelText = n.label.length > 16 ? n.label.substring(0, 14) + '...' : n.label;
         ctx.fillText(labelText, n.x, n.y + radius + 12);
@@ -201,36 +201,39 @@ export const InteractiveActionGraph: React.FC<InteractiveActionGraphProps> = ({
   };
 
   return (
-    <div className="relative w-full rounded-2xl bg-zinc-950/90 border border-zinc-800/80 overflow-hidden select-none shadow-2xl">
-      <div className="absolute top-3.5 left-3.5 z-10 flex items-center gap-2 bg-zinc-900/85 backdrop-blur-md border border-zinc-800 px-3 py-1.5 rounded-xl text-xs text-zinc-300 shadow-md">
-        <span className="font-semibold text-red-400">Interactive Canvas:</span>
+    <div className="relative w-full rounded-xl bg-[#0a0a0d] border border-white/[0.07] overflow-hidden select-none shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)]">
+      <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 bg-[#0f0f12]/90 backdrop-blur-md border border-white/[0.08] px-2.5 py-1 rounded-md text-[11px] text-zinc-400 shadow-sm">
+        <span className="font-medium text-white flex items-center gap-1">
+          <Move className="w-3 h-3 text-red-400" />
+          Interactive Canvas:
+        </span>
         <span className="hidden sm:inline">Drag nodes • Pan canvas • Scroll to zoom</span>
       </div>
 
-      <div className="absolute top-3.5 right-3.5 z-10 flex items-center gap-1 bg-zinc-900/85 backdrop-blur-md border border-zinc-800 p-1 rounded-xl shadow-md">
+      <div className="absolute top-3 right-3 z-10 flex items-center gap-1 bg-[#0f0f12]/90 backdrop-blur-md border border-white/[0.08] p-1 rounded-md shadow-sm">
         <button
           onClick={() => setZoom((z) => Math.min(z * 1.2, 2.5))}
-          className="px-2.5 py-1 text-xs hover:bg-zinc-800 rounded-lg text-zinc-300 transition"
+          className="p-1 hover:bg-white/[0.06] rounded text-zinc-300 transition"
           title="Zoom In"
         >
-          ➕
+          <ZoomIn className="w-3.5 h-3.5" />
         </button>
         <button
           onClick={() => setZoom((z) => Math.max(z / 1.2, 0.5))}
-          className="px-2.5 py-1 text-xs hover:bg-zinc-800 rounded-lg text-zinc-300 transition"
+          className="p-1 hover:bg-white/[0.06] rounded text-zinc-300 transition"
           title="Zoom Out"
         >
-          ➖
+          <ZoomOut className="w-3.5 h-3.5" />
         </button>
         <button
           onClick={() => {
             setZoom(1);
             setPan({ x: 0, y: 0 });
           }}
-          className="px-2.5 py-1 text-xs hover:bg-zinc-800 rounded-lg text-zinc-300 font-mono transition"
+          className="p-1 hover:bg-white/[0.06] rounded text-zinc-300 transition"
           title="Reset View"
         >
-          Reset
+          <RotateCcw className="w-3.5 h-3.5" />
         </button>
       </div>
 

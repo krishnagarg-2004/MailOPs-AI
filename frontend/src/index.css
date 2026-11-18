@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", Oxygen, Ubuntu, Cantarell, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
@@ -14,9 +14,8 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  /* Standard modern scrollbar tokens */
   scrollbar-width: thin;
-  scrollbar-color: #3f3f46 #09090b;
+  scrollbar-color: rgba(255, 255, 255, 0.12) #08080a;
 }
 
 body {
@@ -26,62 +25,70 @@ body {
   background-color: #000000;
   color: #f4f4f5;
   overflow-x: hidden;
+  letter-spacing: -0.011em;
 }
 
-/* Custom dark scrollbars with progressive fallback */
-@supports not (scrollbar-color: auto) {
-  ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-  ::-webkit-scrollbar-track {
-    background: #09090b;
-  }
-  ::-webkit-scrollbar-thumb {
-    background: #27272a;
-    border-radius: 9999px;
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    background: #ef4444;
-  }
-}
-
-/* Clean WebKit scrollbar tuning for modern browsers */
+/* Precision Fey-Style WebKit Scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 ::-webkit-scrollbar-track {
-  background: #09090b;
+  background: #08080a;
 }
 ::-webkit-scrollbar-thumb {
-  background: #27272a;
+  background: rgba(255, 255, 255, 0.12);
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #ef4444;
+  background: rgba(239, 68, 68, 0.7);
 }
 
-/* High-Velocity Enterprise UI Utility Classes */
+/* High-Precision Fey Web Utility Classes */
 @layer utilities {
-  .glass-header {
-    background-color: rgba(9, 9, 11, 0.82);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
+  .fey-glass {
+    background-color: rgba(8, 8, 10, 0.78);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
   }
 
-  .glass-panel {
-    background-color: rgba(12, 12, 15, 0.75);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+  .fey-card {
+    background-color: #0f0f12;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.05), 0 4px 20px -2px rgba(0, 0, 0, 0.5);
+  }
+
+  .fey-card-interactive {
+    background-color: #0f0f12;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+    transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .fey-card-interactive:hover {
+    background-color: #141418;
+    border-color: rgba(255, 255, 255, 0.14);
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.09), 0 8px 30px -4px rgba(0, 0, 0, 0.6);
+  }
+
+  .fey-pill {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 9999px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.03);
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: 0.02em;
   }
 
   .glow-red {
-    box-shadow: 0 0 20px -3px rgba(239, 68, 68, 0.25);
+    box-shadow: 0 0 25px -3px rgba(239, 68, 68, 0.22);
   }
 
   .glow-red-sm {
-    box-shadow: 0 0 10px -2px rgba(239, 68, 68, 0.3);
+    box-shadow: 0 0 12px -2px rgba(239, 68, 68, 0.28);
   }
 
   .thread-item-contain {
@@ -90,17 +97,17 @@ body {
   }
 }
 
-/* Accessible focus ring indicators across all buttons & inputs */
+/* Subtle, non-intrusive focus rings */
 *:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px #ef4444;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.6);
 }
 
-/* Smooth keyframe animations */
-@keyframes fadeIn {
+/* Smooth physics fade-in */
+@keyframes feyFadeIn {
   from {
     opacity: 0;
-    transform: translateY(4px);
+    transform: translateY(3px);
   }
   to {
     opacity: 1;
@@ -109,5 +116,5 @@ body {
 }
 
 .animate-fadeIn {
-  animation: fadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: feyFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

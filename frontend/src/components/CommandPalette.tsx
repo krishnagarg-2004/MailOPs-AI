@@ -1,5 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import {
+  Inbox,
+  FileText,
+  Search,
+  Network,
+  RefreshCw,
+  Zap,
+  Download,
+  Keyboard,
+  ArrowRight,
+} from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import { api } from '../services/api';
 
@@ -8,7 +19,7 @@ interface CommandItem {
   title: string;
   description: string;
   category: 'Navigation' | 'Actions' | 'Filters';
-  icon: string;
+  icon: React.ComponentType<{ className?: string }>;
   action: () => void;
 }
 
@@ -26,10 +37,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
   const commands: CommandItem[] = [
     {
       id: 'nav-inbox',
-      title: 'Go to Inbox & AI Reply',
+      title: 'Inbox & AI Reply',
       description: 'Review synchronized emails, AI analysis, and generate reply drafts',
       category: 'Navigation',
-      icon: '📬',
+      icon: Inbox,
       action: () => {
         navigate('/dashboard');
         onClose();
@@ -37,10 +48,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
     },
     {
       id: 'nav-docs',
-      title: 'Go to Document OCR',
+      title: 'Document OCR',
       description: 'Inspect extracted invoices, purchase orders, and PDF/DOCX contracts',
       category: 'Navigation',
-      icon: '📄',
+      icon: FileText,
       action: () => {
         navigate('/documents');
         onClose();
@@ -48,10 +59,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
     },
     {
       id: 'nav-search',
-      title: 'Go to Semantic Search & RAG Chat',
+      title: 'Semantic Search & RAG Chat',
       description: 'Run natural-language queries across inboxes and converse with AI',
       category: 'Navigation',
-      icon: '🔍',
+      icon: Search,
       action: () => {
         navigate('/search');
         onClose();
@@ -59,10 +70,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
     },
     {
       id: 'nav-graph',
-      title: 'Go to Action Graph & Relationships',
+      title: 'Action Graph & Relationships',
       description: 'Visualize operational dependencies, blocked tasks, and entity networks',
       category: 'Navigation',
-      icon: '⚙️',
+      icon: Network,
       action: () => {
         navigate('/graph');
         onClose();
@@ -73,7 +84,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
       title: 'Trigger Gmail Synchronization',
       description: 'Fetch new inbound emails and initiate background analysis',
       category: 'Actions',
-      icon: '⚡',
+      icon: RefreshCw,
       action: () => {
         const syncBtn = document.querySelector<HTMLButtonElement>('button:has-text("Sync Now"), [data-sync-button]');
         if (syncBtn) {
@@ -86,10 +97,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
     },
     {
       id: 'action-seed-demo',
-      title: '⚡ Seed Realistic Enterprise Demo Data',
+      title: 'Seed Enterprise Demo Data',
       description: 'Populate mailbox with simulated customer escalations, invoices, and graph dependencies',
       category: 'Actions',
-      icon: '🚀',
+      icon: Zap,
       action: () => {
         onClose();
         requestConfirmation({
@@ -110,10 +121,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
     },
     {
       id: 'action-export-digest-csv',
-      title: '📊 Export Executive Digest (CSV)',
+      title: 'Export Executive Digest (CSV)',
       description: 'Download spreadsheet report of pending actions, business risks, and financial totals',
       category: 'Actions',
-      icon: '📥',
+      icon: Download,
       action: async () => {
         onClose();
         try {
@@ -126,10 +137,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
     },
     {
       id: 'action-export-digest-md',
-      title: '📝 Export Executive Digest (Markdown)',
+      title: 'Export Executive Digest (Markdown)',
       description: 'Download formatted markdown executive briefing report',
       category: 'Actions',
-      icon: '📋',
+      icon: Download,
       action: async () => {
         onClose();
         try {
@@ -142,10 +153,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
     },
     {
       id: 'action-shortcuts-help',
-      title: '⌨️ Keyboard Shortcuts Help',
+      title: 'Keyboard Shortcuts Help',
       description: 'View Superhuman-style navigation hotkeys (j/k, r, a, x, ?)',
       category: 'Actions',
-      icon: '⌨️',
+      icon: Keyboard,
       action: () => {
         onClose();
         window.dispatchEvent(new CustomEvent('open-keyboard-shortcuts'));
@@ -192,14 +203,14 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 bg-black/80 backdrop-blur-md p-4 font-sans animate-in fade-in duration-150">
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-24 bg-black/75 backdrop-blur-md p-4 font-sans animate-in fade-in duration-150">
       <div
-        className="w-full max-w-xl bg-zinc-950 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden text-zinc-100 flex flex-col"
+        className="w-full max-w-xl bg-[#0f0f12] border border-white/[0.08] rounded-2xl shadow-[0_16px_50px_rgba(0,0,0,0.8),inset_0_1px_0_0_rgba(255,255,255,0.08)] overflow-hidden text-[#ededed] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Search input header */}
-        <div className="flex items-center gap-3 px-4 py-3.5 border-b border-zinc-800">
-          <span className="text-red-500 text-sm">🔍</span>
+        <div className="flex items-center gap-3 px-4 py-3.5 border-b border-white/[0.06] bg-[#0c0c0f]">
+          <Search className="w-4 h-4 text-zinc-400" />
           <input
             type="text"
             value={query}
@@ -208,45 +219,57 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
             autoFocus
             className="w-full bg-transparent text-sm text-white placeholder-zinc-500 focus:outline-none"
           />
-          <kbd className="hidden sm:inline-block text-[10px] font-semibold bg-zinc-900 border border-zinc-800 px-1.5 py-0.5 rounded text-zinc-400">
+          <kbd className="hidden sm:inline-block text-[10px] font-mono bg-white/[0.05] border border-white/[0.08] px-1.5 py-0.5 rounded text-zinc-400">
             ESC
           </kbd>
         </div>
 
         {/* Command List */}
-        <div className="max-h-80 overflow-y-auto p-2 space-y-1">
+        <div className="max-h-80 overflow-y-auto p-2 space-y-0.5">
           {filteredCommands.length === 0 ? (
             <div className="text-center py-8 text-xs text-zinc-500">
               No matching commands found.
             </div>
           ) : (
-            filteredCommands.map((cmd, idx) => (
-              <div
-                key={cmd.id}
-                onClick={() => cmd.action()}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer text-xs transition ${
-                  selectedIndex === idx
-                    ? 'bg-red-950/60 text-red-300 border border-red-800/80 shadow-sm'
-                    : 'hover:bg-zinc-900/80 text-zinc-300'
-                }`}
-              >
-                <span className="text-base">{cmd.icon}</span>
-                <div className="flex-1 min-w-0">
-                  <div className="font-semibold truncate">{cmd.title}</div>
-                  <div className="text-[11px] text-zinc-400 truncate">{cmd.description}</div>
+            filteredCommands.map((cmd, idx) => {
+              const Icon = cmd.icon;
+              const isSelected = selectedIndex === idx;
+              return (
+                <div
+                  key={cmd.id}
+                  onClick={() => cmd.action()}
+                  className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer text-xs transition-all duration-150 ${
+                    isSelected
+                      ? 'bg-white/[0.07] text-white border border-white/[0.12] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)]'
+                      : 'hover:bg-white/[0.03] text-zinc-300 border border-transparent'
+                  }`}
+                >
+                  <div className={`p-1.5 rounded-md ${isSelected ? 'text-red-400 bg-red-950/40' : 'text-zinc-400 bg-white/[0.03]'}`}>
+                    <Icon className="w-3.5 h-3.5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-white truncate">{cmd.title}</div>
+                    <div className="text-[11px] text-zinc-400 truncate">{cmd.description}</div>
+                  </div>
+                  <span className="text-[10px] tracking-wider px-2 py-0.5 rounded-full bg-white/[0.04] text-zinc-400 font-mono border border-white/[0.06]">
+                    {cmd.category}
+                  </span>
+                  {isSelected && <ArrowRight className="w-3.5 h-3.5 text-zinc-400" />}
                 </div>
-                <span className="text-[9px] uppercase tracking-wider px-2 py-0.5 rounded bg-zinc-900 text-zinc-400 font-medium border border-zinc-800">
-                  {cmd.category}
-                </span>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
 
         {/* Footer shortcuts */}
-        <div className="px-4 py-2 border-t border-zinc-800/80 bg-black/60 flex items-center justify-between text-[11px] text-zinc-500">
-          <span>Navigation: <kbd className="text-[10px] bg-zinc-900 px-1 rounded border border-zinc-800 text-zinc-400">↑</kbd> <kbd className="text-[10px] bg-zinc-900 px-1 rounded border border-zinc-800 text-zinc-400">↓</kbd></span>
-          <span>Select: <kbd className="text-[10px] bg-zinc-900 px-1 rounded border border-zinc-800 text-zinc-400">↵</kbd></span>
+        <div className="px-4 py-2 border-t border-white/[0.06] bg-[#0c0c0f] flex items-center justify-between text-[11px] text-zinc-500">
+          <span>
+            Navigate: <kbd className="text-[10px] bg-white/[0.05] px-1 py-0.5 rounded border border-white/[0.08] text-zinc-400 font-mono">↑</kbd>{' '}
+            <kbd className="text-[10px] bg-white/[0.05] px-1 py-0.5 rounded border border-white/[0.08] text-zinc-400 font-mono">↓</kbd>
+          </span>
+          <span>
+            Select: <kbd className="text-[10px] bg-white/[0.05] px-1 py-0.5 rounded border border-white/[0.08] text-zinc-400 font-mono">↵</kbd>
+          </span>
         </div>
       </div>
     </div>

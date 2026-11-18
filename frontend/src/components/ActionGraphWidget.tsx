@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Grid, RefreshCw, X } from 'lucide-react';
 import { GraphEdgeResult, GraphNodeResult } from '../types/graph';
 
 interface ActionGraphWidgetProps {
@@ -35,18 +36,18 @@ export const ActionGraphWidget: React.FC<ActionGraphWidgetProps> = ({
   const getNodeColor = (type: string) => {
     switch (type) {
       case 'ACTION_ITEM':
-        return 'bg-red-950/70 text-red-200 border-red-800/80';
+        return 'bg-red-950/40 text-red-200 border-red-500/30';
       case 'EMAIL_MESSAGE':
       case 'EMAIL_THREAD':
-        return 'bg-zinc-900/80 text-zinc-200 border-zinc-700/80';
+        return 'bg-white/[0.04] text-zinc-200 border-white/[0.08]';
       case 'INVOICE':
-        return 'bg-red-950/50 text-red-300 border-red-800/60';
+        return 'bg-zinc-900/90 text-red-300 border-red-900/50';
       case 'CONTRACT':
-        return 'bg-zinc-800/80 text-zinc-300 border-zinc-600/80';
+        return 'bg-zinc-800/80 text-zinc-300 border-zinc-700/80';
       case 'PERSON':
-        return 'bg-zinc-900/80 text-zinc-300 border-zinc-700/80';
+        return 'bg-white/[0.03] text-zinc-300 border-white/[0.06]';
       default:
-        return 'bg-zinc-900/80 text-zinc-300 border-zinc-800';
+        return 'bg-white/[0.03] text-zinc-300 border-white/[0.06]';
     }
   };
 
@@ -58,13 +59,17 @@ export const ActionGraphWidget: React.FC<ActionGraphWidgetProps> = ({
   };
 
   return (
-    <div className="bg-zinc-950/90 border border-zinc-800/80 rounded-2xl p-5 shadow-xl space-y-4 text-zinc-100 font-sans">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-800/80 pb-3">
+    <div className="bg-[#0e0e12] border border-white/[0.07] rounded-xl p-4 sm:p-5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)] space-y-3.5 text-[#ededed] font-sans">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/[0.06] pb-3">
         <div>
-          <h3 className="text-xs font-bold uppercase tracking-wider text-red-400">
-            Action Graph Grid ({nodes.length} nodes, {edges.length} edges)
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-white flex items-center gap-1.5">
+            <Grid className="w-3.5 h-3.5 text-red-400" />
+            <span>Action Graph Grid</span>
+            <span className="text-[10px] text-zinc-500 font-mono">
+              ({nodes.length} nodes, {edges.length} edges)
+            </span>
           </h3>
-          <p className="text-xs text-zinc-400 mt-0.5">
+          <p className="text-xs text-zinc-500 mt-0.5">
             Relational dependency inventory across emails, actions, documents, and risks.
           </p>
         </div>
@@ -73,9 +78,9 @@ export const ActionGraphWidget: React.FC<ActionGraphWidgetProps> = ({
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
-            className="bg-zinc-900 border border-zinc-800 rounded-xl text-xs px-3 py-1.5 text-zinc-200 focus:outline-none focus:border-red-500/80 transition"
+            className="bg-[#121216] border border-white/[0.07] rounded-lg text-xs px-2.5 py-1.5 text-zinc-200 focus:outline-none focus:border-red-500/60 transition"
           >
-            <option value="ALL">All Node Types</option>
+            <option value="ALL">All Types</option>
             <option value="ACTION_ITEM">Action Tasks</option>
             <option value="EMAIL_MESSAGE">Emails</option>
             <option value="INVOICE">Invoices</option>
@@ -86,9 +91,10 @@ export const ActionGraphWidget: React.FC<ActionGraphWidgetProps> = ({
           <button
             onClick={onRebuildGraph}
             disabled={isLoading}
-            className="text-xs bg-red-950/60 text-red-300 border border-red-800/60 px-3.5 py-1.5 rounded-xl hover:bg-red-900/50 transition font-medium disabled:opacity-50 active:scale-95"
+            className="text-xs bg-white/[0.04] hover:bg-white/[0.08] text-zinc-200 border border-white/[0.08] px-3 py-1.5 rounded-lg transition font-medium disabled:opacity-50 active:scale-95 flex items-center gap-1.5"
           >
-            {isLoading ? 'Rebuilding...' : 'Rebuild Graph'}
+            <RefreshCw className={`w-3 h-3 text-red-400 ${isLoading ? 'animate-spin' : ''}`} />
+            <span>{isLoading ? 'Rebuilding...' : 'Rebuild'}</span>
           </button>
         </div>
       </div>
@@ -99,19 +105,19 @@ export const ActionGraphWidget: React.FC<ActionGraphWidgetProps> = ({
           No nodes found for this filter.
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-96 overflow-y-auto pr-1">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5 max-h-96 overflow-y-auto pr-1">
           {filteredNodes.map((node) => (
             <div
               key={node.id}
               onClick={() => handleNodeSelect(node)}
-              className={`border rounded-xl p-3.5 cursor-pointer transition-all duration-150 hover:border-zinc-500 ${getNodeColor(node.node_type)} ${
-                selectedNode?.id === node.id ? 'ring-2 ring-red-500 shadow-md' : ''
+              className={`border rounded-lg p-3 cursor-pointer transition-all duration-150 ${getNodeColor(node.node_type)} ${
+                selectedNode?.id === node.id ? 'ring-1 ring-red-500 shadow-sm' : 'hover:border-white/[0.14]'
               }`}
             >
-              <div className="flex items-center justify-between text-[10px] font-semibold tracking-wider uppercase mb-1.5 opacity-80">
+              <div className="flex items-center justify-between text-[10px] font-mono tracking-wider uppercase mb-1 opacity-75">
                 <span>{node.node_type}</span>
               </div>
-              <div className="font-semibold text-xs text-zinc-100 truncate">{node.label}</div>
+              <div className="font-medium text-xs text-zinc-100 truncate">{node.label}</div>
             </div>
           ))}
         </div>
@@ -119,18 +125,18 @@ export const ActionGraphWidget: React.FC<ActionGraphWidgetProps> = ({
 
       {/* Selected Node Drawer */}
       {selectedNode && (
-        <div className="bg-black/80 p-4 rounded-xl border border-red-800/60 space-y-2 text-xs animate-fadeIn shadow-inner">
+        <div className="bg-[#0a0a0d] p-3.5 rounded-lg border border-white/[0.08] space-y-2 text-xs animate-fadeIn">
           <div className="flex items-center justify-between">
-            <span className="font-semibold text-red-400">Node Properties ({selectedNode.node_type})</span>
+            <span className="font-medium text-red-400 text-xs">Node Properties ({selectedNode.node_type})</span>
             <button
               onClick={() => setSelectedNode(null)}
-              className="text-zinc-400 hover:text-white text-xs px-2 py-0.5"
+              className="text-zinc-500 hover:text-white p-1 rounded-md transition"
             >
-              ✕ Close
+              <X className="w-3.5 h-3.5" />
             </button>
           </div>
-          <p className="font-semibold text-zinc-100">{selectedNode.label}</p>
-          <pre className="bg-zinc-900/80 p-3 rounded-lg font-mono text-[11px] text-zinc-300 overflow-x-auto leading-relaxed border border-zinc-800">
+          <p className="font-medium text-zinc-200">{selectedNode.label}</p>
+          <pre className="bg-[#121216] p-2.5 rounded-md font-mono text-[11px] text-zinc-300 overflow-x-auto leading-relaxed border border-white/[0.05]">
             {JSON.stringify(selectedNode.properties, null, 2)}
           </pre>
         </div>

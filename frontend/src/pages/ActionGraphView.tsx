@@ -42,7 +42,11 @@ export const ActionGraphView: React.FC = () => {
       await fetchGraphData();
       toast.success('Action graph successfully rebuilt!');
     } catch (err: any) {
-      toast.error(`Graph Rebuild Error: ${err.message}`);
+      const msg = err?.message === 'Failed to fetch'
+        ? 'Connection to backend failed (service may be waking up or restarting). Please retry in a few moments.'
+        : (err?.message || 'Rebuild failed');
+      toast.error(`Graph Rebuild Error: ${msg}`);
+    } finally {
       setIsLoading(false);
     }
   };

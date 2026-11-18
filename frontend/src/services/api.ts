@@ -8,15 +8,25 @@ import { RAGQueryResponse, SearchResultItem } from '../types/search';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '';
 
 async function fetchJSON<T>(url: string, options: RequestInit = {}): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${url}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      ...options.headers,
-    },
-    credentials: 'include',
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}${url}`, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        ...options.headers,
+      },
+      credentials: 'include',
+    });
+  } catch (netErr: any) {
+    if (netErr?.message === 'Failed to fetch' || netErr?.name === 'TypeError') {
+      const err = new Error('Connection to backend failed (service may be waking up or restarting). Please retry in a few moments.') as any;
+      err.status = 503;
+      throw err;
+    }
+    throw netErr;
+  }
 
   if (!response.ok) {
     const errorText = await response.text();

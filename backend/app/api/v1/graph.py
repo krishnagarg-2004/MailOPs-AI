@@ -93,22 +93,4 @@ async def rebuild_user_graph(
     db: Session = Depends(get_db),
 ):
     """Sync and rebuild Action Graph nodes and edges across all user messages and extracted actions."""
-    messages = db.query(EmailMessage).filter(EmailMessage.user_id == current_user.id).all()
-    actions = db.query(ExtractedAction).filter(ExtractedAction.user_id == current_user.id).all()
-
-    synced_messages = 0
-    synced_actions = 0
-
-    for msg in messages:
-        ActionGraphService.sync_message_nodes(db, current_user.id, msg.id)
-        synced_messages += 1
-
-    for act in actions:
-        ActionGraphService.sync_action_nodes(db, current_user.id, act.id)
-        synced_actions += 1
-
-    return {
-        "status": "ok",
-        "synced_messages": synced_messages,
-        "synced_actions": synced_actions,
-    }
+    return ActionGraphService.rebuild_user_graph(db, current_user.id)

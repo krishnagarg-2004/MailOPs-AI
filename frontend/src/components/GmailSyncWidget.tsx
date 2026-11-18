@@ -131,7 +131,10 @@ export const GmailSyncWidget: React.FC = () => {
     } catch (err: any) {
       setIsSyncing(false);
       if (err?.name === 'AbortError') return;
-      toast.error(`Sync attempt failed: ${err?.message || 'Network error'}`);
+      const msg = err?.message === 'Failed to fetch' || err?.name === 'TypeError'
+        ? 'Connection to backend failed (service may be waking up or restarting). Please retry in a few moments.'
+        : (err?.message || 'Network error');
+      toast.error(`Sync attempt failed: ${msg}`);
     } finally {
       if (syncAbortControllerRef.current === controller) {
         setIsSyncing(false);

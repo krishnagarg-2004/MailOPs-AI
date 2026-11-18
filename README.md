@@ -9,7 +9,7 @@
 [![React](https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react)](https://react.dev/)
 [![pgvector](https://img.shields.io/badge/pgvector-0.7+-336791?style=flat-square&logo=postgresql)](https://github.com/pgvector/pgvector)
 [![Docker](https://img.shields.io/badge/Docker-Compose%20Ready-2496ED?style=flat-square&logo=docker)](docker-compose.yml)
-[![Theme](https://img.shields.io/badge/Theme-Black%2FCharcoal%2FRed-red?style=flat-square)](frontend/src/index.css)
+[![Theme](https://img.shields.io/badge/Theme-Fey%20Luxury%20Obsidian-red?style=flat-square)](frontend/src/index.css)
 
 ---
 

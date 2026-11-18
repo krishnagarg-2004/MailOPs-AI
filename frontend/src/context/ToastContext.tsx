@@ -31,7 +31,6 @@ interface ToastContextValue {
 
 const ToastContext = createContext<ToastContextValue | undefined>(undefined);
 
-// Standalone global emitter for toast notifications
 type ToastSubscriber = (msg: string, type: ToastType, duration?: number) => void;
 const subscribers = new Set<ToastSubscriber>();
 
@@ -89,36 +88,36 @@ export const ToastProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     >
       {children}
 
-      {/* Non-blocking Toast Notification Stack */}
+      {/* Modern Floating Toast Notification Stack */}
       <div
-        className="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none"
+        className="fixed bottom-6 right-6 z-50 flex flex-col gap-2.5 max-w-sm w-full pointer-events-none"
         aria-live="polite"
       >
         {toasts.map((t) => {
-          let borderClasses = 'border-zinc-800 bg-zinc-950 text-zinc-100';
+          let borderClasses = 'border-zinc-800/90 bg-zinc-950/90 text-zinc-100 shadow-xl';
           let icon = <span className="text-zinc-400 font-bold shrink-0">ℹ</span>;
 
           if (t.type === 'error') {
-            borderClasses = 'border-red-600/70 bg-zinc-950 text-zinc-100 shadow-red-950/20';
-            icon = <span className="text-red-500 font-bold shrink-0">✕</span>;
+            borderClasses = 'border-rose-600/70 bg-zinc-950/95 text-zinc-100 shadow-rose-950/40 shadow-xl';
+            icon = <span className="text-rose-500 font-bold shrink-0">✕</span>;
           } else if (t.type === 'success') {
-            borderClasses = 'border-zinc-700 bg-zinc-950 text-zinc-100';
-            icon = <span className="text-red-400 font-bold shrink-0">✓</span>;
+            borderClasses = 'border-emerald-600/60 bg-zinc-950/95 text-zinc-100 shadow-emerald-950/30 shadow-xl';
+            icon = <span className="text-emerald-400 font-bold shrink-0">✓</span>;
           } else if (t.type === 'warning') {
-            borderClasses = 'border-red-900/60 bg-zinc-950 text-zinc-200';
-            icon = <span className="text-red-400 font-bold shrink-0">⚠</span>;
+            borderClasses = 'border-amber-600/60 bg-zinc-950/95 text-zinc-100 shadow-amber-950/30 shadow-xl';
+            icon = <span className="text-amber-400 font-bold shrink-0">⚠</span>;
           }
 
           return (
             <div
               key={t.id}
-              className={`pointer-events-auto border rounded-lg p-3 text-xs shadow-xl flex items-start gap-2.5 transition-all duration-200 ${borderClasses}`}
+              className={`pointer-events-auto border rounded-2xl p-3.5 text-xs backdrop-blur-xl flex items-start gap-3 transition-all duration-200 animate-fadeIn ${borderClasses}`}
             >
               <div className="pt-0.5">{icon}</div>
               <div className="flex-1 font-medium leading-relaxed break-words">{t.message}</div>
               <button
                 onClick={() => removeToast(t.id)}
-                className="text-zinc-500 hover:text-zinc-300 ml-1 text-xs shrink-0 px-1 py-0.5"
+                className="text-zinc-500 hover:text-white ml-1 text-xs shrink-0 px-1 py-0.5 rounded transition"
                 title="Dismiss"
               >
                 ✕
@@ -130,22 +129,26 @@ export const ToastProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
       {/* Styled Non-Modal Confirmation Dialog */}
       {confirmation && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-in fade-in duration-150">
-          <div className="bg-zinc-950 border border-zinc-800 text-zinc-100 shadow-2xl rounded-xl max-w-md w-full p-5 space-y-4">
-            <div className="flex items-center gap-2">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-150">
+          <div className="bg-zinc-950/95 border border-zinc-800/90 text-zinc-100 shadow-2xl rounded-2xl max-w-md w-full p-6 space-y-4">
+            <div className="flex items-center gap-2.5">
               {confirmation.isDanger ? (
-                <span className="text-red-500 text-base">⚠</span>
+                <div className="w-8 h-8 rounded-xl bg-red-950/80 border border-red-800/80 flex items-center justify-center text-rose-400 text-sm">
+                  ⚠
+                </div>
               ) : (
-                <span className="text-zinc-400 text-base">⚡</span>
+                <div className="w-8 h-8 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-red-400 text-sm">
+                  ⚡
+                </div>
               )}
-              <h3 className="text-sm font-bold text-zinc-100">
+              <h3 className="text-sm font-bold text-zinc-100 tracking-tight">
                 {confirmation.title || 'Confirm Action'}
               </h3>
             </div>
             <p className="text-xs text-zinc-300 leading-relaxed">
               {confirmation.message}
             </p>
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-zinc-800">
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-zinc-800/80">
               <button
                 type="button"
                 onClick={() => {
@@ -153,7 +156,7 @@ export const ToastProvider: React.FC<{ children: ReactNode }> = ({ children }) =
                   setConfirmation(null);
                   onCancel?.();
                 }}
-                className="px-3.5 py-1.5 rounded-lg text-xs font-medium text-zinc-300 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 transition"
+                className="px-4 py-2 rounded-xl text-xs font-medium text-zinc-300 bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 transition active:scale-95"
               >
                 {confirmation.cancelLabel || 'Cancel'}
               </button>
@@ -164,9 +167,9 @@ export const ToastProvider: React.FC<{ children: ReactNode }> = ({ children }) =
                   setConfirmation(null);
                   await onConfirm();
                 }}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold text-white transition ${
+                className={`px-4 py-2 rounded-xl text-xs font-semibold text-white transition active:scale-95 ${
                   confirmation.isDanger
-                    ? 'bg-red-600 hover:bg-red-500 shadow-lg shadow-red-950/50'
+                    ? 'bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 shadow-lg shadow-red-950/60'
                     : 'bg-zinc-800 hover:bg-zinc-700'
                 }`}
               >

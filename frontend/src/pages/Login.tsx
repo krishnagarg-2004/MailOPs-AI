@@ -10,31 +10,39 @@ export const Login: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-black text-zinc-100 font-sans p-4">
-      <div className="max-w-md w-full p-8 bg-zinc-950 border border-zinc-800/90 rounded-2xl shadow-2xl space-y-6 text-center">
+    <div className="min-h-screen flex items-center justify-center bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-zinc-900 via-black to-black text-zinc-100 font-sans p-4 relative overflow-hidden">
+      {/* Background ambient decorative glows */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-96 h-96 bg-red-600/10 rounded-full blur-3xl pointer-events-none" />
+
+      <div className="max-w-md w-full p-8 sm:p-10 bg-zinc-950/80 border border-zinc-800/80 rounded-3xl shadow-2xl backdrop-blur-xl space-y-6 text-center relative z-10">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-white flex items-center justify-center gap-2">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-red-600 via-rose-600 to-red-500 flex items-center justify-center font-extrabold text-white text-xl shadow-lg shadow-red-950/80 border border-red-400/40 mx-auto mb-4">
+            M
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white flex items-center justify-center gap-2">
             <span>MailOps</span>
-            <span className="text-red-500 text-base font-bold px-2 py-0.5 rounded bg-red-950/80 border border-red-800/80 uppercase tracking-wider">AI</span>
+            <span className="text-red-400 text-sm font-bold px-2 py-0.5 rounded-full bg-red-950/80 border border-red-800/80 tracking-wider">
+              AI
+            </span>
           </h1>
           <p className="text-xs text-zinc-400 mt-2">
             Enterprise Communication & Work Intelligence Platform
           </p>
         </div>
 
-        <div className="bg-zinc-900/90 p-4 rounded-xl border border-zinc-800/80 text-left text-xs space-y-2 text-zinc-300">
+        <div className="bg-zinc-900/60 p-4 rounded-2xl border border-zinc-800/80 text-left text-xs space-y-2 text-zinc-300">
           <div className="flex items-center gap-2 text-red-400 font-medium">
             <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
             OIDC Single Sign-On Ready
           </div>
-          <p className="text-zinc-400 leading-relaxed">
+          <p className="text-zinc-400 leading-relaxed text-[11px]">
             Connect your Google Workspace mailbox to unlock AI intelligence, document OCR, grounded RAG search, and human-reviewed reply drafting.
           </p>
         </div>
 
         <button
           onClick={() => login()}
-          className="w-full flex items-center justify-center gap-3 py-3 px-4 bg-red-600 hover:bg-red-500 text-white font-semibold text-sm rounded-xl shadow-lg shadow-red-950/60 hover:shadow-red-900/40 transition duration-200 active:scale-[0.99]"
+          className="w-full flex items-center justify-center gap-3 py-3 px-4 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-semibold text-sm rounded-xl shadow-lg shadow-red-950/60 transition duration-200 active:scale-[0.98]"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path
@@ -59,14 +67,14 @@ export const Login: React.FC = () => {
 
         <div className="relative flex py-1 items-center">
           <div className="flex-grow border-t border-zinc-800"></div>
-          <span className="flex-shrink mx-3 text-xs uppercase tracking-wider text-zinc-500 font-medium">Or explore instantly</span>
+          <span className="flex-shrink mx-3 text-[10px] uppercase tracking-wider text-zinc-500 font-medium">Or explore instantly</span>
           <div className="flex-grow border-t border-zinc-800"></div>
         </div>
 
         <button
           onClick={() => loginDemo()}
           disabled={isLoading}
-          className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 hover:border-red-900/60 text-zinc-200 hover:text-white font-semibold text-sm rounded-xl transition duration-200 shadow-sm"
+          className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-zinc-900/90 hover:bg-zinc-850 border border-zinc-800 hover:border-red-900/60 text-zinc-200 hover:text-white font-semibold text-xs sm:text-sm rounded-xl transition duration-200 shadow-sm active:scale-[0.98]"
         >
           <span className="text-red-400">⚡</span>
           Launch Interactive Demo Showcase (No Auth Required)

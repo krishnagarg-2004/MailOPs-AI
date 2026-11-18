@@ -102,17 +102,17 @@ export const InteractiveActionGraph: React.FC<InteractiveActionGraphProps> = ({
         let fillColor = '#18181b'; // zinc-900
         let strokeColor = '#71717a'; // zinc-500
         if (n.node_type === 'ACTION_ITEM') {
-          fillColor = '#991b1b'; // red-800
-          strokeColor = '#dc2626'; // red-600
+          fillColor = '#7f1d1d'; // red-900
+          strokeColor = '#ef4444'; // red-500
         } else if (n.node_type === 'EMAIL_MESSAGE' || n.node_type === 'EMAIL_THREAD') {
           fillColor = '#27272a'; // zinc-800
           strokeColor = '#a1a1aa'; // zinc-400
         } else if (n.node_type === 'INVOICE') {
           fillColor = '#18181b'; // zinc-900
-          strokeColor = '#dc2626'; // red-600
+          strokeColor = '#f87171'; // red-400
         } else if (n.node_type === 'CONTRACT') {
           fillColor = '#27272a'; // zinc-800
-          strokeColor = '#991b1b'; // red-800
+          strokeColor = '#b91c1c'; // red-700
         }
 
         ctx.beginPath();
@@ -120,11 +120,11 @@ export const InteractiveActionGraph: React.FC<InteractiveActionGraphProps> = ({
         ctx.fillStyle = fillColor;
         ctx.fill();
         ctx.lineWidth = isSelected ? 3 : 1.5;
-        ctx.strokeStyle = isSelected ? '#dc2626' : strokeColor; // red-600 if selected
+        ctx.strokeStyle = isSelected ? '#ef4444' : strokeColor;
         ctx.stroke();
 
         // Label
-        ctx.fillStyle = '#f8fafc';
+        ctx.fillStyle = '#f4f4f5';
         ctx.font = '10px sans-serif';
         ctx.textAlign = 'center';
         const labelText = n.label.length > 16 ? n.label.substring(0, 14) + '...' : n.label;
@@ -201,23 +201,23 @@ export const InteractiveActionGraph: React.FC<InteractiveActionGraphProps> = ({
   };
 
   return (
-    <div className="relative w-full rounded-xl bg-black border border-zinc-800 overflow-hidden select-none">
-      <div className="absolute top-3 left-3 z-10 flex items-center gap-2 bg-zinc-900/80 backdrop-blur-sm border border-zinc-800 px-3 py-1.5 rounded-lg text-xs text-zinc-300">
+    <div className="relative w-full rounded-2xl bg-zinc-950/90 border border-zinc-800/80 overflow-hidden select-none shadow-2xl">
+      <div className="absolute top-3.5 left-3.5 z-10 flex items-center gap-2 bg-zinc-900/85 backdrop-blur-md border border-zinc-800 px-3 py-1.5 rounded-xl text-xs text-zinc-300 shadow-md">
         <span className="font-semibold text-red-400">Interactive Canvas:</span>
-        <span>Drag nodes • Pan canvas • Scroll to zoom</span>
+        <span className="hidden sm:inline">Drag nodes • Pan canvas • Scroll to zoom</span>
       </div>
 
-      <div className="absolute top-3 right-3 z-10 flex items-center gap-1 bg-zinc-900/80 backdrop-blur-sm border border-zinc-800 p-1 rounded-lg">
+      <div className="absolute top-3.5 right-3.5 z-10 flex items-center gap-1 bg-zinc-900/85 backdrop-blur-md border border-zinc-800 p-1 rounded-xl shadow-md">
         <button
           onClick={() => setZoom((z) => Math.min(z * 1.2, 2.5))}
-          className="px-2 py-1 text-xs hover:bg-zinc-800 rounded text-zinc-300"
+          className="px-2.5 py-1 text-xs hover:bg-zinc-800 rounded-lg text-zinc-300 transition"
           title="Zoom In"
         >
           ➕
         </button>
         <button
           onClick={() => setZoom((z) => Math.max(z / 1.2, 0.5))}
-          className="px-2 py-1 text-xs hover:bg-zinc-800 rounded text-zinc-300"
+          className="px-2.5 py-1 text-xs hover:bg-zinc-800 rounded-lg text-zinc-300 transition"
           title="Zoom Out"
         >
           ➖
@@ -227,7 +227,7 @@ export const InteractiveActionGraph: React.FC<InteractiveActionGraphProps> = ({
             setZoom(1);
             setPan({ x: 0, y: 0 });
           }}
-          className="px-2 py-1 text-xs hover:bg-zinc-800 rounded text-zinc-300 font-mono"
+          className="px-2.5 py-1 text-xs hover:bg-zinc-800 rounded-lg text-zinc-300 font-mono transition"
           title="Reset View"
         >
           Reset
@@ -237,12 +237,12 @@ export const InteractiveActionGraph: React.FC<InteractiveActionGraphProps> = ({
       <canvas
         ref={canvasRef}
         width={800}
-        height={420}
+        height={450}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onWheel={handleWheel}
-        className="w-full h-[420px] cursor-grab active:cursor-grabbing block"
+        className="w-full h-[450px] cursor-grab active:cursor-grabbing block"
       />
     </div>
   );

@@ -128,13 +128,15 @@ export const DocumentsView: React.FC = () => {
 
   return (
     <div className="space-y-6 font-sans">
-      <div className="flex flex-wrap items-center justify-between border-b border-zinc-800 pb-4 gap-3">
+      <div className="flex flex-wrap items-center justify-between border-b border-zinc-800/80 pb-4 gap-3">
         <div>
-          <h2 className="text-lg font-bold text-white flex items-center gap-2">
+          <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2 tracking-tight">
             <span>Document Intelligence & OCR Workspace</span>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-red-950/60 text-red-400 border border-red-800/60 uppercase tracking-wider font-semibold">Tesseract OCR</span>
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-red-950/70 text-red-400 border border-red-800/70 uppercase tracking-wider font-semibold">
+              Tesseract OCR
+            </span>
           </h2>
-          <p className="text-xs text-zinc-400">
+          <p className="text-xs text-zinc-400 mt-0.5">
             Extract native text, perform Tesseract OCR page rendering, and parse structured invoice/contract metadata.
           </p>
         </div>
@@ -142,7 +144,7 @@ export const DocumentsView: React.FC = () => {
         {extraction?.extracted_text && (
           <button
             onClick={handleDownloadOcrText}
-            className="flex items-center gap-1.5 text-xs bg-red-950/40 hover:bg-red-900/60 text-red-300 border border-red-800/60 hover:border-red-600 px-3 py-1.5 rounded-lg transition font-medium shadow-sm"
+            className="flex items-center gap-1.5 text-xs bg-red-950/40 hover:bg-red-900/60 text-red-300 border border-red-800/60 hover:border-red-600 px-3 py-1.5 rounded-xl transition font-medium shadow-sm active:scale-95"
             title="Download extracted plaintext file"
           >
             <span>📥</span> Download OCR Text (.txt)
@@ -151,13 +153,15 @@ export const DocumentsView: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column: Attachment Browser with Search & Categories */}
-        <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-4 space-y-3 shadow-lg">
+        {/* Left Column: Attachment Browser */}
+        <div className="bg-zinc-950/90 border border-zinc-800/80 rounded-2xl p-4 space-y-3.5 shadow-xl">
           <div className="flex items-center justify-between">
             <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
               Attachments ({filteredAttachments.length})
             </h3>
-            <span className="text-[10px] text-zinc-500 font-mono">Total: {attachments.length}</span>
+            <span className="text-[10px] text-zinc-400 font-mono px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800">
+              Total: {attachments.length}
+            </span>
           </div>
 
           {/* Search Box */}
@@ -166,7 +170,7 @@ export const DocumentsView: React.FC = () => {
             placeholder="Search attachments..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-zinc-900 border border-zinc-800 rounded-lg text-xs px-3 py-1.5 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500/30"
+            className="w-full bg-zinc-900/90 border border-zinc-800 rounded-xl text-xs px-3 py-2 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-red-500/80 focus:ring-1 focus:ring-red-500/30 transition"
           />
 
           {/* Category Filter Pills */}
@@ -175,9 +179,9 @@ export const DocumentsView: React.FC = () => {
               <button
                 key={cat}
                 onClick={() => setCategoryFilter(cat)}
-                className={`px-2 py-0.5 rounded font-medium transition ${
+                className={`px-2.5 py-1 rounded-lg font-medium transition ${
                   categoryFilter === cat
-                    ? 'bg-red-600 text-white font-semibold shadow-sm'
+                    ? 'bg-gradient-to-r from-red-600 to-rose-600 text-white font-semibold shadow-sm'
                     : 'bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800'
                 }`}
               >
@@ -187,26 +191,29 @@ export const DocumentsView: React.FC = () => {
           </div>
 
           {isLoading ? (
-            <div className="text-xs text-zinc-500 py-8 text-center">Loading attachments...</div>
+            <div className="text-xs text-zinc-500 py-12 text-center space-y-2">
+              <span className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin inline-block"></span>
+              <p>Loading attachments...</p>
+            </div>
           ) : filteredAttachments.length === 0 ? (
-            <div className="text-xs text-zinc-500 py-8 text-center">No matching attachments found.</div>
+            <div className="text-xs text-zinc-500 py-12 text-center">No matching attachments found.</div>
           ) : (
             <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1">
               {filteredAttachments.map((att) => (
                 <div
                   key={att.id}
                   onClick={() => handleSelectAttachment(att)}
-                  className={`p-3 rounded-lg border cursor-pointer transition ${
+                  className={`p-3 rounded-xl border cursor-pointer transition-all duration-150 ${
                     selectedAttachment?.id === att.id
-                      ? 'bg-zinc-900 border-l-4 border-l-red-500 border-y border-r border-zinc-800 shadow-md'
-                      : 'bg-zinc-900/60 border-zinc-800/80 hover:border-zinc-700'
+                      ? 'bg-zinc-900/90 border-l-[3px] border-l-red-500 border-y-zinc-800 border-r-zinc-800 shadow-md'
+                      : 'bg-zinc-900/40 border-zinc-800/80 hover:border-zinc-700 hover:bg-zinc-900/70'
                   }`}
                 >
                   <div className="flex items-center justify-between text-xs mb-1">
                     <span className="font-semibold text-zinc-200 truncate max-w-[170px]">
                       {att.filename}
                     </span>
-                    <span className="text-[10px] text-zinc-500 font-mono">
+                    <span className="text-[10px] text-zinc-400 font-mono">
                       {(att.size_bytes / 1024).toFixed(1)} KB
                     </span>
                   </div>
@@ -230,8 +237,11 @@ export const DocumentsView: React.FC = () => {
               onTriggerBusinessAnalysis={handleAnalyzeBusinessDoc}
             />
           ) : (
-            <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-12 text-center text-xs text-zinc-500">
-              Select an attachment to view extracted OCR page text or run business metadata extraction.
+            <div className="bg-zinc-950/90 border border-zinc-800/80 rounded-2xl p-16 text-center text-xs text-zinc-500 space-y-3">
+              <div className="w-12 h-12 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-2xl mx-auto text-zinc-600">
+                📄
+              </div>
+              <p>Select an attachment to view extracted OCR page text or run business metadata extraction.</p>
             </div>
           )}
         </div>
